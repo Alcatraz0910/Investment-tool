@@ -6,13 +6,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 1 complete — run `/gsd-discuss-phase 2` to begin Phase 2
+**Current focus:** Phase 2 context gathered — run `/gsd-plan-phase 2` to begin planning
 
 ## Current Phase
 
-Phase 2: Portfolio & Creator Management — Not started
+Phase 2: Portfolio & Creator Management — Context gathered, ready for planning
 
-**Last activity:** 2026-05-06 — Phase 1 execution complete (verified)
+**Last activity:** 2026-05-06 — Phase 2 context gathered (discuss-phase complete)
 
 ## Phase Status
 
