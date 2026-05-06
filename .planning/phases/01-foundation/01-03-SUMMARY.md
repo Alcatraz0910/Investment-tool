@@ -27,7 +27,7 @@ decisions:
 metrics:
   duration: "< 5 minutes"
   completed_date: "2026-05-06"
-  tasks_completed: 1
+  tasks_completed: 2
   tasks_total: 2
   files_created: 1
   files_modified: 0
@@ -42,7 +42,7 @@ metrics:
 | Task | Name | Status | Commit |
 |------|------|--------|--------|
 | 1 | Write complete schema SQL file | COMPLETE | 7060c39 |
-| 2 | Deploy schema to Supabase | AWAITING CHECKPOINT | — |
+| 2 | Deploy schema to Supabase | COMPLETE | human-confirmed |
 
 ## What Was Built
 
@@ -74,32 +74,10 @@ metrics:
 
 None — plan executed exactly as written. Schema copied verbatim from plan specification.
 
-## Checkpoint: Task 2 Pending
+## Checkpoint: Task 2 Resolved
 
 **Type:** human-action  
-**Blocked by:** User must paste schema.sql into Supabase SQL Editor and run it manually (D-03: no CLI migrations).
-
-### Steps to Deploy
-
-1. Open Supabase Dashboard for the pulse project
-2. Go to: SQL Editor (left sidebar) → New query
-3. Open `.planning/phases/01-foundation/schema.sql` in a text editor
-4. Copy entire contents → paste into SQL Editor → click Run (or Ctrl+Enter)
-5. Wait for "Success. No rows returned"
-
-### Verification After Deploy
-
-In Table Editor (left sidebar → Table Editor):
-- Confirm all 9 tables listed: `users`, `creators`, `user_creators`, `user_creator_category_weights`, `holdings`, `isa_contributions`, `transcripts`, `creator_strategies`, `buy_lists`
-- Each table shows RLS enabled (lock icon)
-- `creator_strategies.allocation` column type shows as `jsonb`
-
-In Database → Triggers:
-- Confirm `on_auth_user_created` trigger on `auth.users` table
-
-### Resume Signal
-
-Type "deployed" when all 9 tables are visible in Table Editor with RLS enabled, or describe any error.
+**Resolution:** User confirmed all 9 tables deployed to Supabase with RLS enabled. Schema live.
 
 ## Threat Flags
 
