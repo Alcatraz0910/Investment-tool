@@ -2,16 +2,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-export async function signIn(
-  _prevState: { error: string | null },
-  formData: FormData
-): Promise<{ error: string | null }> {
+export async function signIn(formData: FormData): Promise<void> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  // Client-side guard: prevent empty submissions reaching Supabase
-  if (!email) return { error: 'Email address is required.' }
-  if (!password) return { error: 'Password is required.' }
+  // Basic guard — HTML required attributes provide first line of defence;
+  // server action validates before touching Supabase (T-1-06)
+  if (!email || !password) {
+    redirect('/auth/login?error=missing_fields')
+  }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -22,9 +21,9 @@ export async function signIn(
       error.message.toLowerCase().includes('invalid login credentials') ||
       error.message.toLowerCase().includes('invalid credentials')
     ) {
-      return { error: 'Incorrect email or password. Try again.' }
+      redirect('/auth/login?error=invalid_credentials')
     }
-    return { error: 'Something went wrong. Please try again.' }
+    redirect('/auth/login?error=unknown')
   }
 
   redirect('/dashboard')

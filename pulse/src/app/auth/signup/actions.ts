@@ -2,19 +2,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-export async function signUp(
-  _prevState: { error: string | null },
-  formData: FormData
-): Promise<{ error: string | null }> {
+export async function signUp(formData: FormData): Promise<void> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string
 
-  // Server-side validation guards
-  if (!email) return { error: 'Email address is required.' }
-  if (!password) return { error: 'Password is required.' }
-  if (password.length < 6) return { error: 'Password must be at least 6 characters.' }
-  if (password !== confirmPassword) return { error: 'Passwords do not match.' }
+  // Server-side validation guards (T-1-09: confirm-password bypass prevention)
+  if (!email) redirect('/auth/signup?error=missing_email')
+  if (!password) redirect('/auth/signup?error=missing_password')
+  if (password.length < 6) redirect('/auth/signup?error=password_too_short')
+  if (password !== confirmPassword) redirect('/auth/signup?error=passwords_mismatch')
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({ email, password })
@@ -25,9 +22,9 @@ export async function signUp(
       error.message.toLowerCase().includes('already in use') ||
       error.message.toLowerCase().includes('user already')
     ) {
-      return { error: 'An account with this email already exists. Sign in instead.' }
+      redirect('/auth/signup?error=email_taken')
     }
-    return { error: 'Something went wrong. Please try again.' }
+    redirect('/auth/signup?error=unknown')
   }
 
   // Supabase may auto-confirm or send email verification depending on project settings.
