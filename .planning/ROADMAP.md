@@ -22,14 +22,14 @@
 **Plans:** 4 plans
 
 **Wave 1**
-- [ ] 01-01-PLAN.md — Scaffold Next.js 15, install dependencies, wire Supabase SSR client pair and middleware
+- [x] 01-01-PLAN.md — Scaffold Next.js 15, install dependencies, wire Supabase SSR client pair and middleware
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 01-02-PLAN.md — Auth pages (/auth/login, /auth/signup) and protected dashboard placeholder (/dashboard)
-- [ ] 01-03-PLAN.md — Full DB schema (9 tables + RLS) deployed to Supabase SQL editor
+- [x] 01-02-PLAN.md — Auth pages (/auth/login, /auth/signup) and protected dashboard placeholder (/dashboard)
+- [x] 01-03-PLAN.md — Full DB schema (9 tables + RLS) deployed to Supabase SQL editor
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-04-PLAN.md — Hand-written TypeScript domain types (src/types/index.ts)
+- [x] 01-04-PLAN.md — Hand-written TypeScript domain types (src/types/index.ts)
 
 **Cross-cutting constraints:**
 - `getUser()` (not `getSession()`) in all server-side Supabase calls — enforced by middleware + dashboard page
