@@ -49,11 +49,22 @@
 
 **Requirements:** CREATOR-01, CREATOR-02, CREATOR-03, CREATOR-04, PORT-01, PORT-02, PORT-03, ISA-01, ISA-03
 
-**Plans:**
-1. Admin creator management: seed curated creator list in Supabase; admin API route to add/remove creators
-2. User creator list: UI to browse curated list, add/remove creators to personal list, add custom YouTube channel URLs
-3. Portfolio entry UI: add, edit, delete holdings (ticker, quantity, current value £); set monthly contribution amount
-4. ISA tracker: log contributions (date + amount); display remaining allowance for current UK tax year (6 Apr – 5 Apr)
+**Plans:** 4 plans
+
+**Wave 1**
+- [ ] 02-01-PLAN.md — Schema migration (monthly_budget column), UserProfile type update, creator seed script (SQL)
+
+**Wave 2** *(all depend on 02-01; run in parallel with each other)*
+- [ ] 02-02-PLAN.md — Dashboard tab bar + Portfolio tab (holdings CRUD + monthly budget inline edit)
+- [ ] 02-03-PLAN.md — Creators tab (browse curated list, track/untrack toggle, add custom creator form)
+- [ ] 02-04-PLAN.md — ISA tab (allowance summary, contribution log, log contribution form)
+
+**Cross-cutting constraints:**
+- All server actions call `getUser()` before any DB operation (defence-in-depth beyond middleware)
+- All DB mutations scoped `.eq('user_id', user.id)` (defence-in-depth beyond RLS)
+- `decimal.js` for all £ arithmetic (sum of contributions, remaining ISA allowance, holding values)
+- Tax year computed server-side using 6 April boundary — never from user-supplied input
+- No CLI migrations — seed-creators.sql and migration SQL run via Supabase SQL editor (D-03)
 
 **Success Criteria:**
 1. Admin can add a YouTube channel to the curated list and it appears in the user-facing browse list
