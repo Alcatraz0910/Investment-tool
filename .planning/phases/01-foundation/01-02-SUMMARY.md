@@ -28,7 +28,7 @@ decisions:
 metrics:
   duration: "~15 minutes"
   completed: "2026-05-06"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
   files_created: 5
   files_modified: 0
@@ -44,15 +44,12 @@ Auth pages and Server Actions wired to Supabase with searchParams-based error di
 |---|------|--------|--------|
 | 1 | Create Server Actions for sign in, sign up, and sign out | Complete | 8e361bf |
 | 2 | Build auth pages and dashboard placeholder per UI-SPEC | Complete | f906dc0 |
-| 3 | Verify auth flow end-to-end in browser | **Checkpoint — awaiting human verification** | — |
+| 3 | Verify auth flow end-to-end in browser | **Complete** | human-approved |
 
-## Task 3: Checkpoint Pending
+## Task 3: Checkpoint Resolved
 
-Task 3 is a `checkpoint:human-verify` gate. The build passes and all files are committed. Browser verification is required before the plan can be marked complete.
+All 8 browser tests passed. One deviation required a fix: the middleware-based redirect for authenticated users on auth pages lost refreshed session cookies. Fixed by moving the authenticated-user redirect to page-level `getUser()` checks in login and signup pages (Supabase-recommended pattern). Also added `revalidatePath('/', 'layout')` to signIn/signOut actions to bust the Next.js router cache.
 
-**What to run:** `cd pulse && npm run dev` then visit http://localhost:3000
-
-**8 tests to perform:**
 1. Visit http://localhost:3000 — expect redirect to /auth/login
 2. Visit http://localhost:3000/dashboard while logged out — expect redirect to /auth/login
 3. Sign up at /auth/signup with a real email + 6+ char password — expect redirect to /auth/login
