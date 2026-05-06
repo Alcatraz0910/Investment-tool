@@ -91,13 +91,12 @@
 | Requirement | Phase |
 |-------------|-------|
 | AUTH-01, AUTH-02 | Phase 1: Foundation |
-| CREATOR-01 – CREATOR-04 | Phase 2: Creator Management |
+| CREATOR-01 – CREATOR-04 | Phase 2: Portfolio & Creator Management |
+| PORT-01 – PORT-03 | Phase 2: Portfolio & Creator Management |
+| ISA-01, ISA-03 | Phase 2: Portfolio & Creator Management |
 | TRANS-01 – TRANS-05 | Phase 3: Transcript Pipeline |
-| STRAT-01 – STRAT-04 | Phase 4: Strategy Extraction |
-| BLEND-01 – BLEND-03 | Phase 4: Strategy Extraction |
-| PORT-01 – PORT-03 | Phase 2: Creator Management |
-| ISA-01 – ISA-03 | Phase 5: Plan Generator |
+| STRAT-01 – STRAT-04 | Phase 4: Strategy Extraction & Blending |
+| BLEND-01 – BLEND-03 | Phase 4: Strategy Extraction & Blending |
 | PLAN-01 – PLAN-04 | Phase 5: Plan Generator |
+| ISA-02 | Phase 5: Plan Generator |
 | UI-01 – UI-05 | Phase 6: Dashboard UI |
-
-*(Traceability updated after roadmap is created)*
