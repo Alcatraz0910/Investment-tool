@@ -1,5 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { signUp } from './actions'
 
 export const metadata: Metadata = {
@@ -20,6 +22,9 @@ export default async function SignupPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) redirect('/dashboard')
   const params = await searchParams
   const errorMessage = params.error ? (ERROR_MESSAGES[params.error] ?? ERROR_MESSAGES.unknown) : null
 

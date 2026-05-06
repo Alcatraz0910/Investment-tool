@@ -1,4 +1,5 @@
 'use server'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -26,11 +27,13 @@ export async function signIn(formData: FormData): Promise<void> {
     redirect('/auth/login?error=unknown')
   }
 
+  revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
+  revalidatePath('/', 'layout')
   redirect('/auth/login')
 }
