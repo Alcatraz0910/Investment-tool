@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/login/actions'
+// Type import proves @/types alias works — used in Phase 2+ for user profile display
+import type { UserProfile } from '@/types'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
