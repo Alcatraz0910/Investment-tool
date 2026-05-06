@@ -19,11 +19,12 @@
 
 **Requirements:** AUTH-01, AUTH-02
 
-**Plans:**
-1. Scaffold Next.js 15 App Router project with Tailwind CSS, Framer Motion, and Supabase client
-2. Configure Supabase Auth (email/password, session persistence, middleware route protection)
-3. Define full DB schema in Supabase: `users`, `creators`, `user_creators`, `holdings`, `isa_contributions`, `transcripts`, `creator_strategies`, `buy_lists`
-4. Write shared TypeScript types (`types/index.ts`) covering all domain models
+**Plans:** 4 plans
+
+- [ ] 01-01-PLAN.md — Scaffold Next.js 15, install dependencies, wire Supabase SSR client pair and middleware
+- [ ] 01-02-PLAN.md — Auth pages (/auth/login, /auth/signup) and protected dashboard placeholder (/dashboard)
+- [ ] 01-03-PLAN.md — Full DB schema (9 tables + RLS) deployed to Supabase SQL editor
+- [ ] 01-04-PLAN.md — Hand-written TypeScript domain types (src/types/index.ts)
 
 **Success Criteria:**
 1. User can sign up, log in, and stay logged in across page reloads
