@@ -1,7 +1,7 @@
 ---
 phase: 2
 slug: portfolio-creator-management
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-06
@@ -59,9 +59,9 @@ All sizes extracted from Phase 1 code (`dashboard/page.tsx`, `auth/login/page.ts
 | Display | 24px (text-2xl) | 600 (font-semibold) | 1.2 | `text-2xl font-semibold` | Page heading ("Dashboard"), modal heading ("Add Holding") |
 | Heading | 18px (text-lg) | 600 (font-semibold) | 1.3 | `text-lg font-semibold` | Tab section sub-headings ("Browse Creators", "Add Custom Creator", "Contribution Log") |
 | Body | 16px (text-base) | 400 (font-normal) | 1.5 | `text-base` | Holdings row data, creator row data, ISA contribution rows, form input text |
-| Label | 14px (text-sm) | 500 (font-medium) | 1.4 | `text-sm font-medium` | Form field labels, tab bar labels, table column headers, action buttons |
+| Label | 14px (text-sm) | 600 (font-semibold) | 1.4 | `text-sm font-semibold` | Form field labels, tab bar labels, table column headers, action buttons |
 
-Exactly 4 sizes, 2 weights (400 regular + 600 semibold; 500 medium for labels only).
+Exactly 4 sizes, 2 weights (400 regular + 600 semibold).
 No italic. No underline except focusable links.
 
 ---
@@ -93,6 +93,18 @@ Phase 1 zinc dark theme — locked. No glassmorphism. No Electric Indigo palette
 
 ---
 
+## Visual Focal Points
+
+| Tab | Primary visual anchor | Rationale |
+|-----|----------------------|-----------|
+| Portfolio | Monthly Budget banner (`text-base text-white` with `font-semibold` £ amount) | First actionable item users care about; above holdings list |
+| Creators | Curated list heading + first creator row | Data-dense; scan pattern starts top-left |
+| ISA | ISA Allowance Summary (`text-2xl font-semibold`) — remaining amount in large type | The critical number users visit this tab to check |
+
+No page-level hero or decorative focal element in Phase 2 (deferred to Phase 6 glassmorphism overhaul).
+
+---
+
 ## Component Inventory
 
 ### Tab Bar
@@ -103,7 +115,7 @@ Phase 1 zinc dark theme — locked. No glassmorphism. No Electric Indigo palette
 
 - Container: `bg-zinc-800 border border-zinc-700 rounded-xl` (the outer content card)
 - Tab bar sits inside the card at the top, `border-b border-zinc-700 mb-6`
-- Tab item: `px-4 py-2 text-sm font-medium`
+- Tab item: `px-4 py-2 text-sm font-semibold`
 - Active tab: `text-white border-b-2 border-indigo-500 -mb-px`
 - Inactive tab: `text-zinc-400 hover:text-zinc-200`
 - URL routing: `?tab=portfolio` (default), `?tab=creators`, `?tab=isa`
@@ -116,11 +128,11 @@ VWRP    12 units    £1,240.00    Tech    [Edit] [Delete]
 ```
 
 - Layout: `flex items-center justify-between py-3 border-b border-zinc-700/50`
-- Ticker: `text-base font-medium text-white` (leftmost, flex-1)
+- Ticker: `text-base font-semibold text-white` (leftmost, flex-1)
 - Quantity: `text-sm text-zinc-400 w-20 text-right`
 - Value: `text-sm text-white w-24 text-right` (£ formatted with 2dp, decimal.js output)
 - Category: `text-sm text-zinc-400 w-32` (AssetCategory string)
-- Actions: `flex gap-2` — Edit + Delete buttons, `text-sm font-medium`
+- Actions: `flex gap-2` — Edit + Delete buttons, `text-sm font-semibold`
   - Edit: `text-indigo-400 hover:text-indigo-300`
   - Delete: `text-red-400 hover:text-red-300`
 - Row hover: `hover:bg-zinc-700/30 rounded-lg px-2`
@@ -134,7 +146,7 @@ Monthly budget: £500   [Edit]
 - Position: top of Portfolio tab panel, above the holdings list
 - Container: `flex items-center justify-between py-3 mb-4 border-b border-zinc-700`
 - Left: `text-base text-white` with `£500` in `font-semibold`
-- Edit button: ghost style (`text-sm font-medium text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 py-1 hover:bg-zinc-700`)
+- Edit button: ghost style (`text-sm font-semibold text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 py-1 hover:bg-zinc-700`)
 - Edit opens an inline input replacing the value display, with `[Save]` and `[Cancel]` — no separate modal
 
 ### Holdings Modal (Add / Edit)
@@ -144,13 +156,13 @@ Monthly budget: £500   [Edit]
 - Heading: `text-xl font-semibold text-white mb-4` ("Add Holding" / "Edit Holding")
 - Field layout: `flex flex-col gap-4`
 - Each field: `flex flex-col gap-1`
-  - Label: `text-sm font-medium text-white`
+  - Label: `text-sm font-semibold text-white`
   - Input: `w-full px-4 py-3 min-h-[44px] bg-zinc-900 border border-zinc-700 rounded-md text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`
   - Category is a `<select>` using same input classes with `bg-zinc-900`
 - Validation error: `text-sm text-red-400 mt-1` below the offending field (inline, not toast)
 - Footer: `flex gap-3 mt-2`
-  - Cancel: ghost button (`border border-zinc-700 text-zinc-300 hover:bg-zinc-700 rounded-md px-4 py-2 text-sm font-medium`)
-  - Save: primary (`bg-indigo-500 hover:bg-indigo-400 text-white rounded-md px-4 py-2 text-sm font-semibold min-h-[44px]`)
+  - Cancel: ghost button (`border border-zinc-700 text-zinc-300 hover:bg-zinc-700 rounded-md px-4 py-2 text-sm font-semibold`)
+  - Save Holding: primary (`bg-indigo-500 hover:bg-indigo-400 text-white rounded-md px-4 py-2 text-sm font-semibold min-h-[44px]`)
 
 ### Creator Browse Row
 
@@ -159,10 +171,10 @@ Damien Talks Money   youtube.com/...   [✓ Tracking] / [Track]
 ```
 
 - Layout: `flex items-center justify-between py-3 border-b border-zinc-700/50`
-- Display name: `text-base font-medium text-white flex-1`
+- Display name: `text-base font-semibold text-white flex-1`
 - Channel URL: `text-sm text-zinc-400 truncate max-w-[200px]`
-- Toggle button (untracked): `text-sm font-medium text-zinc-400 border border-zinc-700 rounded-md px-3 min-h-[36px] hover:border-indigo-500 hover:text-indigo-400`
-- Toggle button (tracked): `text-sm font-medium text-indigo-400 border border-indigo-500/50 rounded-md px-3 min-h-[36px]` with checkmark prefix ("✓ Tracking")
+- Toggle button (untracked): `text-sm font-semibold text-zinc-400 border border-zinc-700 rounded-md px-3 min-h-[36px] hover:border-indigo-500 hover:text-indigo-400`
+- Toggle button (tracked): `text-sm font-semibold text-indigo-400 border border-indigo-500/50 rounded-md px-3 min-h-[36px]` with checkmark prefix ("✓ Tracking")
 
 ### Add Custom Creator Form
 
@@ -194,7 +206,7 @@ Tax year: 6 Apr 2025 – 5 Apr 2026
 
 - Layout: `flex items-center justify-between py-3 border-b border-zinc-700/50`
 - Date: `text-sm text-zinc-400 w-36`
-- Amount: `text-base font-medium text-white`
+- Amount: `text-base font-semibold text-white`
 - Delete: `text-sm text-red-400 hover:text-red-300`
 
 ### Log Contribution Form
@@ -225,12 +237,12 @@ Tax year: 6 Apr 2025 – 5 Apr 2026
 | Element | Copy |
 |---------|------|
 | Primary CTA — add holding | "Add Holding" |
-| Primary CTA — save holding | "Save" |
+| Primary CTA — save holding | "Save Holding" |
 | Primary CTA — track creator | "Track" |
 | Primary CTA — untrack creator | "✓ Tracking" (toggled state; clicking untracked) |
 | Primary CTA — add custom creator | "Add Creator" |
-| Primary CTA — log ISA contribution | "Log" |
-| Monthly budget edit save | "Save" |
+| Primary CTA — log ISA contribution | "Log Contribution" |
+| Monthly budget edit save | "Save Budget" |
 | Holdings empty state heading | "No holdings yet" |
 | Holdings empty state body | "Add your first holding to start tracking your portfolio." |
 | Creators empty state (curated list — fallback only) | "No creators available. Check back soon." |
@@ -361,11 +373,11 @@ These elements must NOT appear in Phase 2 output:
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking — "Save Budget" inline is contextually unambiguous)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-05-06
