@@ -13,7 +13,7 @@ const mockHolding: HoldingWithFillTicker = {
   userId: 'u1',
   ticker: 'VUSA',
   category: 'Index Funds',
-  currentValue: new Decimal(1000),
+  currentValue: 1000,
   isFillTicker: true,
 }
 

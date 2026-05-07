@@ -258,8 +258,17 @@ export default async function DashboardPage({
     }
   }
 
+  // Serialize Decimal fields at the RSC→client boundary (Next.js 15 requirement:
+  // class instances like Decimal cannot cross the server/client boundary).
+  const holdingsPlain = holdings.map(h => ({
+    ...h,
+    currentValue: h.currentValue.toNumber(),
+    quantity: h.quantity.toNumber(),
+  }))
+
   // Server-side plan generation (D-05: auto-generate on page load)
   const monthlyBudgetNumber = profile?.monthlyBudget.toNumber() ?? 500   // D-11: fallback to 500
+  const profilePlain = profile ? { ...profile, monthlyBudget: monthlyBudgetNumber } : null
   const totalContributed = contributions.reduce(
     (sum, c) => sum.plus(c.amount),
     new Decimal(0),
@@ -269,7 +278,7 @@ export default async function DashboardPage({
   const isaRemainingNumber = isaRemaining.toNumber()
 
   const serverPlanResult = generatePlan(
-    holdings,
+    holdingsPlain,
     monthlyBudgetNumber,
     blend,
     isaRemainingNumber,
@@ -333,8 +342,8 @@ export default async function DashboardPage({
             <AnimatedTabPanel tabKey={activeTab}>
               {activeTab === 'portfolio' && (
                 <PortfolioTab
-                  profile={profile}
-                  holdings={holdings}
+                  profile={profilePlain}
+                  holdings={holdingsPlain}
                 />
               )}
               {activeTab === 'creators' && (
@@ -352,7 +361,7 @@ export default async function DashboardPage({
               )}
               {activeTab === 'plan' && (
                 <PlanTab
-                  portfolio={holdings}
+                  portfolio={holdingsPlain}
                   strategy={blend}
                   isaRemaining={isaRemainingNumber}
                   initialBudget={monthlyBudgetNumber}

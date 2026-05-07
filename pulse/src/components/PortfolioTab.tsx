@@ -1,19 +1,39 @@
 'use client'
 import { useState, useTransition, useActionState, startTransition } from 'react'
-import type { UserProfile, Holding, AssetCategory } from '@/types'
-import { Decimal } from '@/types'
+import type { AssetCategory } from '@/types'
 import { HoldingModal } from '@/components/HoldingModal'
 import { deleteHolding, updateMonthlyBudget } from '@/app/dashboard/actions'
 import { setFillTicker } from '@/app/dashboard/plan-actions'
 
+// Plain-number versions of domain types for the RSC→client boundary
+interface ClientProfile {
+  id: string
+  email: string
+  monthlyBudget: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface ClientHolding {
+  id: string
+  userId: string
+  ticker: string
+  category: AssetCategory
+  quantity: number
+  currentValue: number
+  isFillTicker: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
 interface PortfolioTabProps {
-  profile: UserProfile | null
-  holdings: Holding[]
+  profile: ClientProfile | null
+  holdings: ClientHolding[]
 }
 
 export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingHolding, setEditingHolding] = useState<Holding | undefined>(undefined)
+  const [editingHolding, setEditingHolding] = useState<ClientHolding | undefined>(undefined)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [budgetEditMode, setBudgetEditMode] = useState(false)
   const [isPending, startT] = useTransition()
@@ -35,7 +55,7 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
     setModalOpen(true)
   }
 
-  function openEditModal(holding: Holding) {
+  function openEditModal(holding: ClientHolding) {
     setEditingHolding(holding)
     setModalOpen(true)
   }
@@ -67,7 +87,7 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
     })
   }
 
-  const budget = profile?.monthlyBudget ?? new Decimal(0)
+  const budget = profile?.monthlyBudget ?? 0
 
   return (
     <div>

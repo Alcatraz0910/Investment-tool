@@ -30,7 +30,7 @@ const makeHolding = (
   userId: 'user-1',
   ticker,
   category,
-  currentValue: new Decimal(currentValue),
+  currentValue,
   isFillTicker,
 })
 

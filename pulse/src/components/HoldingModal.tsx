@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useEffect, useActionState, startTransition } from 'react'
-import type { Holding, AssetCategory } from '@/types'
+import type { AssetCategory } from '@/types'
 import { addHolding, updateHolding } from '@/app/dashboard/actions'
 
 const ASSET_CATEGORIES: AssetCategory[] = [
@@ -11,7 +11,14 @@ interface HoldingModalProps {
   isOpen: boolean
   onClose: () => void
   /** If provided, the modal is in "Edit" mode pre-filled with this holding */
-  holding?: Holding
+  holding?: {
+    id: string
+    ticker: string
+    quantity: number
+    currentValue: number
+    category: AssetCategory
+    isFillTicker: boolean
+  }
 }
 
 export function HoldingModal({ isOpen, onClose, holding }: HoldingModalProps) {

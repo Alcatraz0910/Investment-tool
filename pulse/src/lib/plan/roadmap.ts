@@ -83,7 +83,7 @@ export function computeRoadmap(
     gapCategory = Object.keys(blend.unified)[0]
   }
 
-  const targetPctForCat = new Decimal(blend.unified[gapCategory] ?? 0).div(100)
+  const targetPctForCat = new Decimal(blend.unified[gapCategory as import('@/types').AssetCategory] ?? 0).div(100)
   const currentPctForCat = (currentMix[gapCategory] ?? new Decimal(0)).div(100)
   const holdingsInGapCat = categoryValues[gapCategory] ?? new Decimal(0)
 

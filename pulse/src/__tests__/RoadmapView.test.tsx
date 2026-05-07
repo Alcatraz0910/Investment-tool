@@ -15,16 +15,13 @@ function makeHolding(category: string, value: number): HoldingWithFillTicker {
     userId: 'u1',
     ticker: `${category.toUpperCase().slice(0, 3)}`,
     category: category as HoldingWithFillTicker['category'],
-    quantity: new Decimal(1),
-    currentValue: new Decimal(value),
+    currentValue: value,
     isFillTicker: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   }
 }
 
 const BLEND_TECH_60: BlendedStrategy = {
-  unified: { Tech: 60, Cash: 40 },
+  unified: { 'Index Funds': 60, Cash: 40 },
   influence: {},
 }
 
@@ -67,7 +64,7 @@ describe('computeRoadmap (UI-03)', () => {
     // blend target Tech = 60% → creatorVision grows; currentPath stays flat
     const holdings: HoldingWithFillTicker[] = [makeHolding('Cash', 1000)]
     const blend: BlendedStrategy = {
-      unified: { Tech: 60, Cash: 40 },
+      unified: { 'Index Funds': 60, Cash: 40 },
       influence: {},
     }
     const result = computeRoadmap(holdings, blend, 500, TAX_YEAR)

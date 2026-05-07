@@ -23,7 +23,7 @@ export type HoldingWithFillTicker = {
   userId: string
   ticker: string
   category: AssetCategory
-  currentValue: Decimal
+  currentValue: number  // plain number — Decimal at DB boundary, number at RSC boundary
   isFillTicker: boolean
 }
 
