@@ -1,14 +1,109 @@
 /**
  * UI-02: BuyListTable disclaimer visible + rationale accordion.
- * Stubs — implementations added in plan 06-04.
+ * TDD RED phase — written for 06-02 implementation.
  */
-import { describe, it } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { BuyListTable } from '@/app/dashboard/components/BuyListTable'
+import type { PlanResult } from '@/lib/plan/generator'
+import { Decimal } from 'decimal.js'
+
+const noStrategyResult: PlanResult = { type: 'no-strategy' }
+
+const noFillResult: PlanResult = {
+  type: 'no-fill-tickers',
+  gapRows: [
+    { category: 'Index Funds', targetPct: 60, currentPct: 0, gapPct: 60, reason: 'no-fill-ticker' },
+  ],
+}
+
+const buyListResult: PlanResult = {
+  type: 'buy-list',
+  isaWarning: false,
+  effectiveBudget: new Decimal(500),
+  gapRows: [],
+  items: [
+    {
+      ticker: 'VWRL',
+      category: 'Index Funds',
+      amountGbp: new Decimal(350),
+      allocationGapPct: 12.5,
+      rationale: 'Index Funds is 40% of portfolio vs 60% target — adding to VWRL closes 12.5% of the gap.',
+    },
+    {
+      ticker: 'AAPL',
+      category: 'Stocks',
+      amountGbp: new Decimal(150),
+      allocationGapPct: 5.0,
+      rationale: 'Stocks is 20% of portfolio vs 30% target — adding to AAPL closes 5.0% of the gap.',
+    },
+  ],
+}
+
+const buyListIsaWarning: PlanResult = {
+  type: 'buy-list',
+  isaWarning: true,
+  effectiveBudget: new Decimal(300),
+  gapRows: [],
+  items: [
+    {
+      ticker: 'VWRL',
+      category: 'Index Funds',
+      amountGbp: new Decimal(300),
+      allocationGapPct: 10,
+      rationale: 'Index Funds closes gap.',
+    },
+  ],
+}
 
 describe('BuyListTable (UI-02)', () => {
-  it.todo('renders disclaimer "Creator-derived information — not financial advice" on buy-list result')
-  it.todo('renders disclaimer on no-fill-tickers result')
-  it.todo('clicking a ticker row expands the rationale accordion')
-  it.todo('expanded accordion shows category, current %, target %, gap %, closes X% text')
-  it.todo('clicking expanded row again collapses it')
-  it.todo('ISA warning renders when monthlyBudget > isaRemaining')
+  it('renders disclaimer "Creator-derived information — not financial advice" on buy-list result', () => {
+    render(<BuyListTable result={buyListResult} />)
+    expect(screen.getByText(/Creator-derived information — not financial advice/i)).toBeTruthy()
+  })
+
+  it('renders disclaimer on no-fill-tickers result', () => {
+    render(<BuyListTable result={noFillResult} />)
+    expect(screen.getByText(/Creator-derived information — not financial advice/i)).toBeTruthy()
+  })
+
+  it('renders disclaimer on no-strategy result', () => {
+    render(<BuyListTable result={noStrategyResult} />)
+    expect(screen.getByText(/Creator-derived information — not financial advice/i)).toBeTruthy()
+  })
+
+  it('clicking a ticker row expands the rationale accordion', () => {
+    render(<BuyListTable result={buyListResult} />)
+    const vwrlButton = screen.getByRole('button', { name: /VWRL/i })
+    fireEvent.click(vwrlButton)
+    expect(screen.getByText(/closes 12.5% of your Index Funds gap/i)).toBeTruthy()
+  })
+
+  it('expanded accordion shows category and closes X% text', () => {
+    render(<BuyListTable result={buyListResult} />)
+    const vwrlButton = screen.getByRole('button', { name: /VWRL/i })
+    fireEvent.click(vwrlButton)
+    expect(screen.getByText(/closes/i)).toBeTruthy()
+    expect(screen.getAllByText(/Index Funds/i).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('clicking expanded row again collapses it', () => {
+    render(<BuyListTable result={buyListResult} />)
+    const vwrlButton = screen.getByRole('button', { name: /VWRL/i })
+    // expand
+    fireEvent.click(vwrlButton)
+    // collapse
+    fireEvent.click(vwrlButton)
+    expect(screen.queryByText(/closes 12.5% of your Index Funds gap/i)).toBeNull()
+  })
+
+  it('ISA warning renders when isaWarning is true', () => {
+    render(<BuyListTable result={buyListIsaWarning} />)
+    expect(screen.getByText(/remaining ISA allowance/i)).toBeTruthy()
+  })
+
+  it('renders glassmorphism row cards (no table element)', () => {
+    const { container } = render(<BuyListTable result={buyListResult} />)
+    expect(container.querySelector('table')).toBeNull()
+  })
 })
