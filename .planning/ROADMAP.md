@@ -52,12 +52,12 @@
 **Plans:** 4 plans
 
 **Wave 1**
-- [ ] 02-01-PLAN.md — Schema migration (monthly_budget column), UserProfile type update, creator seed script (SQL)
+- [x] 02-01-PLAN.md — Schema migration (monthly_budget column), UserProfile type update, creator seed script (SQL)
 
 **Wave 2** *(all depend on 02-01; run in parallel with each other)*
-- [ ] 02-02-PLAN.md — Dashboard tab bar + Portfolio tab (holdings CRUD + monthly budget inline edit)
-- [ ] 02-03-PLAN.md — Creators tab (browse curated list, track/untrack toggle, add custom creator form)
-- [ ] 02-04-PLAN.md — ISA tab (allowance summary, contribution log, log contribution form)
+- [x] 02-02-PLAN.md — Dashboard tab bar + Portfolio tab (holdings CRUD + monthly budget inline edit)
+- [x] 02-03-PLAN.md — Creators tab (browse curated list, track/untrack toggle, add custom creator form)
+- [x] 02-04-PLAN.md — ISA tab (allowance summary, contribution log, log contribution form)
 
 **Cross-cutting constraints:**
 - All server actions call `getUser()` before any DB operation (defence-in-depth beyond middleware)
