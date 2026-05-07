@@ -190,7 +190,7 @@
 
 **Wave 2** *(blocked on 06-01; 06-02 and 06-04 run in parallel)*
 - [x] 06-02-PLAN.md — Action Plan panel: BuyListTable div card list + AnimatePresence accordion + PlanTab "Your Action Plan" + ContributionCalculator controlled with budget lift
-- [ ] 06-04-PLAN.md — Creator cards: StrategyCard glassmorphism + lastRefreshedAt + BlendSummary + TrustWeightSlider accent + ContradictionDiff reskin + creators-tab stagger
+- [x] 06-04-PLAN.md — Creator cards: StrategyCard glassmorphism + lastRefreshedAt + BlendSummary + TrustWeightSlider accent + ContradictionDiff reskin + creators-tab stagger
 
 **Wave 3** *(blocked on 06-00 + 06-01 + 06-02)*
 - [ ] 06-03-PLAN.md — Roadmap View: roadmap.ts computeRoadmap pure function + RoadmapView Recharts LineChart + PlanTab wiring

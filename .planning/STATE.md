@@ -9,8 +9,8 @@ progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 30
-  completed_plans: 27
-  percent: 90
+  completed_plans: 28
+  percent: 93
 ---
 
 # Pulse — Project State
@@ -21,14 +21,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 6 Dashboard UI — Wave 2 complete; Wave 3 (06-03 / 06-04) next
+**Current focus:** Phase 6 Dashboard UI — 06-04 complete; 06-03 (Roadmap View) next in Wave 3
 
 ## Current Phase
 
 Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 
 **Last activity:** 2026-05-07
-**Resume file:** `.planning/phases/06-dashboard-ui/06-03-PLAN.md`
+**Resume file:** `.planning/phases/06-dashboard-ui/06-03-PLAN.md` (Wave 3 — Roadmap View)
 
 ## Phase Status
 
@@ -66,6 +66,9 @@ Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 - BuyListItem has no currentPct/targetPct — accordion shows allocationGapPct + rationale text only
 - AnimatePresence exit in jsdom is async — use aria-expanded for collapse assertions in vitest RTL tests
 - @vitejs/plugin-react required in vitest.config.ts for JSX transform in test files
+- StrategyCard lastRefreshedAt formatted en-GB in parent (creators-tab) and passed as pre-formatted string — server component stays pure
+- creators-tab stagger: motion.ul staggerChildren:0.05 + motion.li child variants (opacity 0→1, y 8→0, 0.25s easeOut)
+- ContradictionDiff badge text: "Strategy shift detected" → "Strategy conflict detected" per UI-SPEC copywriting contract
 
 ## Notes
 
