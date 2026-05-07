@@ -38,9 +38,9 @@ decisions:
   - "refresh_jobs uses SELECT-only RLS; INSERT/UPDATE via service role only (D-12)"
   - "Pinecone index must be pre-created with dim=1536, metric=cosine (documented in Task 4 checkpoint)"
 metrics:
-  duration: "~10 minutes"
+  duration: "~45 minutes (includes human checkpoint)"
   completed_date: "2026-05-07"
-  tasks_completed: 3
+  tasks_completed: 4
   tasks_total: 4
   files_created: 1
   files_modified: 3
@@ -96,17 +96,14 @@ Both migrations are idempotent (IF NOT EXISTS, ADD COLUMN IF NOT EXISTS) — saf
 
 None — plan executed exactly as written.
 
-## Awaiting Human Action (Task 4)
+## Task 4 — Human Checkpoint (COMPLETED)
 
-Task 4 is a `checkpoint:human-action` gate. The user must complete:
+All external provisioning confirmed by user on 2026-05-07:
 
-1. **Run migration.sql in Supabase SQL Editor** — paste contents of `.planning/phases/03-transcript-pipeline/migration.sql` and run. Verify `last_refreshed_at` column on `user_creators` and `refresh_jobs` table with RLS enabled.
-
-2. **Create Pinecone index** — name: `pulse-transcripts`, dimension: 1536, metric: cosine, type: Serverless, cloud: AWS, region: us-east-1. Wait until status = Ready.
-
-3. **Populate pulse/.env.local** with all 5 keys (YOUTUBE_API_KEY, OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_INDEX_NAME=pulse-transcripts, SUPABASE_SERVICE_ROLE_KEY).
-
-4. **Confirm Vercel Pro plan** — pipeline runs synchronously for 30-120s; Hobby plan (10s limit) will time out. Pro plan required for `maxDuration = 300`.
+1. **migration.sql ran cleanly in Supabase SQL Editor** — `last_refreshed_at` column added to `user_creators`; `refresh_jobs` table created with RLS enabled.
+2. **Pinecone index created** — name: `pulse-transcripts`, dim=1536, metric=cosine, serverless. Status: Ready.
+3. **pulse/.env.local populated** — all 5 env vars confirmed present (YOUTUBE_API_KEY, OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_INDEX_NAME, SUPABASE_SERVICE_ROLE_KEY).
+4. **Vercel Pro plan confirmed active** — required for `maxDuration = 300` on ingestion routes.
 
 ## Known Stubs
 
