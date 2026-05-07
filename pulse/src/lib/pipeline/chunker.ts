@@ -8,22 +8,19 @@
  *
  * Pure function. No I/O. RESEARCH Pattern 6.
  */
-import { getEncoding } from 'js-tiktoken'
-
-let cachedEnc: ReturnType<typeof getEncoding> | null = null
-
-function getEnc() {
-  if (!cachedEnc) cachedEnc = getEncoding('cl100k_base')
-  return cachedEnc
-}
+// English transcript text averages ~4 characters per token.
+// Chunking by character count avoids WASM encode/decode entirely while
+// keeping chunks well within OpenAI's 8191-token limit (500t × 4c = 2000 chars max).
+const CHARS_PER_TOKEN = 4
 
 /**
- * Split `text` into overlapping token-aware chunks.
+ * Split `text` into overlapping chunks approximated by token count.
+ * Uses character-based splitting (4 chars ≈ 1 token) — no WASM dependency.
  *
  * @param text       the full transcript text
- * @param chunkSize  max tokens per chunk (default 500)
+ * @param chunkSize  target tokens per chunk (default 500)
  * @param overlap    tokens of overlap between adjacent chunks (default 50)
- * @returns          array of decoded chunk strings (in original order)
+ * @returns          array of chunk strings (in original order)
  */
 export function chunkText(
   text: string,
@@ -36,22 +33,15 @@ export function chunkText(
     throw new Error('overlap must be >= 0 and < chunkSize')
   }
 
-  const enc = getEnc()
-  // Convert to plain number[] so each chunk can be re-wrapped in a fresh Uint32Array.
-  // enc.decode() rejects Uint32Array slices (WASM Buffer.concat internal validation).
-  const tokenList = Array.from(enc.encode(text))
-  if (tokenList.length === 0) return []
-
+  const maxChars = chunkSize * CHARS_PER_TOKEN
+  const strideChars = (chunkSize - overlap) * CHARS_PER_TOKEN
   const chunks: string[] = []
-  const stride = chunkSize - overlap
   let start = 0
 
-  while (start < tokenList.length) {
-    const end = Math.min(start + chunkSize, tokenList.length)
-    const uint32 = new Uint32Array(tokenList.slice(start, end))
-    chunks.push(new TextDecoder().decode(enc.decode(uint32)))
-    if (end === tokenList.length) break
-    start += stride
+  while (start < text.length) {
+    chunks.push(text.slice(start, start + maxChars))
+    if (start + maxChars >= text.length) break
+    start += strideChars
   }
 
   return chunks
