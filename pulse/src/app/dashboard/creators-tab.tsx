@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition, useActionState, startTransition } from 'react'
+import { useState, useTransition, useActionState } from 'react'
 import { motion } from 'framer-motion'
 import type { Creator, Transcript, CreatorStrategy, UserCreator } from '@/types'
 import { trackCreator, untrackCreator, addCustomCreator } from '@/app/dashboard/creator-actions'
@@ -179,7 +179,7 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
         <h2 className="text-lg font-semibold text-white mb-3">Add Custom Creator</h2>
 
         <form
-          action={(formData) => startTransition(() => customAction(formData))}
+          action={(formData) => startT(() => customAction(formData))}
           className="flex flex-col gap-3"
         >
           {/* Channel URL */}
