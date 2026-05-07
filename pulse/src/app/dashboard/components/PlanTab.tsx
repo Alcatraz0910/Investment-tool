@@ -11,6 +11,7 @@
  */
 import { useState } from 'react'
 import { ContributionCalculator } from './ContributionCalculator'
+import { RoadmapView } from './RoadmapView'
 import type { HoldingWithFillTicker } from '@/lib/plan/generator'
 import type { BlendedStrategy } from '@/lib/strategy/blender'
 
@@ -46,7 +47,12 @@ export function PlanTab({ portfolio, strategy, isaRemaining, initialBudget }: Pr
         onBudgetChange={setBudget}
       />
 
-      {/* Roadmap View slot — Plan 06-03 will add <RoadmapView> here */}
+      {/* Roadmap View — below Buy List, per D-06 */}
+      <RoadmapView
+        holdings={portfolio}
+        blend={strategy}
+        monthlyBudget={budget}
+      />
     </div>
   )
 }
