@@ -1,11 +1,22 @@
 'use client'
 import { useState, useTransition, useActionState, startTransition } from 'react'
+import { motion } from 'framer-motion'
 import type { Creator, Transcript, CreatorStrategy, UserCreator } from '@/types'
 import { trackCreator, untrackCreator, addCustomCreator } from '@/app/dashboard/creator-actions'
 import RefreshButton from './refresh-button'
 import TranscriptList from './transcript-list'
 import { StrategyCard } from './components/StrategyCard'
 import { TrustWeightSlider } from './components/TrustWeightSlider'
+
+const creatorListVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+}
+
+const creatorItemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } },
+}
 
 interface CreatorsTabProps {
   creators: Creator[]
@@ -81,12 +92,13 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
           No creators available. Check back soon.
         </p>
       ) : (
-        <ul>
+        <motion.ul variants={creatorListVariants} initial="hidden" animate="visible">
           {creators.map((creator) => {
             const isTracked = tracked.has(creator.id)
             return (
-              <li
+              <motion.li
                 key={creator.id}
+                variants={creatorItemVariants}
                 className="flex flex-col py-3 border-b border-zinc-700/50"
               >
                 {/* Top row: creator info + action buttons */}
@@ -134,7 +146,12 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
                 )}
                 {tracked.has(creator.id) && (
                   <>
-                    <StrategyCard strategy={strategiesByCreator.get(creator.id) ?? null} />
+                    <StrategyCard
+                      strategy={strategiesByCreator.get(creator.id) ?? null}
+                      lastRefreshedAt={
+                        lastRefreshedMap.get(creator.id)?.toLocaleDateString('en-GB') ?? 'Never'
+                      }
+                    />
                     {userCreatorMap.has(creator.id) && (
                       <TrustWeightSlider
                         userCreatorId={userCreatorMap.get(creator.id)!.id}
@@ -149,10 +166,10 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
                     )}
                   </>
                 )}
-              </li>
+              </motion.li>
             )
           })}
-        </ul>
+        </motion.ul>
       )}
 
       {/* Add Custom Creator Form */}
