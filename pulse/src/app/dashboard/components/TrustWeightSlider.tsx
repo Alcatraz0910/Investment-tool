@@ -65,7 +65,7 @@ function SingleSlider({
         onTouchEnd={handleRelease}
         disabled={saving}
         aria-label={`${label} trust weight: ${value}%`}
-        className="flex-1 accent-indigo-500 disabled:opacity-60"
+        className="flex-1 accent-accent disabled:opacity-60"
       />
       <span className="text-sm text-zinc-400 w-8 text-right">{value}%</span>
       {saved && (
@@ -90,7 +90,7 @@ export function TrustWeightSlider({
   }
 
   return (
-    <div className="mt-3 pt-3 border-t border-zinc-700/50">
+    <div className="mt-3 pt-3 border-t border-white/10">
       {/* Global slider */}
       <SingleSlider
         label="Trust weight"
@@ -105,7 +105,7 @@ export function TrustWeightSlider({
       <button
         type="button"
         onClick={() => setShowCategories((v) => !v)}
-        className="mt-2 text-xs text-zinc-500 hover:text-zinc-300 underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+        className="mt-2 text-xs text-zinc-500 hover:text-zinc-300 underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-accent rounded"
       >
         {showCategories ? 'Hide per-category' : 'Customize per category'}
       </button>

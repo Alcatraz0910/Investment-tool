@@ -60,16 +60,16 @@ export function ContradictionDiff({ contradictionNote }: ContradictionDiffProps)
         aria-expanded={expanded}
       >
         <span>⚠</span>
-        <span>Strategy shift detected</span>
+        <span>Strategy conflict detected</span>
         <span className="text-amber-400/60 ml-1">{expanded ? '▲' : '▼'}</span>
       </button>
 
       {/* Expandable diff table */}
       {expanded && shifts.length > 0 && (
-        <div className="mt-2 rounded-md border border-zinc-700 bg-zinc-900/50 overflow-hidden">
+        <div className="mt-2 rounded-md border border-border bg-surface overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-zinc-700">
+              <tr className="border-b border-border">
                 <th className="text-left px-3 py-2 text-zinc-400 font-medium">Category</th>
                 <th className="text-right px-3 py-2 text-zinc-400 font-medium">Previous</th>
                 <th className="text-right px-3 py-2 text-zinc-400 font-medium">Current</th>
@@ -82,7 +82,7 @@ export function ContradictionDiff({ contradictionNote }: ContradictionDiffProps)
                 return (
                   <tr
                     key={row.category}
-                    className="border-b border-zinc-700/50 last:border-0"
+                    className="border-b border-border last:border-0"
                   >
                     <td className="px-3 py-1.5 text-zinc-300">
                       {isFlagged && <span className="text-amber-400 mr-1">⚠</span>}
