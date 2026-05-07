@@ -14,12 +14,13 @@ import { generatePlan } from '@/lib/plan/generator'
 import { upsertBuyList } from '@/app/dashboard/plan-actions'
 import { PlanTab } from '@/app/dashboard/components/PlanTab'
 import { AnimatedTabPanel } from '@/app/dashboard/components/AnimatedTabPanel'
+import { GettingStartedGuide } from '@/components/GettingStartedGuide'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
 }
 
-type Tab = 'portfolio' | 'creators' | 'plan'
+type Tab = 'portfolio' | 'plan'
 
 export default async function DashboardPage({
   searchParams,
@@ -33,7 +34,7 @@ export default async function DashboardPage({
 
   const params = await searchParams
   const rawTab = params.tab ?? 'portfolio'
-  const activeTab: Tab = ['portfolio', 'creators', 'plan'].includes(rawTab)
+  const activeTab: Tab = ['portfolio', 'plan'].includes(rawTab)
     ? (rawTab as Tab)
     : 'portfolio'
 
@@ -95,6 +96,14 @@ export default async function DashboardPage({
     createdAt: new Date(row.created_at),
   }))
 
+  // Always-on counts for the Getting Started guide
+  const { count: trackedCreatorCount, data: ucGuideRows } = await supabase
+    .from('user_creators')
+    .select('creator_id, last_refreshed_at', { count: 'exact' })
+    .eq('user_id', user.id)
+  // A creator has a strategy if it has ever been refreshed (last_refreshed_at is set during refresh)
+  const hasAnyStrategy = (ucGuideRows ?? []).some(r => r.last_refreshed_at !== null)
+
   // Fetch creators, tracked IDs, last_refreshed_at, and transcripts (only if Creators tab)
   let creators: Creator[] = []
   let lastRefreshedMap = new Map<string, Date | null>()
@@ -104,7 +113,7 @@ export default async function DashboardPage({
   let blend: BlendedStrategy | null = null
   let creatorNameMap: Record<string, string> = {}
 
-  if (activeTab === 'creators' || activeTab === 'plan') {
+  if (activeTab === 'plan') {
     const [{ data: creatorRows }, { data: trackRows }] = await Promise.all([
       supabase.from('creators').select('*').eq('is_active', true).order('display_name'),
       supabase.from('user_creators').select('creator_id, last_refreshed_at').eq('user_id', user.id),
@@ -289,7 +298,6 @@ export default async function DashboardPage({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
-    { id: 'creators', label: 'Creators' },
     { id: 'plan', label: 'Plan' },
   ]
 
@@ -302,15 +310,31 @@ export default async function DashboardPage({
             <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
             <p className="text-base text-zinc-400 mt-1">Welcome, {user.email}</p>
           </div>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="px-4 py-2 min-h-[44px] border border-border rounded-md text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
+          <div className="flex items-center gap-3">
+            <a
+              href="/dashboard/creators"
+              className="px-4 py-2 min-h-[44px] border border-accent/40 rounded-md text-sm font-medium text-accent hover:bg-accent/10 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent flex items-center"
             >
-              Sign out
-            </button>
-          </form>
+              Creators
+            </a>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="px-4 py-2 min-h-[44px] border border-border rounded-md text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
+
+        {/* Getting Started guide — visible until all 4 steps complete */}
+        <GettingStartedGuide
+          hasHoldings={holdings.length > 0}
+          hasFillTicker={holdings.some(h => h.isFillTicker)}
+          hasTrackedCreator={(trackedCreatorCount ?? 0) > 0}
+          hasStrategy={hasAnyStrategy}
+        />
 
         {/* Content card */}
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl">
@@ -346,20 +370,7 @@ export default async function DashboardPage({
                   holdings={holdingsPlain}
                 />
               )}
-              {activeTab === 'creators' && (
-                <>
-                  <CreatorsTab
-                    creators={creators}
-                    initialTracked={Array.from(lastRefreshedMap.keys())}
-                    lastRefreshedMap={lastRefreshedMap}
-                    transcriptsByCreator={transcriptsByCreator}
-                    strategiesByCreator={strategiesByCreator}
-                    userCreatorMap={userCreatorMap}
-                  />
-                  <BlendSummary blend={blend} creatorNameMap={creatorNameMap} />
-                </>
-              )}
-              {activeTab === 'plan' && (
+{activeTab === 'plan' && (
                 <PlanTab
                   portfolio={holdingsPlain}
                   strategy={blend}
