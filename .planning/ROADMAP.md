@@ -121,7 +121,7 @@
 - [x] 04-01-PLAN.md — Setup: install @anthropic-ai/sdk + vitest, create lib/anthropic/client.ts singleton, fix Pinecone metadata (add chunk text), create test stubs
 
 **Wave 1** *(run in parallel; both blocked on 04-01)*
-- [ ] 04-02-PLAN.md — Strategy extractor: RAG retrieval (3 sub-queries) + Claude tool_use extraction + creator_strategies INSERT (STRAT-01/02/03)
+- [x] 04-02-PLAN.md — Strategy extractor: RAG retrieval (3 sub-queries) + Claude tool_use extraction + creator_strategies INSERT (STRAT-01/02/03)
 - [ ] 04-03-PLAN.md — Contradiction detection (pure function) + StrategyBlender pure module (STRAT-04, BLEND-02/03)
 
 **Wave 2** *(blocked on 04-02 + 04-03)*
