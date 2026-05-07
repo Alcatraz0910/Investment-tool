@@ -122,7 +122,7 @@
 
 **Wave 1** *(run in parallel; both blocked on 04-01)*
 - [x] 04-02-PLAN.md — Strategy extractor: RAG retrieval (3 sub-queries) + Claude tool_use extraction + creator_strategies INSERT (STRAT-01/02/03)
-- [ ] 04-03-PLAN.md — Contradiction detection (pure function) + StrategyBlender pure module (STRAT-04, BLEND-02/03)
+- [x] 04-03-PLAN.md — Contradiction detection (pure function) + StrategyBlender pure module (STRAT-04, BLEND-02/03)
 
 **Wave 2** *(blocked on 04-02 + 04-03)*
 - [ ] 04-04-PLAN.md — Refresh route integration (non-blocking extraction, D-01/02) + saveCreatorWeight server action (BLEND-01)
