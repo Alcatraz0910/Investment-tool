@@ -37,18 +37,20 @@ export function chunkText(
   }
 
   const enc = getEnc()
-  const tokens = enc.encode(text)
-  if (tokens.length === 0) return []
+  // Convert to plain number[] so each chunk can be re-wrapped in a fresh Uint32Array.
+  // enc.decode() rejects Uint32Array slices (WASM Buffer.concat internal validation).
+  const tokenList = Array.from(enc.encode(text))
+  if (tokenList.length === 0) return []
 
   const chunks: string[] = []
   const stride = chunkSize - overlap
   let start = 0
 
-  while (start < tokens.length) {
-    const end = Math.min(start + chunkSize, tokens.length)
-    const slice = tokens.slice(start, end)
-    chunks.push(new TextDecoder().decode(enc.decode(slice)))
-    if (end === tokens.length) break
+  while (start < tokenList.length) {
+    const end = Math.min(start + chunkSize, tokenList.length)
+    const uint32 = new Uint32Array(tokenList.slice(start, end))
+    chunks.push(new TextDecoder().decode(enc.decode(uint32)))
+    if (end === tokenList.length) break
     start += stride
   }
 
