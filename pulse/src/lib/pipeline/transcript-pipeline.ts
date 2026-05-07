@@ -21,7 +21,7 @@
  * - All transcripts upserts use onConflict: 'video_id' (RESEARCH Pitfall 4)
  * - Sequential transcript fetches — no Promise.all (RESEARCH Anti-Patterns / T-03-04-05)
  * - Pinecone vector IDs: `${videoId}-chunk-${idx}` — deterministic, upsert is idempotent
- * - Pinecone metadata: creator_id, video_id, title, chunk_index, published_at
+ * - Pinecone metadata: creator_id, video_id, title, chunk_index, published_at, text
  * - user_creators.last_refreshed_at update scoped to (user_id, creator_id) pair (T-03-04-01)
  *
  * Note on Supabase typing: This project does not have generated Database types (no
@@ -280,6 +280,7 @@ export async function runRefreshPipeline(
             title: row.title,
             chunk_index: idx,
             published_at: row.published_at,
+            text: chunks[idx] ?? '',   // Phase 4: required for RAG context string (Pitfall 1)
           },
         }))
         for (let b = 0; b < records.length; b += PUSH_BATCH) {
