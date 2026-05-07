@@ -55,7 +55,8 @@ VALUES
   ('https://www.youtube.com/@rob_berger',      'Rob Berger',          TRUE),
   ('https://www.youtube.com/@DividendBull',    'Dividend Bull',       TRUE),
   ('https://www.youtube.com/@FelixPrehn',      'Felix Prehn',         TRUE),
-  ('https://www.youtube.com/@MinorityMindset', 'Minority Mindset',    TRUE)
+  ('https://www.youtube.com/@MinorityMindset',  'Minority Mindset',    TRUE),
+  ('https://www.youtube.com/@beststockstrategy','BestStockStrategy',   TRUE)
 ON CONFLICT (channel_url) DO NOTHING;
 
 -- Verify: SELECT display_name, channel_url FROM public.creators ORDER BY created_at;
