@@ -152,18 +152,20 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
                         lastRefreshedMap.get(creator.id)?.toLocaleDateString('en-GB') ?? 'Never'
                       }
                     />
-                    {userCreatorMap.has(creator.id) && (
-                      <TrustWeightSlider
-                        userCreatorId={userCreatorMap.get(creator.id)!.id}
-                        initialGlobalWeight={userCreatorMap.get(creator.id)!.trustWeight}
-                        initialCategoryWeights={
-                          userCreatorMap.get(creator.id)!.categoryWeights?.map((w) => ({
+                    {(() => {
+                      const uc = userCreatorMap.get(creator.id)
+                      if (!uc) return null
+                      return (
+                        <TrustWeightSlider
+                          userCreatorId={uc.id}
+                          initialGlobalWeight={uc.trustWeight}
+                          initialCategoryWeights={uc.categoryWeights?.map((w) => ({
                             category: w.category,
                             weight: w.weight,
-                          })) ?? []
-                        }
-                      />
-                    )}
+                          })) ?? []}
+                        />
+                      )
+                    })()}
                   </>
                 )}
               </motion.li>
