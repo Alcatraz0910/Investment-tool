@@ -21,7 +21,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 5 Plan Generator — not started
+**Current focus:** Phase 5 Plan Generator — context gathered, ready to plan
 
 ## Current Phase
 
