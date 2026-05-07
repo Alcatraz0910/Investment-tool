@@ -2,10 +2,12 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/login/actions'
-import type { UserProfile, Holding, Creator } from '@/types'
+import type { UserProfile, Holding, Creator, ISAContribution } from '@/types'
 import { Decimal } from '@/types'
 import { PortfolioTab } from '@/components/PortfolioTab'
 import { CreatorsTab } from '@/app/dashboard/creators-tab'
+import { ISATab } from '@/app/dashboard/isa-tab'
+import { getCurrentTaxYear } from '@/lib/tax-year'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
@@ -64,6 +66,29 @@ export default async function DashboardPage({
       currentValue: new Decimal(row.current_value),
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
+    }))
+  }
+
+  // Fetch ISA contributions for current tax year (only if ISA tab)
+  let contributions: ISAContribution[] = []
+  const currentTaxYear = getCurrentTaxYear()
+
+  if (activeTab === 'isa') {
+    const { data: contribRows } = await supabase
+      .from('isa_contributions')
+      .select('id, user_id, amount, contribution_date, tax_year, notes, created_at')
+      .eq('user_id', user.id)
+      .eq('tax_year', currentTaxYear)
+      .order('contribution_date', { ascending: false })
+
+    contributions = (contribRows ?? []).map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      amount: new Decimal(row.amount),
+      contributionDate: new Date(row.contribution_date),
+      taxYear: row.tax_year,
+      notes: row.notes ?? null,
+      createdAt: new Date(row.created_at),
     }))
   }
 
@@ -152,7 +177,7 @@ export default async function DashboardPage({
               <CreatorsTab creators={creators} trackedCreatorIds={trackedCreatorIds} />
             )}
             {activeTab === 'isa' && (
-              <p className="text-zinc-400 text-sm">ISA tracker coming in this phase.</p>
+              <ISATab contributions={contributions} currentTaxYear={currentTaxYear} />
             )}
           </div>
         </div>
