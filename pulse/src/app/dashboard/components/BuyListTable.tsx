@@ -1,53 +1,77 @@
 'use client'
 /**
- * BuyListTable — Phase 5 Plan Generator (PLAN-01 … PLAN-04, ISA-02).
+ * BuyListTable — Phase 6 restyle (UI-02, D-09/D-10/D-13).
  *
- * Renders all three PlanResult variants:
- *   - 'no-strategy'     : placeholder card (D-06)
- *   - 'no-fill-tickers' : gap rows + prompt banner (D-08)
- *   - 'buy-list'        : ISA warning + buy rows + gap rows + disclaimer (PLAN-04)
+ * Phase 6 changes from Phase 5:
+ * - <table> converted to glassmorphism div card list (D-02)
+ * - AnimatePresence rationale accordion on click (D-09/D-10/D-13)
+ * - Card-mount stagger animation (D-11.1)
+ * - ISA warning uses red-500 palette (UI-SPEC)
+ * - gap bar uses bg-accent (Electric Indigo)
  *
  * CRITICAL: No "advice", "recommend", or "suggest" in any user-facing string.
+ * Disclaimer "Creator-derived information — not financial advice" on ALL variants.
+ * CRITICAL: All rationale rendered as JSX text nodes — never dangerouslySetInnerHTML (T-06-02-01).
  */
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { PlanResult } from '@/lib/plan/generator'
+
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } },
+}
 
 interface Props {
   result: PlanResult
 }
 
 export function BuyListTable({ result }: Props) {
-  // --- no-strategy: placeholder ---
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  function toggleRow(key: string) {
+    setExpanded((prev) => (prev === key ? null : key))
+  }
+
+  // --- no-strategy ---
   if (result.type === 'no-strategy') {
     return (
-      <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-6 text-center">
-        <p className="text-sm text-zinc-400">
-          Refresh a creator to generate your first Buy List.
+      <div className="space-y-4">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+          <p className="text-sm text-zinc-400">
+            No strategy yet. Track a creator and run Refresh.
+          </p>
+        </div>
+        <p className="text-xs text-zinc-500">
+          Creator-derived information — not financial advice
         </p>
       </div>
     )
   }
 
-  // --- no-fill-tickers: banner + gap rows ---
+  // --- no-fill-tickers ---
   if (result.type === 'no-fill-tickers') {
     return (
       <div className="space-y-4">
-        {/* D-08 banner */}
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3">
           <p className="text-sm text-amber-400 font-medium">
             Mark preferred holdings to get specific buy suggestions.
           </p>
         </div>
-
-        {/* Gap rows */}
         {result.gapRows.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs text-zinc-500 uppercase tracking-wide">Category Gaps</p>
             {result.gapRows.map((row) => (
               <div
                 key={row.category}
-                className="flex items-start gap-3 px-4 py-2 bg-zinc-800/40 border border-zinc-700/50 rounded-md"
+                className="flex items-start gap-3 px-4 py-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl"
               >
-                <span className="text-xs font-medium text-indigo-400 shrink-0 pt-0.5 w-24">
+                <span className="text-xs font-medium text-accent shrink-0 pt-0.5 w-24">
                   {row.category}
                 </span>
                 <p className="text-xs text-zinc-400">
@@ -59,8 +83,7 @@ export function BuyListTable({ result }: Props) {
             ))}
           </div>
         )}
-
-        <p className="text-xs text-zinc-500 mt-4">
+        <p className="text-xs text-zinc-500">
           Creator-derived information — not financial advice
         </p>
       </div>
@@ -72,100 +95,138 @@ export function BuyListTable({ result }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* ISA warning (ISA-02) */}
+      {/* ISA warning (UI-SPEC: red-500 palette) */}
       {isaWarning && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
-          <p className="text-sm text-amber-400 font-medium">
-            Your budget exceeds your remaining ISA allowance. Plan total has been capped to the ISA limit.
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+          <p className="text-sm text-red-400">
+            Your monthly budget exceeds your remaining ISA allowance. Only the remaining allowance amount will be used.
           </p>
         </div>
       )}
 
       {items.length === 0 && gapRows.length === 0 ? (
-        <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-6 text-center">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 text-center">
           <p className="text-sm text-zinc-400">
-            Your portfolio is already at or above all target allocations.
+            Add your portfolio holdings to generate a Buy List.
           </p>
         </div>
       ) : (
         <>
-          {/* Buy items table */}
+          {/* Column headers */}
           {items.length > 0 && (
-            <div className="overflow-hidden rounded-lg border border-zinc-700">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-zinc-800 border-b border-zinc-700">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-                      Ticker
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-                      Category
-                    </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-                      Amount (£)
-                    </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-                      Gap Closed
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-700/50">
-                  {items.map((item) => (
-                    <tr
-                      key={`${item.ticker}-${item.category}`}
-                      className="bg-zinc-800/30 hover:bg-zinc-800/60 transition-colors"
-                      title={item.rationale}
-                    >
-                      <td className="px-4 py-3 font-medium text-white">
-                        {item.ticker}
-                      </td>
-                      <td className="px-4 py-3 text-zinc-300">
-                        {item.category}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-white">
-                        £{item.amountGbp.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="w-16 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-indigo-500 rounded-full"
-                              style={{ width: `${Math.min(item.allocationGapPct, 100)}%` }}
-                            />
-                          </div>
-                          <span className="text-zinc-300 text-xs w-10 text-right">
-                            {item.allocationGapPct.toFixed(1)}%
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-zinc-700 bg-zinc-800">
-                    <td colSpan={2} className="px-4 py-2 text-xs text-zinc-500">
-                      Total
-                    </td>
-                    <td className="px-4 py-2 text-right text-sm font-semibold text-white">
-                      £{effectiveBudget.toFixed(2)}
-                    </td>
-                    <td />
-                  </tr>
-                </tfoot>
-              </table>
+            <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-4 py-2">
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Ticker</span>
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Category</span>
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">Amount</span>
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">Gap</span>
             </div>
           )}
 
-          {/* Gap rows (informational — categories without fill tickers or holdings) */}
+          {/* Buy item cards with stagger */}
+          {items.length > 0 && (
+            <motion.div
+              className="space-y-2"
+              variants={listVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {items.map((item) => {
+                const rowKey = `${item.ticker}-${item.category}`
+                const isExpanded = expanded === rowKey
+                const amountDisplay = typeof item.amountGbp === 'object' && 'toFixed' in item.amountGbp
+                  ? (item.amountGbp as { toFixed: (n: number) => string }).toFixed(2)
+                  : Number(item.amountGbp).toFixed(2)
+                return (
+                  <motion.div
+                    key={rowKey}
+                    variants={itemVariants}
+                    className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl overflow-hidden"
+                  >
+                    {/* Row button — min 44px height for WCAG touch target */}
+                    <button
+                      type="button"
+                      aria-label={`${item.ticker} ${item.category} buy row`}
+                      className="w-full grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-4 py-3 min-h-[44px] text-left hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded-xl"
+                      onClick={() => toggleRow(rowKey)}
+                      aria-expanded={isExpanded}
+                    >
+                      <span className="font-medium text-white text-sm">{item.ticker}</span>
+                      <span className="text-zinc-300 text-sm">{item.category}</span>
+                      <span className="font-medium text-white text-sm text-right">
+                        £{amountDisplay}
+                      </span>
+                      <div className="flex items-center gap-2 justify-end">
+                        <div className="w-12 h-1.5 bg-border rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-accent rounded-full"
+                            style={{ width: `${Math.min(item.allocationGapPct, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-zinc-400 text-xs w-8 text-right">
+                          {item.allocationGapPct.toFixed(1)}%
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Rationale accordion (D-09/D-10/D-13) */}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2, ease: 'easeOut' }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <div className="px-4 pb-4 pt-1 border-t border-white/10">
+                            <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs mb-2">
+                              <div>
+                                <dt className="text-zinc-500">Category</dt>
+                                <dd className="text-zinc-300">{item.category}</dd>
+                              </div>
+                              <div>
+                                <dt className="text-zinc-500">Gap closed</dt>
+                                <dd className="text-zinc-300">{item.allocationGapPct.toFixed(1)}%</dd>
+                              </div>
+                            </dl>
+                            <p className="text-xs text-zinc-400">
+                              This purchase closes {item.allocationGapPct.toFixed(1)}% of your {item.category} gap.
+                            </p>
+                            {item.rationale && (
+                              <p className="text-xs text-zinc-500 mt-1">{item.rationale}</p>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          )}
+
+          {/* Total */}
+          {items.length > 0 && (
+            <div className="flex justify-between items-center px-4 py-2 bg-surface border border-border rounded-xl">
+              <span className="text-xs text-zinc-500">Total</span>
+              <span className="text-sm font-semibold text-white">
+                £{typeof effectiveBudget === 'object' && 'toFixed' in effectiveBudget
+                  ? (effectiveBudget as { toFixed: (n: number) => string }).toFixed(2)
+                  : Number(effectiveBudget).toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          {/* Gap rows */}
           {gapRows.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs text-zinc-500 uppercase tracking-wide">Gaps Not Covered</p>
               {gapRows.map((row) => (
                 <div
                   key={row.category}
-                  className="flex items-start gap-3 px-4 py-2 bg-zinc-800/40 border border-zinc-700/50 rounded-md"
+                  className="flex items-start gap-3 px-4 py-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl"
                 >
-                  <span className="text-xs font-medium text-indigo-400 shrink-0 pt-0.5 w-24">
+                  <span className="text-xs font-medium text-accent shrink-0 pt-0.5 w-24">
                     {row.category}
                   </span>
                   <p className="text-xs text-zinc-400">
@@ -180,8 +241,8 @@ export function BuyListTable({ result }: Props) {
         </>
       )}
 
-      {/* PLAN-04 disclaimer */}
-      <p className="text-xs text-zinc-500 mt-4">
+      {/* PLAN-04 + UI-SPEC disclaimer — required on all buy-list states */}
+      <p className="text-xs text-zinc-500">
         Creator-derived information — not financial advice
       </p>
     </div>

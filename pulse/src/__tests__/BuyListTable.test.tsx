@@ -83,18 +83,22 @@ describe('BuyListTable (UI-02)', () => {
     render(<BuyListTable result={buyListResult} />)
     const vwrlButton = screen.getByRole('button', { name: /VWRL/i })
     fireEvent.click(vwrlButton)
-    expect(screen.getByText(/closes/i)).toBeTruthy()
+    // Use getAllByText since rationale also contains "closes" — ensure at least one match
+    expect(screen.getAllByText(/closes/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/Index Funds/i).length).toBeGreaterThanOrEqual(1)
   })
 
-  it('clicking expanded row again collapses it', () => {
+  it('clicking expanded row again collapses it (aria-expanded toggles)', () => {
     render(<BuyListTable result={buyListResult} />)
     const vwrlButton = screen.getByRole('button', { name: /VWRL/i })
-    // expand
+    // Before click: collapsed
+    expect(vwrlButton).toHaveAttribute('aria-expanded', 'false')
+    // Expand
     fireEvent.click(vwrlButton)
-    // collapse
+    expect(vwrlButton).toHaveAttribute('aria-expanded', 'true')
+    // Collapse
     fireEvent.click(vwrlButton)
-    expect(screen.queryByText(/closes 12.5% of your Index Funds gap/i)).toBeNull()
+    expect(vwrlButton).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('ISA warning renders when isaWarning is true', () => {
