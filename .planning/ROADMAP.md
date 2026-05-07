@@ -80,11 +80,26 @@
 
 **Requirements:** TRANS-01, TRANS-02, TRANS-03, TRANS-04, TRANS-05
 
-**Plans:**
-1. YouTube transcript fetcher: given a channel URL, retrieve all videos from last 12 months (YouTube Data API v3 for video list; `youtube-transcript` npm package for transcript text; API captions fallback)
-2. Supabase transcript store: persist raw transcript text with creator ID, video ID, title, published date; deduplicate on re-fetch
-3. Pinecone embedding pipeline: chunk transcripts (~500 tokens), embed with OpenAI `text-embedding-3-small`, upsert to Pinecone namespace keyed by creator ID
-4. Manual Refresh UI: per-creator "Refresh" button triggers the full fetch → store → embed pipeline; updates last-refreshed timestamp
+**Plans:** 7 plans
+
+**Wave 0**
+- [ ] 03-01-PLAN.md — Setup: env vars, npm install (googleapis, youtube-transcript, openai, @pinecone-database/pinecone, js-tiktoken), migration.sql (last_refreshed_at + refresh_jobs via SQL editor), Pinecone index creation
+
+**Wave 1** *(blocked on 03-01)*
+- [ ] 03-02-PLAN.md — Infra clients: lib/supabase/service.ts, lib/youtube/client.ts, lib/openai/client.ts, lib/pinecone/client.ts (server-only singletons)
+- [ ] 03-03-PLAN.md — Type updates (UserCreator.lastRefreshedAt, RefreshJob) + lib/pipeline/chunker.ts (cl100k_base, 500-token chunks)
+
+**Wave 2** *(blocked on 03-02 + 03-03)*
+- [ ] 03-04-PLAN.md — lib/pipeline/transcript-pipeline.ts: orchestrator (resolve channel → list videos → fetch transcripts → embed → upsert to Pinecone → update last_refreshed_at); idempotency rules D-07/D-08/D-09/D-10
+
+**Wave 3** *(blocked on 03-04)*
+- [ ] 03-05-PLAN.md — POST + GET /api/refresh/[creatorId]/route.ts (auth guard, UUID validation, ownership check, maxDuration=300; status polling endpoint)
+
+**Wave 4** *(blocked on 03-03 + 03-05)*
+- [ ] 03-06-PLAN.md — Client components: refresh-button.tsx (2s polling) + transcript-list.tsx (expand/collapse, status chips)
+
+**Wave 5** *(blocked on 03-06)*
+- [ ] 03-07-PLAN.md — Integration: page.tsx data fetch (transcripts + last_refreshed_at) + creators-tab.tsx wiring; human-verified end-to-end smoke test
 
 **Success Criteria:**
 1. Clicking Refresh on a creator fetches at least the last 10 videos and stores transcripts in Supabase
