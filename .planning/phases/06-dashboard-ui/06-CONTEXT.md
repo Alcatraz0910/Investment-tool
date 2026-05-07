@@ -36,10 +36,10 @@ Phase ends when all 5 UI success criteria pass: glassmorphism renders, Action Pl
 - **D-05:** Install `recharts` as a dependency. Use `LineChart` with two `Line` series.
 - **D-06:** Roadmap View is a section within the **Plan tab**, below the Buy List — not a separate tab. Three-tab navigation (Portfolio | Creators | Plan) unchanged.
 - **D-07:** Time horizon = 12 months covering the current UK tax year (today → 5 April). Use `getCurrentTaxYear()` from `lib/tax-year.ts`.
-- **D-08:** Y-axis = total portfolio value (£). Two lines:
-  - **"Your Current Path"** — current portfolio value + monthly_budget contributions flat (no rebalancing)
-  - **"Creator's Vision"** — same contributions but weighted toward blended target allocation
-  - Both lines plotted monthly across the 12-month horizon. All arithmetic uses `decimal.js`.
+- **D-08:** Y-axis = **£ allocated to the largest-gap category** (the category with the biggest deficit between current allocation and blended target). Two lines:
+  - **"Your Current Path"** — £ in that category grows only from proportional contributions (current mix, no rebalancing)
+  - **"Creator's Vision"** — £ in that category grows as if each month's budget follows the blended target allocation (closes the gap faster)
+  - Both lines plotted monthly across the 12-month horizon. All arithmetic uses `decimal.js`. This formula produces visible divergence for success criterion 3: a user with 0% Tech and a 60% Tech target shows Tech holdings growing on the Creator's Vision line while staying flat on Your Current Path. *(Updated 2026-05-07: original "total portfolio value" Y-axis was changed because both lines would be identical with no growth model.)*
 
 ### Ticker Rationale Panel
 - **D-09:** Expandable inline row — clicking a ticker row in BuyListTable toggles an expanded section in-place. Uses Framer Motion `AnimatePresence` + `motion.div` with height animation. Matches the `ContradictionDiff` accordion pattern already in the codebase.

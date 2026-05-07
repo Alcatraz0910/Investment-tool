@@ -595,30 +595,19 @@ export function RoadmapView({ holdings, blend, monthlyBudget }: Props) {
 | A4 | Planner uses `'framer-motion'` import path (not `'motion/react'`) since `package.json` declares the legacy name | Standard Stack + Pitfall 7 | Low — both export same API; keep consistency |
 | A5 | Existing `<table>` in `BuyListTable.tsx` should be converted to a `<div>` list to host AnimatePresence accordion cleanly | Pattern 4 | Low — alternative `<tr colSpan>` pattern works but is uglier |
 
-## Open Questions
+## Open Questions (RESOLVED 2026-05-07)
 
 1. **Should the Roadmap View chart update when the user drags the Contribution Calculator slider?**
-   - What we know: D-08 says trajectory uses `monthly_budget contributions`. ContributionCalculator already has live local budget state.
-   - What's unclear: Whether RoadmapView observes that local state, or uses the static `users.monthly_budget` from page.tsx server fetch.
-   - Recommendation: **Yes — RoadmapView should re-render on slider drag.** Architecturally simple: lift budget state into PlanTab (`useState`), pass into both ContributionCalculator AND RoadmapView. ContributionCalculator already accepts `initialBudget` — promote to controlled with setter.
+   - RESOLVED: Yes. Budget state lifted into `PlanTab.tsx` as `useState(initialBudget)`. Passed to both ContributionCalculator (controlled) and RoadmapView. Chart re-renders via `useMemo` on budget change with no network call. (Plan 06-02 + 06-03)
 
-2. **What is the divergence formula between "Creator's Vision" and "Your Current Path" on a £-value y-axis?**
-   - What we know: Both lines have identical total contributions over the same horizon. With no growth model, the £-cumulative line is the same.
-   - What's unclear: Where does the visible divergence come from?
-   - Hypotheses for planner to choose:
-     - (a) **Allocation-drift visualisation**: plot, per month, the projected category breakdown — `creatorVision` = portfolio with target % applied; `currentPath` = portfolio with current % applied. The divergence is the £-amount in over- or under-allocated categories, summed.
-     - (b) **Single-category focus**: pick the largest category gap. Plot £ in that category over time under both regimes.
-     - (c) **Growth-assumption divergence**: assume target allocation has higher implied returns (creator's claim). Apply a fixed percentage growth to one and not the other. Out of v1 scope.
-   - Recommendation: (a). Implement `computeRoadmap` to produce two lines representing portfolio-value-aligned-to-target vs portfolio-value-aligned-to-current. Confirm with user during planning.
+2. **What is the divergence formula between "Creator's Vision" and "Your Current Path"?**
+   - RESOLVED: Option (b) — single-category focus. Y-axis = £ allocated to the largest-gap category. "Your Current Path" distributes contributions proportionally to current mix (category stays flat). "Creator's Vision" distributes contributions toward blended target (category grows toward target %). Produces visible divergence for 0% Tech vs 60% Tech target. D-08 updated in CONTEXT.md to reflect this. (Plan 06-03)
 
-3. **Where exactly should the `lastRefreshedAt` date render on the StrategyCard?**
-   - What we know: UI-05 requires it. `lastRefreshedMap` already passed to CreatorsTab from page.tsx. `StrategyCard` does NOT currently take `lastRefreshedAt`.
-   - What's unclear: Whether to add `lastRefreshedAt` prop to `StrategyCard` or render it from the parent `creators-tab.tsx`.
-   - Recommendation: Pass through to `StrategyCard` (encapsulation). 1-line prop addition.
+3. **Where should `lastRefreshedAt` render on the StrategyCard?**
+   - RESOLVED: Added as prop to `StrategyCard.tsx`. Rendered below confidence score as "Last refreshed {date}". Wired from `creators-tab.tsx` via `lastRefreshedMap`. (Plan 06-04)
 
-4. **Does Phase 6 update the existing `<table>` in `BuyListTable.tsx` to a card list, or stay tabular?**
-   - What we know: D-09/D-13 mandate AnimatePresence accordion expansion. `<tr colSpan>` accordion is awkward.
-   - Recommendation: Convert to `<div>` flex list. Each item is its own glassmorphism row card. Visually richer; aligns with D-02.
+4. **`<table>` in `BuyListTable.tsx` — convert to card list or stay tabular?**
+   - RESOLVED: Convert to `<div>` flex list of glassmorphism row cards. Enables AnimatePresence height animation for rationale accordion (D-09/D-13). Visually aligns with D-02. (Plan 06-02)
 
 ## Environment Availability
 
