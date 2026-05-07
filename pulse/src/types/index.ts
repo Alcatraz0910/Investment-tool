@@ -67,6 +67,7 @@ export interface UserCreator {
   userId: string
   creatorId: string
   trustWeight: number         // 0–100; global default; per-category via UserCreatorCategoryWeight
+  lastRefreshedAt: Date | null   // Phase 3 (D-11) — NULL = never refreshed
   createdAt: Date
   creator?: Creator           // Optional join for display
   categoryWeights?: UserCreatorCategoryWeight[]  // Optional join for Phase 4
@@ -136,6 +137,30 @@ export interface Transcript {
   isEmbedded: boolean         // TRUE after Pinecone upsert in Phase 3
   lastFetched: Date | null
   createdAt: Date
+  updatedAt: Date
+}
+
+// ---------------------------------------------------------------------------
+// RefreshJob
+// Phase 3: Transcript pipeline progress state.
+// Mirrors public.refresh_jobs row. One row per (user, creator) pair.
+// Polled by the Refresh button client component every 2s.
+// ---------------------------------------------------------------------------
+
+/**
+ * Phase 3: Transcript pipeline progress state.
+ * Mirrors public.refresh_jobs row. One row per (user, creator) pair.
+ * Polled by the Refresh button client component every 2s.
+ */
+export interface RefreshJob {
+  id: string
+  userId: string
+  creatorId: string
+  status: 'running' | 'done' | 'error' | 'idle'
+  step: string | null
+  summary: string | null
+  error: string | null
+  startedAt: Date
   updatedAt: Date
 }
 
