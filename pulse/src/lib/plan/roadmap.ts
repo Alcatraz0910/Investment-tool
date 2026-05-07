@@ -91,7 +91,8 @@ export function computeRoadmap(
   const [, endSuffix] = taxYear.split('-')
   const endYear = 2000 + parseInt(endSuffix, 10)
   const endDate = new Date(Date.UTC(endYear, 3, 5))  // 5 April (month index 3)
-  const today = new Date()
+  const now = new Date()
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
   const monthCount = Math.max(0, monthsBetween(today, endDate))
 
   const points: RoadmapPoint[] = []
