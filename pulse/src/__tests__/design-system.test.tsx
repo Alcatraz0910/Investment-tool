@@ -1,12 +1,15 @@
 /**
  * UI-01: Design system token existence checks.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 
 const cssPath = path.resolve(__dirname, '../app/globals.css')
-const cssContent = fs.readFileSync(cssPath, 'utf8')
+let cssContent: string
+beforeAll(() => {
+  cssContent = fs.readFileSync(cssPath, 'utf8')
+})
 
 describe('design-system tokens (UI-01)', () => {
   it('globals.css contains --color-base: #1C1C1E', () => {
