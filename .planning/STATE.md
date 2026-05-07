@@ -9,8 +9,8 @@ progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 20
-  completed_plans: 15
-  percent: 50
+  completed_plans: 16
+  percent: 53
 ---
 
 # Pulse — Project State
@@ -21,11 +21,11 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 4 Strategy Extraction & Blending — ready to execute (5 plans)
+**Current focus:** Phase 4 Strategy Extraction & Blending — executing (04-01 complete, 4 plans remaining)
 
 ## Current Phase
 
-Phase 4: Strategy Extraction & Blending — **Ready to execute**
+Phase 4: Strategy Extraction & Blending — **Executing** (04-01 complete)
 
 **Last activity:** 2026-05-07
 
@@ -36,7 +36,7 @@ Phase 4: Strategy Extraction & Blending — **Ready to execute**
 | 1 | Foundation | ✅ Complete (2026-05-06) |
 | 2 | Portfolio & Creator Management | ✅ Complete (2026-05-07) |
 | 3 | Transcript Pipeline | ✅ Complete (2026-05-07) |
-| 4 | Strategy Extraction & Blending | 📋 Ready to execute (5 plans) |
+| 4 | Strategy Extraction & Blending | 🔄 Executing — 04-01 done (4 plans remaining) |
 | 5 | Plan Generator | 🔲 Not started |
 | 6 | Dashboard UI | 🔲 Not started |
 
@@ -50,6 +50,8 @@ Phase 4: Strategy Extraction & Blending — **Ready to execute**
 - `decimal.js` for all £ arithmetic (avoid floating point errors)
 - RAG pattern for Claude (Pinecone → chunks → Claude) to handle transcript volume
 - UK tax year (6 Apr – 5 Apr) for ISA allowance tracking
+- Pinecone metadata must include `text` field for RAG context string construction (Pitfall 1 fixed in 04-01)
+- vitest globals:true avoids redundant imports; @/ alias wired to ./src in vitest.config.ts
 
 ## Notes
 

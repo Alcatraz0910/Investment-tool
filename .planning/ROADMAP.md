@@ -115,12 +115,20 @@
 
 **Requirements:** STRAT-01, STRAT-02, STRAT-03, STRAT-04, BLEND-01, BLEND-02, BLEND-03
 
-**Plans:**
-1. RAG pipeline: given a creator ID, query Pinecone for most relevant transcript chunks → construct context → call Claude to extract structured strategy (`{ category: string, allocation_pct: number }[]`) with confidence score and source video citations
-2. Strategy versioning: store each extraction as a snapshot in Supabase `creator_strategies` table; preserve all historical versions
-3. Contradiction detection: compare new strategy against most recent prior version; flag significant allocation shifts (>15%) on the creator's strategy card
-4. Creator trust weights UI: Confidence Slider per creator per category (0–100%); saved to Supabase `user_creators` table
-5. Strategy blender: `StrategyBlender.ts` — takes all tracked creators + their weights → weighted average → unified target allocation; produces Blend Summary (per-creator influence %)
+**Plans:** 5 plans
+
+**Wave 0**
+- [x] 04-01-PLAN.md — Setup: install @anthropic-ai/sdk + vitest, create lib/anthropic/client.ts singleton, fix Pinecone metadata (add chunk text), create test stubs
+
+**Wave 1** *(run in parallel; both blocked on 04-01)*
+- [ ] 04-02-PLAN.md — Strategy extractor: RAG retrieval (3 sub-queries) + Claude tool_use extraction + creator_strategies INSERT (STRAT-01/02/03)
+- [ ] 04-03-PLAN.md — Contradiction detection (pure function) + StrategyBlender pure module (STRAT-04, BLEND-02/03)
+
+**Wave 2** *(blocked on 04-02 + 04-03)*
+- [ ] 04-04-PLAN.md — Refresh route integration (non-blocking extraction, D-01/02) + saveCreatorWeight server action (BLEND-01)
+
+**Wave 3** *(blocked on 04-04)*
+- [ ] 04-05-PLAN.md — Frontend: TrustWeightSlider, ContradictionDiff, StrategyCard, BlendSummary; extend creators-tab.tsx + page.tsx
 
 **Success Criteria:**
 1. After a creator Refresh, a new strategy snapshot is generated with category allocations, confidence score, and ≥1 source video citation
