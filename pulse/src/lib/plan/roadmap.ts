@@ -27,6 +27,59 @@ export interface RoadmapPoint {
 }
 
 /**
+ * Internal helper: compute currentMix per category from holdings.
+ * Returns { categoryValues, currentMix }.
+ */
+function computeMix(holdings: HoldingWithFillTicker[]): {
+  categoryValues: Record<string, Decimal>
+  currentMix: Record<string, Decimal>
+} {
+  const totalPortfolioValue = holdings.reduce(
+    (sum, h) => sum.plus(h.currentValue),
+    new Decimal(0),
+  )
+
+  const categoryValues: Record<string, Decimal> = {}
+  for (const h of holdings) {
+    categoryValues[h.category] = (categoryValues[h.category] ?? new Decimal(0)).plus(h.currentValue)
+  }
+
+  const currentMix: Record<string, Decimal> = {}
+  if (totalPortfolioValue.gt(0)) {
+    for (const [cat, val] of Object.entries(categoryValues)) {
+      currentMix[cat] = val.div(totalPortfolioValue).mul(100)
+    }
+  }
+
+  return { categoryValues, currentMix }
+}
+
+/**
+ * Shared helper: find the category with the largest positive gap (target - current).
+ * Falls back to the first blend category if no positive gap exists.
+ */
+function findLargestGapCategory(
+  holdings: HoldingWithFillTicker[],
+  blend: BlendedStrategy,
+): string {
+  const { currentMix } = computeMix(holdings)
+
+  let gapCategory = Object.keys(blend.unified)[0] ?? ''
+  let maxGap = new Decimal(-Infinity)
+
+  for (const [cat, targetPct] of Object.entries(blend.unified)) {
+    const currentPct = currentMix[cat] ?? new Decimal(0)
+    const gap = new Decimal(targetPct ?? 0).minus(currentPct)
+    if (gap.gt(maxGap)) {
+      maxGap = gap
+      gapCategory = cat
+    }
+  }
+
+  return gapCategory
+}
+
+/**
  * Compute monthly trajectory from today through 5 April of the given tax year's end.
  *
  * @param holdings   User's current portfolio holdings (currentValue: Decimal)
@@ -44,44 +97,9 @@ export function computeRoadmap(
   if (!blend || Object.keys(blend.unified).length === 0) return []
 
   const budget = new Decimal(monthlyBudgetGbp)
+  const { categoryValues, currentMix } = computeMix(holdings)
 
-  // Compute total portfolio value
-  const totalPortfolioValue = holdings.reduce(
-    (sum, h) => sum.plus(h.currentValue),
-    new Decimal(0),
-  )
-
-  // Compute per-category current values
-  const categoryValues: Record<string, Decimal> = {}
-  for (const h of holdings) {
-    categoryValues[h.category] = (categoryValues[h.category] ?? new Decimal(0)).plus(h.currentValue)
-  }
-
-  // Compute current allocation mix (%) per category
-  const currentMix: Record<string, Decimal> = {}
-  if (totalPortfolioValue.gt(0)) {
-    for (const [cat, val] of Object.entries(categoryValues)) {
-      currentMix[cat] = val.div(totalPortfolioValue).mul(100)
-    }
-  }
-
-  // Find largest-gap category: max(targetPct - currentPct) across blend.unified
-  let gapCategory = ''
-  let maxGap = new Decimal(-Infinity)
-
-  for (const [cat, targetPct] of Object.entries(blend.unified)) {
-    const currentPct = currentMix[cat] ?? new Decimal(0)
-    const gap = new Decimal(targetPct ?? 0).minus(currentPct)
-    if (gap.gt(maxGap)) {
-      maxGap = gap
-      gapCategory = cat
-    }
-  }
-
-  // If no positive gap found, use the first category
-  if (!gapCategory || maxGap.lte(0)) {
-    gapCategory = Object.keys(blend.unified)[0]
-  }
+  const gapCategory = findLargestGapCategory(holdings, blend)
 
   const targetPctForCat = new Decimal(blend.unified[gapCategory as import('@/types').AssetCategory] ?? 0).div(100)
   const currentPctForCat = (currentMix[gapCategory] ?? new Decimal(0)).div(100)
@@ -116,43 +134,14 @@ export function computeRoadmap(
 /**
  * Returns the name of the largest-gap category for chart labelling.
  * Exported so RoadmapView can display it as the Y-axis label.
+ * Delegates to the shared findLargestGapCategory helper.
  */
 export function getLargestGapCategory(
   holdings: HoldingWithFillTicker[],
   blend: BlendedStrategy,
 ): string {
   if (Object.keys(blend.unified).length === 0) return ''
-
-  const totalPortfolioValue = holdings.reduce(
-    (sum, h) => sum.plus(h.currentValue),
-    new Decimal(0),
-  )
-
-  const categoryValues: Record<string, Decimal> = {}
-  for (const h of holdings) {
-    categoryValues[h.category] = (categoryValues[h.category] ?? new Decimal(0)).plus(h.currentValue)
-  }
-
-  const currentMix: Record<string, Decimal> = {}
-  if (totalPortfolioValue.gt(0)) {
-    for (const [cat, val] of Object.entries(categoryValues)) {
-      currentMix[cat] = val.div(totalPortfolioValue).mul(100)
-    }
-  }
-
-  let gapCategory = Object.keys(blend.unified)[0]
-  let maxGap = new Decimal(-Infinity)
-
-  for (const [cat, targetPct] of Object.entries(blend.unified)) {
-    const currentPct = currentMix[cat] ?? new Decimal(0)
-    const gap = new Decimal(targetPct ?? 0).minus(currentPct)
-    if (gap.gt(maxGap)) {
-      maxGap = gap
-      gapCategory = cat
-    }
-  }
-
-  return gapCategory
+  return findLargestGapCategory(holdings, blend)
 }
 
 /**
