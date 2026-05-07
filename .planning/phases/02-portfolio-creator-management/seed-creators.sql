@@ -49,11 +49,13 @@ INSERT INTO public.creators (channel_url, display_name, is_active)
 VALUES
   ('https://www.youtube.com/@GrahamStephan',   'Graham Stephan',      TRUE),
   ('https://www.youtube.com/@AndreiJikh',      'Andrei Jikh',         TRUE),
-  ('https://www.youtube.com/@HumphreyTalks',   'Humphrey Talks',      TRUE),
   ('https://www.youtube.com/@ThePlainBagel',   'The Plain Bagel',     TRUE),
   ('https://www.youtube.com/@BenFelixCSI',     'Ben Felix',           TRUE),
   ('https://www.youtube.com/@TickerSymbolYOU', 'Ticker Symbol: YOU',  TRUE),
-  ('https://www.youtube.com/@NateOBrien',      'Nate O''Brien',       TRUE)
+  ('https://www.youtube.com/@rob_berger',      'Rob Berger',          TRUE),
+  ('https://www.youtube.com/@DividendBull',    'Dividend Bull',       TRUE),
+  ('https://www.youtube.com/@FelixPrehn',      'Felix Prehn',         TRUE),
+  ('https://www.youtube.com/@MinorityMindset', 'Minority Mindset',    TRUE)
 ON CONFLICT (channel_url) DO NOTHING;
 
 -- Verify: SELECT display_name, channel_url FROM public.creators ORDER BY created_at;
