@@ -21,13 +21,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 6 Dashboard UI — not started
+**Current focus:** Phase 6 Dashboard UI — context gathered, ready for planning
 
 ## Current Phase
 
-Phase 5: Plan Generator — **Complete** (4/4 plans, 2026-05-07)
+Phase 6: Dashboard UI — **Context gathered** (2026-05-07)
 
 **Last activity:** 2026-05-07
+**Resume file:** `.planning/phases/06-dashboard-ui/06-CONTEXT.md`
 
 ## Phase Status
 
@@ -38,7 +39,7 @@ Phase 5: Plan Generator — **Complete** (4/4 plans, 2026-05-07)
 | 3 | Transcript Pipeline | ✅ Complete (2026-05-07) |
 | 4 | Strategy Extraction & Blending | ✅ Complete (2026-05-07) |
 | 5 | Plan Generator | ✅ Complete (2026-05-07) |
-| 6 | Dashboard UI | 🔲 Not started |
+| 6 | Dashboard UI | 🟡 In progress |
 
 ## Key Decisions Made
 
