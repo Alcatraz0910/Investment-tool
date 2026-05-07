@@ -2,9 +2,10 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/login/actions'
-import type { UserProfile, Holding } from '@/types'
+import type { UserProfile, Holding, Creator } from '@/types'
 import { Decimal } from '@/types'
 import { PortfolioTab } from '@/components/PortfolioTab'
+import { CreatorsTab } from '@/app/dashboard/creators-tab'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
@@ -66,6 +67,29 @@ export default async function DashboardPage({
     }))
   }
 
+  // Fetch creators and tracked IDs (only if Creators tab)
+  let creators: Creator[] = []
+  let trackedCreatorIds = new Set<string>()
+
+  if (activeTab === 'creators') {
+    const [{ data: creatorRows }, { data: trackRows }] = await Promise.all([
+      supabase.from('creators').select('*').eq('is_active', true).order('display_name'),
+      supabase.from('user_creators').select('creator_id').eq('user_id', user.id),
+    ])
+
+    creators = (creatorRows ?? []).map((row) => ({
+      id: row.id,
+      channelUrl: row.channel_url,
+      displayName: row.display_name,
+      channelId: row.channel_id ?? null,
+      isActive: row.is_active,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+    }))
+
+    trackedCreatorIds = new Set((trackRows ?? []).map((r) => r.creator_id))
+  }
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
     { id: 'creators', label: 'Creators' },
@@ -125,7 +149,7 @@ export default async function DashboardPage({
               />
             )}
             {activeTab === 'creators' && (
-              <p className="text-zinc-400 text-sm">Creator management coming in this phase.</p>
+              <CreatorsTab creators={creators} trackedCreatorIds={trackedCreatorIds} />
             )}
             {activeTab === 'isa' && (
               <p className="text-zinc-400 text-sm">ISA tracker coming in this phase.</p>
