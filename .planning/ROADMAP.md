@@ -141,15 +141,30 @@
 
 ## Phase 5: Plan Generator
 
-**Goal:** `PlanGenerator.ts` takes the user's portfolio, monthly budget, and blended strategy to produce an actionable, ISA-capped Buy List; the Contribution Calculator updates it live.
+**Goal:** `generatePlan` takes the user's portfolio, monthly budget, and blended strategy to produce an actionable, ISA-capped Buy List; the Contribution Calculator updates it live.
 
 **Requirements:** PLAN-01, PLAN-02, PLAN-03, PLAN-04, ISA-02
 
-**Plans:**
-1. `PlanGenerator.ts`: pure TypeScript function — inputs `(portfolio: Holding[], budget_gbp: number, strategy: BlendedStrategy, isa_remaining: number)` → outputs `BuyList: { ticker: string, category: string, amount_gbp: Decimal, gap_closed_pct: number, rationale: string }[]`; uses `decimal.js` for all £ arithmetic; caps total to `isa_remaining`
-2. ISA allowance guard: if `budget > isa_remaining`, truncate Buy List to remaining allowance and surface a warning; do not silently exceed the limit
-3. Buy List API route (`/api/plan/generate`): calls PlanGenerator with current user data; stores result in Supabase `buy_lists` table with timestamp
-4. Contribution Calculator: client-side slider component (£200 → £1,000) that calls PlanGenerator with updated budget and re-renders the Buy List without a network round-trip (compute in browser using cached strategy + portfolio)
+**Plans:** 4 plans
+
+**Wave 0** *(manual blocking step + type prep)*
+- [ ] 05-01-PLAN.md — Schema migration (is_fill_ticker column + partial unique index via SQL editor) + extend types/index.ts (Holding.isFillTicker, BuyListItem.allocationGapPct)
+
+**Wave 1** *(blocked on 05-01)*
+- [ ] 05-02-PLAN.md — `lib/plan/generator.ts` pure function + `generator.test.ts` vitest TDD (covers PLAN-01/02/03/04, ISA-02)
+
+**Wave 2** *(blocked on 05-01 + 05-02)*
+- [ ] 05-03-PLAN.md — `plan-actions.ts` (upsertBuyList + setFillTicker server actions) + PortfolioTab fill-ticker toggle UI
+
+**Wave 3** *(blocked on 05-01 + 05-02 + 05-03)*
+- [ ] 05-04-PLAN.md — PlanTab.tsx + ContributionCalculator.tsx + BuyListTable.tsx + page.tsx integration (4th Plan tab, always-fetch holdings + ISA, server-side generation + upsert)
+
+**Cross-cutting constraints:**
+- `decimal.js` for all £ arithmetic in generator.ts — never native JS floats
+- `generator.ts` has zero server-only imports — must run in browser for ContributionCalculator
+- No CLI migrations — is_fill_ticker migration via Supabase SQL editor (D-03)
+- No "advice"/"recommend"/"suggest" in rationale strings (PLAN-04)
+- ISA tax year computed via `getCurrentTaxYear()` from lib/tax-year.ts (6 April boundary)
 
 **Success Criteria:**
 1. PlanGenerator produces a Buy List where the sum of all amounts equals `min(budget, isa_remaining)` to the penny (using decimal arithmetic)
