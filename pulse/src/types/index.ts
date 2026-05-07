@@ -36,6 +36,8 @@ export type AssetCategory =
 export interface UserProfile {
   id: string
   email: string
+  // £ monthly contribution budget — maps to public.users.monthly_budget (PORT-03)
+  monthlyBudget: Decimal
   createdAt: Date
   updatedAt: Date
 }
