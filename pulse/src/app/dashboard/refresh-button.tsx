@@ -38,6 +38,7 @@ export default function RefreshButton({
   const [step, setStep] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [extractionWarning, setExtractionWarning] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Stop polling on unmount
@@ -91,6 +92,7 @@ export default function RefreshButton({
     setStep('Resolving channel...')
     setSummary(null)
     setError(null)
+    setExtractionWarning(null)
 
     // Start 2s polling immediately (D-02)
     if (pollRef.current) clearInterval(pollRef.current)
@@ -113,6 +115,7 @@ export default function RefreshButton({
       setStep(null)
       setSummary(data?.summary ?? null)
       setError(null)
+      setExtractionWarning(data?.extractionWarning ?? null)
     } catch {
       stopPolling()
       setStatus('error')
@@ -174,6 +177,13 @@ export default function RefreshButton({
       {status === 'done' && summary && (
         <p className="text-sm text-zinc-400 py-1 pl-1" aria-live="polite">
           {summary}
+        </p>
+      )}
+
+      {/* Extraction warning — non-blocking, amber, shown after done */}
+      {status === 'done' && extractionWarning && (
+        <p className="text-amber-400 text-xs mt-1" aria-live="polite">
+          {extractionWarning}
         </p>
       )}
 

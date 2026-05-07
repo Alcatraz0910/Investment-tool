@@ -2,12 +2,15 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/login/actions'
-import type { UserProfile, Holding, Creator, ISAContribution, Transcript } from '@/types'
+import type { UserProfile, Holding, Creator, ISAContribution, Transcript, CreatorStrategy, UserCreator, UserCreatorCategoryWeight } from '@/types'
 import { Decimal } from '@/types'
 import { PortfolioTab } from '@/components/PortfolioTab'
 import { CreatorsTab } from '@/app/dashboard/creators-tab'
 import { ISATab } from '@/app/dashboard/isa-tab'
 import { getCurrentTaxYear } from '@/lib/tax-year'
+import { blendStrategies } from '@/lib/strategy/blender'
+import type { BlendedStrategy, BlendInput } from '@/lib/strategy/blender'
+import { BlendSummary } from '@/app/dashboard/components/BlendSummary'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
@@ -96,6 +99,10 @@ export default async function DashboardPage({
   let creators: Creator[] = []
   let lastRefreshedMap = new Map<string, Date | null>()
   let transcriptsByCreator = new Map<string, Transcript[]>()
+  let strategiesByCreator = new Map<string, CreatorStrategy | null>()
+  let userCreatorMap = new Map<string, UserCreator>()
+  let blend: BlendedStrategy | null = null
+  let creatorNameMap: Record<string, string> = {}
 
   if (activeTab === 'creators') {
     const [{ data: creatorRows }, { data: trackRows }] = await Promise.all([
@@ -148,6 +155,106 @@ export default async function DashboardPage({
         acc.set(t.creatorId, list)
         return acc
       }, new Map<string, Transcript[]>())
+    }
+
+    if (trackedIds.length > 0) {
+      // Fetch latest strategy per creator (ORDER BY created_at DESC; take first per creator)
+      const { data: stratRows } = await supabase
+        .from('creator_strategies')
+        .select('id, creator_id, allocation, confidence, source_video_ids, has_contradiction, contradiction_note, extracted_at, created_at')
+        .in('creator_id', trackedIds)
+        .order('created_at', { ascending: false })
+
+      // Group by creator_id, keep only the latest (first row after desc ordering)
+      const seenCreators = new Set<string>()
+      for (const row of stratRows ?? []) {
+        const cid = row.creator_id as string
+        if (!seenCreators.has(cid)) {
+          seenCreators.add(cid)
+          strategiesByCreator.set(cid, {
+            id: row.id as string,
+            creatorId: cid,
+            allocation: row.allocation ?? {},
+            confidence: row.confidence as number,
+            sourceVideoIds: (row.source_video_ids as string[]) ?? [],
+            hasContradiction: row.has_contradiction as boolean,
+            contradictionNote: (row.contradiction_note as string | null) ?? null,
+            extractedAt: new Date(row.extracted_at as string),
+            createdAt: new Date(row.created_at as string),
+          })
+        }
+      }
+      // Ensure all tracked creators have an entry (null = no strategy yet)
+      for (const cid of trackedIds) {
+        if (!strategiesByCreator.has(cid)) strategiesByCreator.set(cid, null)
+      }
+
+      // Fetch UserCreator rows with category weights
+      const { data: ucRows } = await supabase
+        .from('user_creators')
+        .select('id, creator_id, trust_weight')
+        .eq('user_id', user.id)
+        .in('creator_id', trackedIds)
+
+      const ucIds = (ucRows ?? []).map((r) => r.id as string)
+      let catWeightRows: Array<{ user_creator_id: string; category: string; weight: number; created_at: string; updated_at: string }> = []
+
+      if (ucIds.length > 0) {
+        const { data: cwRows } = await supabase
+          .from('user_creator_category_weights')
+          .select('user_creator_id, category, weight, created_at, updated_at')
+          .in('user_creator_id', ucIds)
+        catWeightRows = (cwRows ?? []) as typeof catWeightRows
+      }
+
+      for (const uc of ucRows ?? []) {
+        const cid = uc.creator_id as string
+        const ucId = uc.id as string
+        const catWeights = catWeightRows
+          .filter((cw) => cw.user_creator_id === ucId)
+          .map((cw): UserCreatorCategoryWeight => ({
+            id: `${ucId}-${cw.category}`,
+            userCreatorId: ucId,
+            category: cw.category as import('@/types').AssetCategory,
+            weight: Number(cw.weight),
+            createdAt: new Date(cw.created_at),
+            updatedAt: new Date(cw.updated_at),
+          }))
+
+        userCreatorMap.set(cid, {
+          id: ucId,
+          userId: user.id,
+          creatorId: cid,
+          trustWeight: Number(uc.trust_weight ?? 50),
+          lastRefreshedAt: lastRefreshedMap.get(cid) ?? null,
+          createdAt: new Date(),
+          categoryWeights: catWeights,
+        })
+      }
+
+      // Build creator name map for BlendSummary
+      creatorNameMap = Object.fromEntries(
+        creators.map((c) => [c.id, c.displayName])
+      )
+
+      // Compute blend (BLEND-02/03)
+      const blendInput: BlendInput = {
+        creators: trackedIds.map((cid) => ({
+          userCreator: userCreatorMap.get(cid) ?? {
+            id: '',
+            userId: user.id,
+            creatorId: cid,
+            trustWeight: 50,
+            lastRefreshedAt: null,
+            createdAt: new Date(),
+            categoryWeights: [],
+          },
+          latestStrategy: strategiesByCreator.get(cid) ?? null,
+        })),
+      }
+      if (blendInput.creators.length > 0) {
+        blend = blendStrategies(blendInput)
+      }
     }
   }
 
@@ -210,12 +317,17 @@ export default async function DashboardPage({
               />
             )}
             {activeTab === 'creators' && (
-              <CreatorsTab
-                creators={creators}
-                initialTracked={Array.from(lastRefreshedMap.keys())}
-                lastRefreshedMap={lastRefreshedMap}
-                transcriptsByCreator={transcriptsByCreator}
-              />
+              <>
+                <CreatorsTab
+                  creators={creators}
+                  initialTracked={Array.from(lastRefreshedMap.keys())}
+                  lastRefreshedMap={lastRefreshedMap}
+                  transcriptsByCreator={transcriptsByCreator}
+                  strategiesByCreator={strategiesByCreator}
+                  userCreatorMap={userCreatorMap}
+                />
+                <BlendSummary blend={blend} creatorNameMap={creatorNameMap} />
+              </>
             )}
             {activeTab === 'isa' && (
               <ISATab contributions={contributions} currentTaxYear={currentTaxYear} />

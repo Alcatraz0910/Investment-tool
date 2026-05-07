@@ -1,18 +1,22 @@
 'use client'
 import { useState, useTransition, useActionState, startTransition } from 'react'
-import type { Creator, Transcript } from '@/types'
+import type { Creator, Transcript, CreatorStrategy, UserCreator } from '@/types'
 import { trackCreator, untrackCreator, addCustomCreator } from '@/app/dashboard/creator-actions'
 import RefreshButton from './refresh-button'
 import TranscriptList from './transcript-list'
+import { StrategyCard } from './components/StrategyCard'
+import { TrustWeightSlider } from './components/TrustWeightSlider'
 
 interface CreatorsTabProps {
   creators: Creator[]
   initialTracked: string[]
   lastRefreshedMap: Map<string, Date | null>
   transcriptsByCreator: Map<string, Transcript[]>
+  strategiesByCreator: Map<string, CreatorStrategy | null>
+  userCreatorMap: Map<string, UserCreator>
 }
 
-export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transcriptsByCreator }: CreatorsTabProps) {
+export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transcriptsByCreator, strategiesByCreator, userCreatorMap }: CreatorsTabProps) {
   // Optimistic tracking state: mirror server state, update immediately on toggle
   const [tracked, setTracked] = useState<Set<string>>(new Set<string>(initialTracked))
   const [isPending, startT] = useTransition()
@@ -120,6 +124,23 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
                     creatorName={creator.displayName}
                     transcripts={transcriptsByCreator.get(creator.id) ?? []}
                   />
+                )}
+                {tracked.has(creator.id) && (
+                  <>
+                    <StrategyCard strategy={strategiesByCreator.get(creator.id) ?? null} />
+                    {userCreatorMap.has(creator.id) && (
+                      <TrustWeightSlider
+                        userCreatorId={userCreatorMap.get(creator.id)!.id}
+                        initialGlobalWeight={userCreatorMap.get(creator.id)!.trustWeight}
+                        initialCategoryWeights={
+                          userCreatorMap.get(creator.id)!.categoryWeights?.map((w) => ({
+                            category: w.category,
+                            weight: w.weight,
+                          })) ?? []
+                        }
+                      />
+                    )}
+                  </>
                 )}
               </li>
             )
