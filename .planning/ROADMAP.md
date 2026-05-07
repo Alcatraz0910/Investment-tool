@@ -186,7 +186,7 @@
 - [x] 06-00-PLAN.md — Test infra: install recharts + @testing-library/react + jsdom; configure vitest jsdom; create 5 Wave 0 test stubs
 
 **Wave 1** *(blocked on 06-00)*
-- [ ] 06-01-PLAN.md — Design system: globals.css body token, page.tsx max-w-4xl + glassmorphism shell, AnimatedTabPanel tab-fade wrapper
+- [x] 06-01-PLAN.md — Design system: globals.css body token, page.tsx max-w-4xl + glassmorphism shell, AnimatedTabPanel tab-fade wrapper
 
 **Wave 2** *(blocked on 06-01; 06-02 and 06-04 run in parallel)*
 - [ ] 06-02-PLAN.md — Action Plan panel: BuyListTable div card list + AnimatePresence accordion + PlanTab "Your Action Plan" + ContributionCalculator controlled with budget lift

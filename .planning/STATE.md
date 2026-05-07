@@ -9,8 +9,8 @@ progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 30
-  completed_plans: 25
-  percent: 85
+  completed_plans: 26
+  percent: 87
 ---
 
 # Pulse — Project State
@@ -21,14 +21,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 6 Dashboard UI — Wave 1 (06-01 design system)
+**Current focus:** Phase 6 Dashboard UI — Wave 2 (06-02 / 06-04 in parallel)
 
 ## Current Phase
 
 Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 
 **Last activity:** 2026-05-07
-**Resume file:** `.planning/phases/06-dashboard-ui/06-01-PLAN.md`
+**Resume file:** `.planning/phases/06-dashboard-ui/06-02-PLAN.md`
 
 ## Phase Status
 
@@ -60,6 +60,8 @@ Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 - blender.ts outputs plain number (not Decimal) — Phase 5 PlanGenerator wraps in new Decimal() on use
 - vi.hoisted() required for module-level mock refs in vitest when vi.mock factory closures reference top-level consts
 - saveCreatorWeight uses createClient() for auth + createServiceClient() for write (Pattern 7: service client bypasses RLS)
+- AnimatedTabPanel imports from 'framer-motion' (not 'motion/react') — matches package.json dependency name
+- dashboard shell: max-w-4xl, glassmorphism (backdrop-blur-xl bg-white/5), accent tokens replace indigo-500 hardcodes
 
 ## Notes
 
