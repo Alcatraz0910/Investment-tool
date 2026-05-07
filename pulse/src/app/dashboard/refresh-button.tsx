@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface RefreshButtonProps {
   creatorId: string
@@ -34,6 +35,7 @@ export default function RefreshButton({
   creatorName,
   lastRefreshedAt,
 }: RefreshButtonProps) {
+  const router = useRouter()
   const [status, setStatus] = useState<Status>('idle')
   const [step, setStep] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
@@ -116,6 +118,7 @@ export default function RefreshButton({
       setSummary(data?.summary ?? null)
       setError(null)
       setExtractionWarning(data?.extractionWarning ?? null)
+      router.refresh()
     } catch {
       stopPolling()
       setStatus('error')
