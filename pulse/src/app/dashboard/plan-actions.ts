@@ -92,3 +92,24 @@ export async function setFillTicker(holdingId: string, category: AssetCategory):
   revalidatePath('/dashboard')
   return {}
 }
+
+/**
+ * Removes fill-ticker status from a specific holding.
+ * Called when the user clicks ★ on an already-starred holding to deselect it.
+ */
+export async function clearFillTicker(holdingId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Something went wrong. Please try again.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const svc = createServiceClient() as any
+  const { error } = await svc.from('holdings')
+    .update({ is_fill_ticker: false, updated_at: new Date().toISOString() })
+    .eq('id', holdingId)
+    .eq('user_id', user.id)
+
+  if (error) return { error: 'Something went wrong. Please try again.' }
+  revalidatePath('/dashboard')
+  return {}
+}

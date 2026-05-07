@@ -3,7 +3,7 @@ import { useState, useTransition, useActionState, startTransition } from 'react'
 import type { AssetCategory } from '@/types'
 import { HoldingModal } from '@/components/HoldingModal'
 import { deleteHolding, updateMonthlyBudget } from '@/app/dashboard/actions'
-import { setFillTicker } from '@/app/dashboard/plan-actions'
+import { setFillTicker, clearFillTicker } from '@/app/dashboard/plan-actions'
 
 // Plain-number versions of domain types for the RSC→client boundary
 interface ClientProfile {
@@ -65,10 +65,12 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
     setEditingHolding(undefined)
   }
 
-  function handleSetFillTicker(holdingId: string, category: AssetCategory) {
+  function handleSetFillTicker(holdingId: string, category: AssetCategory, isCurrentlyFilled: boolean) {
     setFillTickerState({})
     startT(async () => {
-      const result = await setFillTicker(holdingId, category)
+      const result = isCurrentlyFilled
+        ? await clearFillTicker(holdingId)
+        : await setFillTicker(holdingId, category)
       if (result.error) {
         setFillTickerState({ error: result.error })
       }
@@ -215,7 +217,7 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                   <div className="flex gap-2 ml-4 items-center">
                     <button
                       type="button"
-                      onClick={() => handleSetFillTicker(holding.id, holding.category)}
+                      onClick={() => handleSetFillTicker(holding.id, holding.category, holding.isFillTicker)}
                       disabled={isPending}
                       aria-label={holding.isFillTicker ? 'Preferred buy target for this category' : 'Mark as preferred buy target'}
                       title={holding.isFillTicker ? 'Preferred buy target for this category' : 'Mark as preferred buy target'}
