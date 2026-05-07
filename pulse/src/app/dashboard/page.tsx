@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/login/actions'
-import type { UserProfile, Holding, Creator, ISAContribution } from '@/types'
+import type { UserProfile, Holding, Creator, ISAContribution, Transcript } from '@/types'
 import { Decimal } from '@/types'
 import { PortfolioTab } from '@/components/PortfolioTab'
 import { CreatorsTab } from '@/app/dashboard/creators-tab'
@@ -92,14 +92,15 @@ export default async function DashboardPage({
     }))
   }
 
-  // Fetch creators and tracked IDs (only if Creators tab)
+  // Fetch creators, tracked IDs, last_refreshed_at, and transcripts (only if Creators tab)
   let creators: Creator[] = []
-  let trackedCreatorIds = new Set<string>()
+  let lastRefreshedMap = new Map<string, Date | null>()
+  let transcriptsByCreator = new Map<string, Transcript[]>()
 
   if (activeTab === 'creators') {
     const [{ data: creatorRows }, { data: trackRows }] = await Promise.all([
       supabase.from('creators').select('*').eq('is_active', true).order('display_name'),
-      supabase.from('user_creators').select('creator_id').eq('user_id', user.id),
+      supabase.from('user_creators').select('creator_id, last_refreshed_at').eq('user_id', user.id),
     ])
 
     creators = (creatorRows ?? []).map((row) => ({
@@ -112,7 +113,42 @@ export default async function DashboardPage({
       updatedAt: new Date(row.updated_at),
     }))
 
-    trackedCreatorIds = new Set((trackRows ?? []).map((r) => r.creator_id))
+    lastRefreshedMap = new Map<string, Date | null>(
+      (trackRows ?? []).map((r) => [
+        r.creator_id as string,
+        r.last_refreshed_at ? new Date(r.last_refreshed_at as string) : null,
+      ]),
+    )
+
+    const trackedIds = Array.from(lastRefreshedMap.keys())
+    if (trackedIds.length > 0) {
+      const { data: transcriptRows } = await supabase
+        .from('transcripts')
+        .select('id, creator_id, video_id, title, published_at, raw_text, word_count, is_embedded, last_fetched, created_at, updated_at')
+        .in('creator_id', trackedIds)
+        .order('published_at', { ascending: false })
+
+      const all: Transcript[] = (transcriptRows ?? []).map((row) => ({
+        id: row.id as string,
+        creatorId: row.creator_id as string,
+        videoId: row.video_id as string,
+        title: row.title as string,
+        publishedAt: new Date(row.published_at as string),
+        rawText: (row.raw_text as string | null) ?? null,
+        wordCount: (row.word_count as number | null) ?? null,
+        isEmbedded: row.is_embedded as boolean,
+        lastFetched: row.last_fetched ? new Date(row.last_fetched as string) : null,
+        createdAt: new Date(row.created_at as string),
+        updatedAt: new Date(row.updated_at as string),
+      }))
+
+      transcriptsByCreator = all.reduce((acc, t) => {
+        const list = acc.get(t.creatorId) ?? []
+        list.push(t)
+        acc.set(t.creatorId, list)
+        return acc
+      }, new Map<string, Transcript[]>())
+    }
   }
 
   const tabs: { id: Tab; label: string }[] = [
@@ -174,7 +210,12 @@ export default async function DashboardPage({
               />
             )}
             {activeTab === 'creators' && (
-              <CreatorsTab creators={creators} trackedCreatorIds={trackedCreatorIds} />
+              <CreatorsTab
+                creators={creators}
+                initialTracked={Array.from(lastRefreshedMap.keys())}
+                lastRefreshedMap={lastRefreshedMap}
+                transcriptsByCreator={transcriptsByCreator}
+              />
             )}
             {activeTab === 'isa' && (
               <ISATab contributions={contributions} currentTaxYear={currentTaxYear} />
