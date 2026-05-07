@@ -294,7 +294,9 @@ export default async function DashboardPage({
   )
 
   // Persist plan (D-07: always overwrite) — fire and forget (non-blocking)
-  void upsertBuyList(serverPlanResult)
+  upsertBuyList(serverPlanResult).catch((err) =>
+    console.error('[DashboardPage] upsertBuyList failed:', err)
+  )
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
