@@ -193,7 +193,7 @@
 - [x] 06-04-PLAN.md — Creator cards: StrategyCard glassmorphism + lastRefreshedAt + BlendSummary + TrustWeightSlider accent + ContradictionDiff reskin + creators-tab stagger
 
 **Wave 3** *(blocked on 06-00 + 06-01 + 06-02)*
-- [ ] 06-03-PLAN.md — Roadmap View: roadmap.ts computeRoadmap pure function + RoadmapView Recharts LineChart + PlanTab wiring
+- [x] 06-03-PLAN.md — Roadmap View: roadmap.ts computeRoadmap pure function + RoadmapView Recharts LineChart + PlanTab wiring
 
 **Wave 4** *(blocked on 06-02 + 06-03 + 06-04)*
 - [ ] 06-05-PLAN.md — Smoke tests: implement real assertions in 5 test stubs + human visual checkpoint

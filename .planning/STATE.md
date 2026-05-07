@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In Progress
-last_updated: "2026-05-07T22:00:00.000Z"
+last_updated: "2026-05-07T23:00:00.000Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 30
-  completed_plans: 28
-  percent: 93
+  completed_plans: 29
+  percent: 97
 ---
 
 # Pulse — Project State
@@ -21,14 +21,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 6 Dashboard UI — 06-04 complete; 06-03 (Roadmap View) next in Wave 3
+**Current focus:** Phase 6 Dashboard UI — 06-03 complete; 06-04 (Settings Panel) next in Wave 4
 
 ## Current Phase
 
 Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 
 **Last activity:** 2026-05-07
-**Resume file:** `.planning/phases/06-dashboard-ui/06-03-PLAN.md` (Wave 3 — Roadmap View)
+**Resume file:** `.planning/phases/06-dashboard-ui/06-04-PLAN.md` (Wave 4 — Settings Panel)
 
 ## Phase Status
 
@@ -69,6 +69,8 @@ Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 - StrategyCard lastRefreshedAt formatted en-GB in parent (creators-tab) and passed as pre-formatted string — server component stays pure
 - creators-tab stagger: motion.ul staggerChildren:0.05 + motion.li child variants (opacity 0→1, y 8→0, 0.25s easeOut)
 - ContradictionDiff badge text: "Strategy shift detected" → "Strategy conflict detected" per UI-SPEC copywriting contract
+- Roadmap divergence via largest-gap category: plot £ in that category under current-mix vs target-mix — visible when currentMix != targetMix
+- getLargestGapCategory exported separately from computeRoadmap for RoadmapView subtitle without re-running full function
 
 ## Notes
 
