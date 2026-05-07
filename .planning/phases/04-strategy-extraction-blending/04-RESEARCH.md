@@ -888,22 +888,22 @@ needed on reads. INSERTs require service role (no authenticated INSERT policy). 
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Chunk text in Pinecone metadata**
+1. **Chunk text in Pinecone metadata** *(RESOLVED: Plan 04-01 task 3)*
    - What we know: Phase 3 does not store `text` in Pinecone metadata.
    - What's unclear: Does Phase 4 require a re-embed pass of all Phase 3 vectors, or can it launch with the `text` field for new embeddings only?
-   - Recommendation: Plan should include a task to update `transcript-pipeline.ts` upsert to store `text: chunks[idx]` AND document that creators need a manual Refresh to populate text-bearing vectors before extraction works correctly.
+   - Resolution: Plan 04-01 task 3 adds `text: chunks[idx] ?? ''` to Pinecone upsert records in `transcript-pipeline.ts`. New embeds will include text. Creators need a manual Refresh to populate text-bearing vectors before extraction works correctly; this is documented in the plan.
 
-2. **`version` column on `creator_strategies`**
+2. **`version` column on `creator_strategies`** *(RESOLVED: use `created_at DESC` ordering)*
    - What we know: CONTEXT.md refers to `version INT` but schema.sql does not have it.
    - What's unclear: Was it intentionally omitted in Phase 1?
-   - Recommendation: Planner decides — add via SQL Editor (single ALTER TABLE statement) or use `created_at` ordering throughout Phase 4.
+   - Resolution: No `version` column added. All plans use `ORDER BY created_at DESC` to get the latest strategy. Version number for display is computed in-app as count of prior rows + 1.
 
-3. **StrategyBlender missing-category denominator behaviour**
+3. **StrategyBlender missing-category denominator behaviour** *(RESOLVED: exclude weight from denominator)*
    - What we know: Formula from REQUIREMENTS.md. Edge case not specified.
    - What's unclear: Should a creator's weight count toward denominator for a category if their allocation doesn't include that category?
-   - Recommendation: Omit weight from denominator if allocation is missing for that category — this avoids "diluting" the allocation toward 0 when the creator simply didn't discuss it.
+   - Resolution: When a creator has no allocation for a category, their weight is excluded from BOTH numerator AND denominator for that category. Plan 04-03 blender.ts implements `if (allocationPct === undefined) continue` to skip contribution entirely, avoiding dilution of uncovered categories toward 0.
 
 ---
 
