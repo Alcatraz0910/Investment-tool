@@ -148,16 +148,16 @@
 **Plans:** 4 plans
 
 **Wave 0** *(manual blocking step + type prep)*
-- [ ] 05-01-PLAN.md — Schema migration (is_fill_ticker column + partial unique index via SQL editor) + extend types/index.ts (Holding.isFillTicker, BuyListItem.allocationGapPct)
+- [x] 05-01-PLAN.md — Schema migration (is_fill_ticker column + partial unique index via SQL editor) + extend types/index.ts (Holding.isFillTicker, BuyListItem.allocationGapPct)
 
 **Wave 1** *(blocked on 05-01)*
-- [ ] 05-02-PLAN.md — `lib/plan/generator.ts` pure function + `generator.test.ts` vitest TDD (covers PLAN-01/02/03/04, ISA-02)
+- [x] 05-02-PLAN.md — `lib/plan/generator.ts` pure function + `generator.test.ts` vitest TDD (covers PLAN-01/02/03/04, ISA-02)
 
 **Wave 2** *(blocked on 05-01 + 05-02)*
-- [ ] 05-03-PLAN.md — `plan-actions.ts` (upsertBuyList + setFillTicker server actions) + PortfolioTab fill-ticker toggle UI
+- [x] 05-03-PLAN.md — `plan-actions.ts` (upsertBuyList + setFillTicker server actions) + PortfolioTab fill-ticker toggle UI
 
 **Wave 3** *(blocked on 05-01 + 05-02 + 05-03)*
-- [ ] 05-04-PLAN.md — PlanTab.tsx + ContributionCalculator.tsx + BuyListTable.tsx + page.tsx integration (4th Plan tab, always-fetch holdings + ISA, server-side generation + upsert)
+- [x] 05-04-PLAN.md — PlanTab.tsx + ContributionCalculator.tsx + BuyListTable.tsx + page.tsx integration (4th Plan tab, always-fetch holdings + ISA, server-side generation + upsert)
 
 **Cross-cutting constraints:**
 - `decimal.js` for all £ arithmetic in generator.ts — never native JS floats
