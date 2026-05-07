@@ -13,6 +13,7 @@ import { BlendSummary } from '@/app/dashboard/components/BlendSummary'
 import { generatePlan } from '@/lib/plan/generator'
 import { upsertBuyList } from '@/app/dashboard/plan-actions'
 import { PlanTab } from '@/app/dashboard/components/PlanTab'
+import { AnimatedTabPanel } from '@/app/dashboard/components/AnimatedTabPanel'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
@@ -284,8 +285,8 @@ export default async function DashboardPage({
   ]
 
   return (
-    <main className="min-h-screen bg-zinc-900 px-6 py-12">
-      <div className="max-w-2xl mx-auto">
+    <main className="min-h-screen bg-base px-6 py-12">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -295,7 +296,7 @@ export default async function DashboardPage({
           <form action={signOut}>
             <button
               type="submit"
-              className="px-4 py-2 min-h-[44px] border border-zinc-700 rounded-md text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              className="px-4 py-2 min-h-[44px] border border-border rounded-md text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
             >
               Sign out
             </button>
@@ -303,9 +304,9 @@ export default async function DashboardPage({
         </div>
 
         {/* Content card */}
-        <div className="bg-zinc-800 border border-zinc-700 rounded-xl">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl">
           {/* Tab bar */}
-          <div className="border-b border-zinc-700 mb-0">
+          <div className="border-b border-border mb-0">
             <nav className="flex px-8 pt-6" aria-label="Dashboard tabs">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id
@@ -316,8 +317,8 @@ export default async function DashboardPage({
                     aria-current={isActive ? 'page' : undefined}
                     className={
                       isActive
-                        ? 'px-4 py-2 text-sm font-semibold text-white border-b-2 border-indigo-500 -mb-px focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-t-sm'
-                        : 'px-4 py-2 text-sm font-semibold text-zinc-400 hover:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-t-sm'
+                        ? 'px-4 py-2 text-sm font-semibold text-accent border-b-2 border-accent -mb-px focus:outline-none focus:ring-2 focus:ring-accent rounded-t-sm'
+                        : 'px-4 py-2 text-sm font-semibold text-zinc-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent rounded-t-sm'
                     }
                   >
                     {tab.label}
@@ -329,33 +330,35 @@ export default async function DashboardPage({
 
           {/* Tab panels */}
           <div className="p-8 pt-6">
-            {activeTab === 'portfolio' && (
-              <PortfolioTab
-                profile={profile}
-                holdings={holdings}
-              />
-            )}
-            {activeTab === 'creators' && (
-              <>
-                <CreatorsTab
-                  creators={creators}
-                  initialTracked={Array.from(lastRefreshedMap.keys())}
-                  lastRefreshedMap={lastRefreshedMap}
-                  transcriptsByCreator={transcriptsByCreator}
-                  strategiesByCreator={strategiesByCreator}
-                  userCreatorMap={userCreatorMap}
+            <AnimatedTabPanel tabKey={activeTab}>
+              {activeTab === 'portfolio' && (
+                <PortfolioTab
+                  profile={profile}
+                  holdings={holdings}
                 />
-                <BlendSummary blend={blend} creatorNameMap={creatorNameMap} />
-              </>
-            )}
-            {activeTab === 'plan' && (
-              <PlanTab
-                portfolio={holdings}
-                strategy={blend}
-                isaRemaining={isaRemainingNumber}
-                initialBudget={monthlyBudgetNumber}
-              />
-            )}
+              )}
+              {activeTab === 'creators' && (
+                <>
+                  <CreatorsTab
+                    creators={creators}
+                    initialTracked={Array.from(lastRefreshedMap.keys())}
+                    lastRefreshedMap={lastRefreshedMap}
+                    transcriptsByCreator={transcriptsByCreator}
+                    strategiesByCreator={strategiesByCreator}
+                    userCreatorMap={userCreatorMap}
+                  />
+                  <BlendSummary blend={blend} creatorNameMap={creatorNameMap} />
+                </>
+              )}
+              {activeTab === 'plan' && (
+                <PlanTab
+                  portfolio={holdings}
+                  strategy={blend}
+                  isaRemaining={isaRemainingNumber}
+                  initialBudget={monthlyBudgetNumber}
+                />
+              )}
+            </AnimatedTabPanel>
           </div>
         </div>
       </div>
