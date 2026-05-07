@@ -50,7 +50,7 @@ Dashboard Plan tab wired end-to-end: three client components (BuyListTable, Cont
 |------|------|--------|-------|
 | 1 | Create BuyListTable, ContributionCalculator, PlanTab | d290c89 | BuyListTable.tsx, ContributionCalculator.tsx, PlanTab.tsx |
 | 2 | Extend page.tsx — Plan tab, always-fetch, generation + upsert | 87ae5fc | page.tsx |
-| 3 | Human verify — smoke test | checkpoint | awaiting |
+| 3 | Human verify — smoke test | verified | — |
 
 ## What Was Built
 
@@ -80,7 +80,14 @@ Thin `'use client'` wrapper. Renders heading + `ContributionCalculator` with ser
 
 ## Deviations from Plan
 
-None — plan executed exactly as written.
+### Post-verification Refactor
+
+**[Rule 1 - Bug] Simplified category model from 8 categories to 3**
+- **Found during:** Task 3 (human verify)
+- **Issue:** 8-category asset allocation model (Tech, Dividends, Bonds, etc.) did not match actual portfolio use; UI rendered empty/mismatched categories
+- **Fix:** Replaced 8-category model with Index Funds / Stocks / Cash throughout
+- **Files modified:** multiple (schema, types, generator, components)
+- **Commit:** 2e1150d
 
 ## Verification
 
@@ -90,7 +97,7 @@ None — plan executed exactly as written.
 - `grep "useMemo" ContributionCalculator.tsx` — 1 match
 - `grep "generatePlan" ContributionCalculator.tsx` — 1 match
 - `grep "isFillTicker.*row.is_fill_ticker" page.tsx` — 1 match
-- Human smoke test: awaiting (Task 3 checkpoint)
+- Human smoke test: PASSED (user verified all scenarios A-D)
 
 ## Known Stubs
 
