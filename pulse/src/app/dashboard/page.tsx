@@ -15,12 +15,13 @@ import { upsertBuyList } from '@/app/dashboard/plan-actions'
 import { PlanTab } from '@/app/dashboard/components/PlanTab'
 import { AnimatedTabPanel } from '@/app/dashboard/components/AnimatedTabPanel'
 import { GettingStartedGuide } from '@/components/GettingStartedGuide'
+import { ISATab } from '@/app/dashboard/isa-tab'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
 }
 
-type Tab = 'portfolio' | 'plan'
+type Tab = 'portfolio' | 'isa' | 'plan'
 
 export default async function DashboardPage({
   searchParams,
@@ -34,7 +35,7 @@ export default async function DashboardPage({
 
   const params = await searchParams
   const rawTab = params.tab ?? 'portfolio'
-  const activeTab: Tab = ['portfolio', 'plan'].includes(rawTab)
+  const activeTab: Tab = ['portfolio', 'isa', 'plan'].includes(rawTab)
     ? (rawTab as Tab)
     : 'portfolio'
 
@@ -300,6 +301,7 @@ export default async function DashboardPage({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
+    { id: 'isa', label: 'ISA' },
     { id: 'plan', label: 'Plan' },
   ]
 
@@ -372,7 +374,13 @@ export default async function DashboardPage({
                   holdings={holdingsPlain}
                 />
               )}
-{activeTab === 'plan' && (
+              {activeTab === 'isa' && (
+                <ISATab
+                  contributions={contributions}
+                  currentTaxYear={currentTaxYear}
+                />
+              )}
+              {activeTab === 'plan' && (
                 <PlanTab
                   portfolio={holdingsPlain}
                   strategy={blend}
