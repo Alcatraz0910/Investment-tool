@@ -76,7 +76,7 @@ describe('BuyListTable (UI-02)', () => {
     render(<BuyListTable result={buyListResult} />)
     const vwrlButton = screen.getByRole('button', { name: /VWRL/i })
     fireEvent.click(vwrlButton)
-    expect(screen.getByText(/closes 12.5% of your Index Funds gap/i)).toBeTruthy()
+    expect(screen.getByText('This purchase closes 12.5% of your Index Funds gap.')).toBeInTheDocument()
   })
 
   it('expanded accordion shows category and closes X% text', () => {
