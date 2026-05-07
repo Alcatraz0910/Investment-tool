@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-last_updated: "2026-05-07T20:00:00.000Z"
+status: In Progress
+last_updated: "2026-05-07T21:00:00.000Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 30
-  completed_plans: 24
-  percent: 83
+  completed_plans: 25
+  percent: 85
 ---
 
 # Pulse — Project State
@@ -21,14 +21,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 6 Dashboard UI — 6 plans ready, execute with `/gsd-execute-phase 6`
+**Current focus:** Phase 6 Dashboard UI — Wave 1 (06-01 design system)
 
 ## Current Phase
 
-Phase 6: Dashboard UI — **Planned** (2026-05-07) — 6 plans, 5 waves
+Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 
 **Last activity:** 2026-05-07
-**Resume file:** `.planning/phases/06-dashboard-ui/06-00-PLAN.md`
+**Resume file:** `.planning/phases/06-dashboard-ui/06-01-PLAN.md`
 
 ## Phase Status
 
@@ -53,6 +53,7 @@ Phase 6: Dashboard UI — **Planned** (2026-05-07) — 6 plans, 5 waves
 - UK tax year (6 Apr – 5 Apr) for ISA allowance tracking
 - Pinecone metadata must include `text` field for RAG context string construction (Pitfall 1 fixed in 04-01)
 - vitest globals:true avoids redundant imports; @/ alias wired to ./src in vitest.config.ts
+- vitest environment changed node→jsdom for RTL DOM rendering; setupFiles imports jest-dom matchers globally
 - contradiction.ts implemented fully in 04-02 (not deferred to 04-03) — extractor.ts import resolved
 - Module-level vi.fn() required for mockResolvedValueOnce in vitest module mock factories
 - Open Question 3 resolved: blender excludes weight from BOTH numerator and denominator when creator has no allocation for a category
