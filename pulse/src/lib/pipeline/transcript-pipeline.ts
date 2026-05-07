@@ -283,9 +283,9 @@ export async function runRefreshPipeline(
           },
         }))
         for (let b = 0; b < records.length; b += PUSH_BATCH) {
-          // Pinecone SDK v7: namespace.upsert accepts records array directly
+          // Pinecone SDK v7: upsert expects { records: [...] }, not a bare array
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (ns as any).upsert(records.slice(b, b + PUSH_BATCH))
+          await (ns as any).upsert({ records: records.slice(b, b + PUSH_BATCH) })
         }
 
         // Mark embedded in Supabase — application-layer idempotency gate (D-07)

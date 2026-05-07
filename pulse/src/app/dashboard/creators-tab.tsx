@@ -112,15 +112,15 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
                         lastRefreshedAt={lastRefreshedMap.get(creator.id) ?? null}
                       />
                     )}
-                    {tracked.has(creator.id) && (
-                      <TranscriptList
-                        creatorId={creator.id}
-                        creatorName={creator.displayName}
-                        transcripts={transcriptsByCreator.get(creator.id) ?? []}
-                      />
-                    )}
                   </div>
                 </div>
+                {tracked.has(creator.id) && (
+                  <TranscriptList
+                    creatorId={creator.id}
+                    creatorName={creator.displayName}
+                    transcripts={transcriptsByCreator.get(creator.id) ?? []}
+                  />
+                )}
               </li>
             )
           })}
