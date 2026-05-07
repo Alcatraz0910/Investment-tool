@@ -1,16 +1,20 @@
 'use client'
 import { useState, useTransition, useActionState, startTransition } from 'react'
-import type { Creator } from '@/types'
+import type { Creator, Transcript } from '@/types'
 import { trackCreator, untrackCreator, addCustomCreator } from '@/app/dashboard/creator-actions'
+import RefreshButton from './refresh-button'
+import TranscriptList from './transcript-list'
 
 interface CreatorsTabProps {
   creators: Creator[]
-  trackedCreatorIds: Set<string>
+  initialTracked: string[]
+  lastRefreshedMap: Map<string, Date | null>
+  transcriptsByCreator: Map<string, Transcript[]>
 }
 
-export function CreatorsTab({ creators, trackedCreatorIds: initialTracked }: CreatorsTabProps) {
+export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transcriptsByCreator }: CreatorsTabProps) {
   // Optimistic tracking state: mirror server state, update immediately on toggle
-  const [tracked, setTracked] = useState<Set<string>>(new Set(initialTracked))
+  const [tracked, setTracked] = useState<Set<string>>(new Set<string>(initialTracked))
   const [isPending, startT] = useTransition()
   const [toggleError, setToggleError] = useState<string | null>(null)
 
@@ -79,25 +83,44 @@ export function CreatorsTab({ creators, trackedCreatorIds: initialTracked }: Cre
             return (
               <li
                 key={creator.id}
-                className="flex items-center justify-between py-3 border-b border-zinc-700/50"
+                className="flex flex-col py-3 border-b border-zinc-700/50"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-white">{creator.displayName}</p>
-                  <p className="text-sm text-zinc-400 truncate max-w-[200px]">{creator.channelUrl}</p>
+                {/* Top row: creator info + action buttons */}
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-semibold text-white">{creator.displayName}</p>
+                    <p className="text-sm text-zinc-400 truncate max-w-[200px]">{creator.channelUrl}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggle(creator.id)}
+                      disabled={isPending}
+                      aria-pressed={isTracked}
+                      className={
+                        isTracked
+                          ? 'text-sm font-semibold text-indigo-400 border border-indigo-500/50 rounded-md px-3 min-h-[36px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                          : 'text-sm font-semibold text-zinc-400 border border-zinc-700 rounded-md px-3 min-h-[36px] hover:border-indigo-500 hover:text-indigo-400 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                      }
+                    >
+                      {isTracked ? '✓ Tracking' : 'Track'}
+                    </button>
+                    {tracked.has(creator.id) && (
+                      <RefreshButton
+                        creatorId={creator.id}
+                        creatorName={creator.displayName}
+                        lastRefreshedAt={lastRefreshedMap.get(creator.id) ?? null}
+                      />
+                    )}
+                    {tracked.has(creator.id) && (
+                      <TranscriptList
+                        creatorId={creator.id}
+                        creatorName={creator.displayName}
+                        transcripts={transcriptsByCreator.get(creator.id) ?? []}
+                      />
+                    )}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleToggle(creator.id)}
-                  disabled={isPending}
-                  aria-pressed={isTracked}
-                  className={
-                    isTracked
-                      ? 'text-sm font-semibold text-indigo-400 border border-indigo-500/50 rounded-md px-3 min-h-[36px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-                      : 'text-sm font-semibold text-zinc-400 border border-zinc-700 rounded-md px-3 min-h-[36px] hover:border-indigo-500 hover:text-indigo-400 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-                  }
-                >
-                  {isTracked ? '✓ Tracking' : 'Track'}
-                </button>
               </li>
             )
           })}
