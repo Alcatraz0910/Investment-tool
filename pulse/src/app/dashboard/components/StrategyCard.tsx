@@ -33,9 +33,11 @@ export function StrategyCard({ strategy, lastRefreshedAt }: StrategyCardProps) {
     )
   }
 
-  const categories = Object.entries(strategy.allocation).sort(
-    ([, a], [, b]) => (b ?? 0) - (a ?? 0),
-  )
+  const rawEntries = Object.entries(strategy.allocation).filter(([, v]) => (v ?? 0) > 0)
+  const total = rawEntries.reduce((s, [, v]) => s + (v ?? 0), 0)
+  const categories = rawEntries
+    .map(([cat, pct]) => [cat, total > 0 ? Math.round((pct ?? 0) / total * 100) : 0] as const)
+    .sort(([, a], [, b]) => b - a)
 
   return (
     <div className="mt-3 pt-3 border-t border-white/10">
@@ -67,6 +69,9 @@ export function StrategyCard({ strategy, lastRefreshedAt }: StrategyCardProps) {
             <span className="text-accent font-medium">{pct}%</span>
           </span>
         ))}
+        {total > 0 && Math.abs(total - 100) > 5 && (
+          <span className="text-xs text-zinc-500 italic">(normalised to 100%)</span>
+        )}
       </div>
 
       {/* Contradiction diff badge (STRAT-04) */}

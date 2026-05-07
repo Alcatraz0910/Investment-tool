@@ -100,16 +100,12 @@ export function RoadmapView({ holdings, blend, monthlyBudget }: Props) {
 
   return (
     <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 mt-6">
-      <div className="flex items-baseline gap-2 mb-1">
-        <h3 className="text-base font-semibold text-white">12-Month Roadmap</h3>
-        {gapCategory && (
-          <span className="text-xs text-zinc-500">
-            · tracking £ in {gapCategory}
-          </span>
-        )}
-      </div>
-      <p className="text-xs text-zinc-500 mb-4">
-        How contributions grow your {gapCategory || 'portfolio'} under each allocation strategy.
+      <h3 className="text-base font-semibold text-white mb-1">12-Month Roadmap</h3>
+      <p className="text-xs text-zinc-400 mb-4">
+        {gapCategory
+          ? <>Tracking <span className="text-accent">{gapCategory}</span> — the category with the largest gap between your current mix and the creator strategy.</>
+          : 'How contributions grow your portfolio under each allocation strategy.'
+        }
       </p>
 
       {/* Recharts LineChart — ResponsiveContainer requires explicit height (UI-SPEC: 300px) */}
