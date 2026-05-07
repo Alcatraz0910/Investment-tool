@@ -21,14 +21,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 6 Dashboard UI — context gathered, ready for planning
+**Current focus:** Phase 6 Dashboard UI — UI-SPEC approved, ready for planning
 
 ## Current Phase
 
-Phase 6: Dashboard UI — **Context gathered** (2026-05-07)
+Phase 6: Dashboard UI — **UI-SPEC approved** (2026-05-07)
 
 **Last activity:** 2026-05-07
-**Resume file:** `.planning/phases/06-dashboard-ui/06-CONTEXT.md`
+**Resume file:** `.planning/phases/06-dashboard-ui/06-UI-SPEC.md`
 
 ## Phase Status
 
