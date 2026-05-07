@@ -40,40 +40,49 @@ function SingleSlider({
   const [value, setValue] = useState(initialValue)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const handleRelease = async () => {
     setSaving(true)
+    setSaveError(null)
     try {
       await onSave(value)
       setSaved(true)
       setTimeout(() => setSaved(false), 1500)
+    } catch {
+      setSaveError('Save failed — try again')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-zinc-400 w-32 shrink-0">{label}</span>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
-        onMouseUp={handleRelease}
-        onTouchEnd={handleRelease}
-        disabled={saving}
-        aria-label={`${label} trust weight: ${value}%`}
-        className="flex-1 accent-accent disabled:opacity-60"
-      />
-      <span className="text-sm text-zinc-400 w-8 text-right">{value}%</span>
-      {saved && (
-        <span className="text-green-400 text-sm" aria-label="Saved">
-          ✓
-        </span>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-zinc-400 w-32 shrink-0">{label}</span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={value}
+          onChange={(e) => setValue(Number(e.target.value))}
+          onMouseUp={handleRelease}
+          onTouchEnd={handleRelease}
+          disabled={saving}
+          aria-label={`${label} trust weight: ${value}%`}
+          className="flex-1 accent-accent disabled:opacity-60"
+        />
+        <span className="text-sm text-zinc-400 w-8 text-right">{value}%</span>
+        {saved && (
+          <span className="text-green-400 text-sm" aria-label="Saved">
+            ✓
+          </span>
+        )}
+        {!saved && <span className="w-4" />}
+      </div>
+      {saveError && (
+        <span className="text-red-400 text-xs pl-32">{saveError}</span>
       )}
-      {!saved && <span className="w-4" />}
     </div>
   )
 }
