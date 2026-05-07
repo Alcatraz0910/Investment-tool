@@ -93,7 +93,14 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-semibold text-white">{creator.displayName}</p>
-                    <p className="text-sm text-zinc-400 truncate max-w-[200px]">{creator.channelUrl}</p>
+                    <a
+                      href={creator.channelUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-zinc-500 hover:text-indigo-400 transition-colors truncate block"
+                    >
+                      {creator.channelUrl.replace('https://www.youtube.com/', 'youtube.com/')}
+                    </a>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
