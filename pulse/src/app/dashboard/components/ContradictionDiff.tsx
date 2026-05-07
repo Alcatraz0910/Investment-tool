@@ -27,6 +27,7 @@ interface ContradictionDiffProps {
 
 function parseNoteToShifts(note: string): ShiftRow[] {
   // Note format from contradiction.ts: "Tech: 40% → 66% (+26%); Dividends: 30% → 15% (-15%)"
+  if (note.length > 2000) return []  // reject pathologically long AI output
   return note
     .split('; ')
     .map((segment) => {
@@ -63,6 +64,13 @@ export function ContradictionDiff({ contradictionNote }: ContradictionDiffProps)
         <span>Strategy conflict detected</span>
         <span className="text-amber-400/60 ml-1">{expanded ? '▲' : '▼'}</span>
       </button>
+
+      {/* Fallback when note is unparseable or too long */}
+      {expanded && shifts.length === 0 && (
+        <p className="mt-2 text-xs text-amber-400/80 px-1">
+          Strategy shift details unavailable.
+        </p>
+      )}
 
       {/* Expandable diff table */}
       {expanded && shifts.length > 0 && (
