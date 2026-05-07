@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { runRefreshPipeline } from '@/lib/pipeline/transcript-pipeline'
+import { extractCreatorStrategy } from '@/lib/strategy/extractor'
 
 /**
  * Vercel function timeout — required for transcript pipeline (30-120s).
@@ -51,6 +52,20 @@ export async function POST(
 
   try {
     const result = await runRefreshPipeline(creatorId, user.id)
+
+    // D-01: auto-extract at end of Refresh (no separate button)
+    // D-02: non-blocking — extraction failure does not fail the Refresh
+    let extractionStatus: 'ok' | 'warning' = 'ok'
+    let extractionWarning: string | undefined
+
+    try {
+      await extractCreatorStrategy(creatorId, user.id)
+    } catch (extractionErr) {
+      console.warn('[refresh] extraction failed (non-blocking):', extractionErr)
+      extractionStatus = 'warning'
+      extractionWarning = 'Transcripts refreshed. Strategy extraction failed — try again later.'
+    }
+
     return NextResponse.json(
       {
         status: 'done',
@@ -58,6 +73,8 @@ export async function POST(
         fetched: result.fetched,
         total: result.total,
         pending: result.pending,
+        extractionStatus,
+        ...(extractionWarning ? { extractionWarning } : {}),
       },
       { status: 200 },
     )
