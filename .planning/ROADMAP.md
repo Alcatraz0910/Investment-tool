@@ -128,7 +128,7 @@
 - [x] 04-04-PLAN.md — Refresh route integration (non-blocking extraction, D-01/02) + saveCreatorWeight server action (BLEND-01)
 
 **Wave 3** *(blocked on 04-04)*
-- [ ] 04-05-PLAN.md — Frontend: TrustWeightSlider, ContradictionDiff, StrategyCard, BlendSummary; extend creators-tab.tsx + page.tsx
+- [x] 04-05-PLAN.md — Frontend: TrustWeightSlider, ContradictionDiff, StrategyCard, BlendSummary; extend creators-tab.tsx + page.tsx
 
 **Success Criteria:**
 1. After a creator Refresh, a new strategy snapshot is generated with category allocations, confidence score, and ≥1 source video citation
