@@ -56,7 +56,7 @@ export default async function DashboardPage({
   if (activeTab === 'portfolio') {
     const { data: rows } = await supabase
       .from('holdings')
-      .select('id, user_id, ticker, category, quantity, current_value, created_at, updated_at')
+      .select('id, user_id, ticker, category, quantity, current_value, is_fill_ticker, created_at, updated_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -67,6 +67,7 @@ export default async function DashboardPage({
       category: row.category,
       quantity: new Decimal(row.quantity),
       currentValue: new Decimal(row.current_value),
+      isFillTicker: row.is_fill_ticker ?? false,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
     }))

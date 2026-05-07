@@ -101,6 +101,7 @@ export interface Holding {
   category: AssetCategory
   quantity: Decimal           // Number of shares/units
   currentValue: Decimal       // £ value — wrap DB NUMERIC in new Decimal() on read
+  isFillTicker: boolean       // TRUE = preferred buy target for this category (D-01, Phase 5)
   createdAt: Date
   updatedAt: Date
 }
@@ -200,6 +201,7 @@ export interface BuyListItem {
   ticker: string
   category: AssetCategory
   amountGbp: Decimal          // £ — never number (PLAN-01 decimal.js constraint)
+  allocationGapPct: number    // % of category gap this purchase partially closes (PLAN-02)
   rationale: string           // Creator-derived rationale (not "advice" — CLAUDE.md)
 }
 
