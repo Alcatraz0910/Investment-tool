@@ -6,7 +6,6 @@ import type { UserProfile, Holding, Creator, ISAContribution, Transcript, Creato
 import { Decimal } from '@/types'
 import { PortfolioTab } from '@/components/PortfolioTab'
 import { CreatorsTab } from '@/app/dashboard/creators-tab'
-import { ISATab } from '@/app/dashboard/isa-tab'
 import { getCurrentTaxYear } from '@/lib/tax-year'
 import { blendStrategies } from '@/lib/strategy/blender'
 import type { BlendedStrategy, BlendInput } from '@/lib/strategy/blender'
@@ -19,7 +18,7 @@ export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
 }
 
-type Tab = 'portfolio' | 'creators' | 'isa' | 'plan'
+type Tab = 'portfolio' | 'creators' | 'plan'
 
 export default async function DashboardPage({
   searchParams,
@@ -33,7 +32,7 @@ export default async function DashboardPage({
 
   const params = await searchParams
   const rawTab = params.tab ?? 'portfolio'
-  const activeTab: Tab = ['portfolio', 'creators', 'isa', 'plan'].includes(rawTab)
+  const activeTab: Tab = ['portfolio', 'creators', 'plan'].includes(rawTab)
     ? (rawTab as Tab)
     : 'portfolio'
 
@@ -281,7 +280,6 @@ export default async function DashboardPage({
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
     { id: 'creators', label: 'Creators' },
-    { id: 'isa', label: 'ISA' },
     { id: 'plan', label: 'Plan' },
   ]
 
@@ -349,9 +347,6 @@ export default async function DashboardPage({
                 />
                 <BlendSummary blend={blend} creatorNameMap={creatorNameMap} />
               </>
-            )}
-            {activeTab === 'isa' && (
-              <ISATab contributions={contributions} currentTaxYear={currentTaxYear} />
             )}
             {activeTab === 'plan' && (
               <PlanTab

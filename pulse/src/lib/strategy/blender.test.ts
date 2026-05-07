@@ -39,13 +39,13 @@ describe('blendStrategies (BLEND-02)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 100),
-          latestStrategy: makeStrategy('c1', { Tech: 60, Dividends: 20 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60, Stocks: 20 }),
         },
       ],
     }
     const result = blendStrategies(input)
-    expect(result.unified.Tech).toBeCloseTo(60)
-    expect(result.unified.Dividends).toBeCloseTo(20)
+    expect(result.unified['Index Funds']).toBeCloseTo(60)
+    expect(result.unified.Stocks).toBeCloseTo(20)
   })
 
   it('two creators equal weight: unified is simple average of their allocations', () => {
@@ -53,17 +53,17 @@ describe('blendStrategies (BLEND-02)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 50),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 50),
-          latestStrategy: makeStrategy('c2', { Tech: 40 }),
+          latestStrategy: makeStrategy('c2', { 'Index Funds': 40 }),
         },
       ],
     }
     const result = blendStrategies(input)
     // (60×50 + 40×50) / (50+50) = 5000/100 = 50
-    expect(result.unified.Tech).toBeCloseTo(50)
+    expect(result.unified['Index Funds']).toBeCloseTo(50)
   })
 
   it('two creators unequal weight: unified is weighted average per REQUIREMENTS.md formula', () => {
@@ -71,17 +71,17 @@ describe('blendStrategies (BLEND-02)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 80),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 20),
-          latestStrategy: makeStrategy('c2', { Tech: 20 }),
+          latestStrategy: makeStrategy('c2', { 'Index Funds': 20 }),
         },
       ],
     }
     const result = blendStrategies(input)
     // (60×80 + 20×20) / (80+20) = (4800+400)/100 = 52
-    expect(result.unified.Tech).toBeCloseTo(52)
+    expect(result.unified['Index Funds']).toBeCloseTo(52)
   })
 
   it('creator with trustWeight=0 excluded from numerator and denominator', () => {
@@ -89,17 +89,17 @@ describe('blendStrategies (BLEND-02)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 100),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 0),
-          latestStrategy: makeStrategy('c2', { Tech: 20 }),
+          latestStrategy: makeStrategy('c2', { 'Index Funds': 20 }),
         },
       ],
     }
     const result = blendStrategies(input)
     // c2 excluded (weight=0); result = 60×100/100 = 60
-    expect(result.unified.Tech).toBeCloseTo(60)
+    expect(result.unified['Index Funds']).toBeCloseTo(60)
   })
 
   it('creator with latestStrategy=null excluded entirely from blend', () => {
@@ -107,7 +107,7 @@ describe('blendStrategies (BLEND-02)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 100),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 100),
@@ -116,26 +116,26 @@ describe('blendStrategies (BLEND-02)', () => {
       ],
     }
     const result = blendStrategies(input)
-    expect(result.unified.Tech).toBeCloseTo(60)
+    expect(result.unified['Index Funds']).toBeCloseTo(60)
   })
 
   it('category absent from creator allocation: weight excluded from denominator (Open Q3)', () => {
-    // c1 has Tech=60, c2 does NOT have Tech in allocation
-    // Expected: Tech = 60×100/(100) = 60 (not 60×100/(100+100)=30)
+    // c1 has Index Funds=60, c2 does NOT have Index Funds in allocation
+    // Expected: Index Funds = 60×100/(100) = 60 (not 60×100/(100+100)=30)
     const input: BlendInput = {
       creators: [
         {
           userCreator: makeUserCreator('c1', 100),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 100),
-          latestStrategy: makeStrategy('c2', { Dividends: 40 }),  // no Tech
+          latestStrategy: makeStrategy('c2', { Stocks: 40 }),  // no Index Funds
         },
       ],
     }
     const result = blendStrategies(input)
-    expect(result.unified.Tech).toBeCloseTo(60)
+    expect(result.unified['Index Funds']).toBeCloseTo(60)
   })
 
   it('all weights=0 for a category: category absent from unified output (no NaN)', () => {
@@ -143,12 +143,12 @@ describe('blendStrategies (BLEND-02)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 0),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
       ],
     }
     const result = blendStrategies(input)
-    expect(result.unified.Tech).toBeUndefined()
+    expect(result.unified['Index Funds']).toBeUndefined()
     expect(Object.values(result.unified).every((v) => !Number.isNaN(v))).toBe(true)
   })
 })
@@ -159,11 +159,11 @@ describe('blendStrategies influence (BLEND-03)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 60),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 40),
-          latestStrategy: makeStrategy('c2', { Tech: 40 }),
+          latestStrategy: makeStrategy('c2', { 'Index Funds': 40 }),
         },
       ],
     }
@@ -178,11 +178,11 @@ describe('blendStrategies influence (BLEND-03)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 60),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 40),
-          latestStrategy: makeStrategy('c2', { Tech: 40 }),
+          latestStrategy: makeStrategy('c2', { 'Index Funds': 40 }),
         },
       ],
     }
@@ -196,7 +196,7 @@ describe('blendStrategies influence (BLEND-03)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 100),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 100),
@@ -213,11 +213,11 @@ describe('blendStrategies influence (BLEND-03)', () => {
       creators: [
         {
           userCreator: makeUserCreator('c1', 100),
-          latestStrategy: makeStrategy('c1', { Tech: 60 }),
+          latestStrategy: makeStrategy('c1', { 'Index Funds': 60 }),
         },
         {
           userCreator: makeUserCreator('c2', 0),
-          latestStrategy: makeStrategy('c2', { Tech: 40 }),
+          latestStrategy: makeStrategy('c2', { 'Index Funds': 40 }),
         },
       ],
     }

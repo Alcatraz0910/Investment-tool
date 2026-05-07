@@ -2,7 +2,7 @@
  * TrustWeightSlider — Phase 4 (D-08, D-09, D-10, BLEND-01).
  *
  * Shows a global trust weight slider (0–100%) for a creator.
- * "Customize per category" toggle reveals 8 per-category sliders.
+ * "Customize per category" toggle reveals 3 per-category sliders.
  * Auto-saves on onMouseUp / onTouchEnd. Green tick confirmation (1.5s).
  *
  * Client component — interactive slider.
@@ -12,14 +12,9 @@ import { useState } from 'react'
 import { saveCreatorWeight } from '@/app/dashboard/actions'
 
 const CATEGORIES = [
-  'Tech',
-  'Dividends',
-  'Bonds',
-  'Commodities',
+  'Index Funds',
+  'Stocks',
   'Cash',
-  'Emerging Markets',
-  'Small Cap',
-  'REITs',
 ] as const
 
 interface CategoryWeight {

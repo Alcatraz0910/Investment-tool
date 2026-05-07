@@ -23,14 +23,9 @@ import type { AllocationMap, AssetCategory, UserCreator, UserCreatorCategoryWeig
 
 // The 8 standard asset categories (matches AssetCategory type and DB CHECK constraint)
 const CATEGORIES: AssetCategory[] = [
-  'Tech',
-  'Dividends',
-  'Bonds',
-  'Commodities',
+  'Index Funds',
+  'Stocks',
   'Cash',
-  'Emerging Markets',
-  'Small Cap',
-  'REITs',
 ]
 
 export interface BlendedStrategy {

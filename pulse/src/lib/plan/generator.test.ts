@@ -35,13 +35,13 @@ const makeHolding = (
 })
 
 const simpleStrategy: BlendedStrategy = {
-  unified: { Tech: 60, Dividends: 40 },
+  unified: { 'Index Funds': 60, Stocks: 40 },
   influence: {},
 }
 
 const simpleHoldings: HoldingWithFillTicker[] = [
-  makeHolding('VUSA', 'Tech', 400, true),
-  makeHolding('VHYL', 'Dividends', 100, true),
+  makeHolding('VUSA', 'Index Funds', 400, true),
+  makeHolding('VHYL', 'Stocks', 100, true),
 ]
 
 // ---------------------------------------------------------------------------
@@ -129,10 +129,10 @@ describe('buy-list normal case (PLAN-01)', () => {
   it('returns empty items array when portfolio already at target', () => {
     // Holdings exactly match strategy allocation
     const holdings = [
-      makeHolding('VUSA', 'Tech', 600, true),
-      makeHolding('VHYL', 'Dividends', 400, true),
+      makeHolding('VUSA', 'Index Funds', 600, true),
+      makeHolding('VHYL', 'Stocks', 400, true),
     ]
-    const result = generatePlan(holdings, 100, { unified: { Tech: 60, Dividends: 40 }, influence: {} }, 2000)
+    const result = generatePlan(holdings, 100, { unified: { 'Index Funds': 60, Stocks: 40 }, influence: {} }, 2000)
     expect(result.type).toBe('buy-list')
     if (result.type !== 'buy-list') return
     // portfolioTotal=1000, effectiveBudget=100, totalAfter=1100
@@ -169,7 +169,7 @@ describe('allocationGapPct correctness (PLAN-02)', () => {
 describe('updated strategy produces updated items (PLAN-03)', () => {
   it('switching to 80/20 strategy changes item amounts', () => {
     const strategy8020: BlendedStrategy = {
-      unified: { Tech: 80, Dividends: 20 },
+      unified: { 'Index Funds': 80, Stocks: 20 },
       influence: {},
     }
     const result = generatePlan(simpleHoldings, 500, strategy8020, 2000)
@@ -230,18 +230,18 @@ describe('rationale language (PLAN-04)', () => {
 describe('GapRow: category with holdings but no fill ticker (D-03)', () => {
   it('emits GapRow with reason=no-fill-ticker when holding has isFillTicker=false', () => {
     const holdings = [
-      makeHolding('VUSA', 'Tech', 400, false),    // not fill
-      makeHolding('VHYL', 'Dividends', 100, true), // fill
+      makeHolding('VUSA', 'Index Funds', 400, false),    // not fill
+      makeHolding('VHYL', 'Stocks', 100, true),          // fill
     ]
     const result = generatePlan(holdings, 500, simpleStrategy, 2000)
     expect(result.type).toBe('buy-list')
     if (result.type !== 'buy-list') return
-    const techGap = result.gapRows.find(g => g.category === 'Tech')
-    expect(techGap).toBeDefined()
-    expect(techGap?.reason).toBe('no-fill-ticker')
-    // No BuyListItem for Tech
-    const techItem = result.items.find(i => i.category === 'Tech')
-    expect(techItem).toBeUndefined()
+    const idxGap = result.gapRows.find(g => g.category === 'Index Funds')
+    expect(idxGap).toBeDefined()
+    expect(idxGap?.reason).toBe('no-fill-ticker')
+    // No BuyListItem for Index Funds
+    const idxItem = result.items.find(i => i.category === 'Index Funds')
+    expect(idxItem).toBeUndefined()
   })
 })
 
@@ -252,21 +252,21 @@ describe('GapRow: category with holdings but no fill ticker (D-03)', () => {
 describe('GapRow: category in strategy with zero holdings (D-04)', () => {
   it('emits GapRow with reason=no-holdings for category with no holdings at all', () => {
     const holdings = [
-      makeHolding('VHYL', 'Dividends', 100, true), // only Dividends
+      makeHolding('VHYL', 'Stocks', 100, true), // only Stocks
     ]
     const strategy: BlendedStrategy = {
-      unified: { Tech: 60, Dividends: 40 },
+      unified: { 'Index Funds': 60, Stocks: 40 },
       influence: {},
     }
     const result = generatePlan(holdings, 500, strategy, 2000)
     expect(result.type).toBe('buy-list')
     if (result.type !== 'buy-list') return
-    const techGap = result.gapRows.find(g => g.category === 'Tech')
-    expect(techGap).toBeDefined()
-    expect(techGap?.reason).toBe('no-holdings')
-    // No BuyListItem for Tech
-    const techItem = result.items.find(i => i.category === 'Tech')
-    expect(techItem).toBeUndefined()
+    const idxGap = result.gapRows.find(g => g.category === 'Index Funds')
+    expect(idxGap).toBeDefined()
+    expect(idxGap?.reason).toBe('no-holdings')
+    // No BuyListItem for Index Funds
+    const idxItem = result.items.find(i => i.category === 'Index Funds')
+    expect(idxItem).toBeUndefined()
   })
 })
 
@@ -277,8 +277,8 @@ describe('GapRow: category in strategy with zero holdings (D-04)', () => {
 describe('no-fill-tickers result (D-08)', () => {
   it('returns no-fill-tickers when ALL holdings have isFillTicker=false', () => {
     const holdings = [
-      makeHolding('VUSA', 'Tech', 400, false),
-      makeHolding('VHYL', 'Dividends', 100, false),
+      makeHolding('VUSA', 'Index Funds', 400, false),
+      makeHolding('VHYL', 'Stocks', 100, false),
     ]
     const result = generatePlan(holdings, 500, simpleStrategy, 2000)
     expect(result.type).toBe('no-fill-tickers')
@@ -296,12 +296,12 @@ describe('rounding — last item absorbs penny difference', () => {
   it('sum of items equals effectiveBudget even with odd split', () => {
     // 3 categories to force non-round split
     const holdings = [
-      makeHolding('VUSA', 'Tech', 100, true),
-      makeHolding('VHYL', 'Dividends', 100, true),
-      makeHolding('IGLT', 'Bonds', 100, true),
+      makeHolding('VUSA', 'Index Funds', 100, true),
+      makeHolding('VHYL', 'Stocks', 100, true),
+      makeHolding('CASH', 'Cash', 100, true),
     ]
     const strategy: BlendedStrategy = {
-      unified: { Tech: 50, Dividends: 30, Bonds: 20 },
+      unified: { 'Index Funds': 50, Stocks: 30, Cash: 20 },
       influence: {},
     }
     const result = generatePlan(holdings, 100, strategy, 2000)

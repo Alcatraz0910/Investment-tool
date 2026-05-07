@@ -51,7 +51,7 @@ This project uses the Get Shit Done (GSD) planning workflow. All planning artifa
 ## Key Domain Knowledge
 
 - **Stocks & Shares ISA:** UK tax-advantaged investment account. £20,000 annual allowance per person. Tax year runs 6 April – 5 April. Contributions are not withdrawable and re-added within the same tax year (unless it's a flexible ISA).
-- **Asset allocation categories:** Tech, Dividends, Bonds, Commodities, Cash, Emerging Markets, Small Cap, REITs — use these as standard category names.
+- **Asset allocation categories:** Index Funds, Stocks, Cash — use these as standard category names.
 - **Creator strategy extraction:** Finance YouTubers rarely state explicit percentages. Claude must infer from language patterns. Always confidence-score inferences.
 - **Strategy blending:** `unified_allocation[category] = Σ(creator_allocation[category] × weight[category]) / Σ(weight[category])` — weighted average per category.
 

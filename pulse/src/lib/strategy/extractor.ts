@@ -70,7 +70,7 @@ const TOOL_DEF: Anthropic.Tool = {
           properties: {
             category: {
               type: 'string',
-              enum: ['Tech', 'Dividends', 'Bonds', 'Commodities', 'Cash', 'Emerging Markets', 'Small Cap', 'REITs'],
+              enum: ['Index Funds', 'Stocks', 'Cash'],
             },
             allocation_pct: {
               type: 'number',

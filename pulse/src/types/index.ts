@@ -16,18 +16,12 @@ export { Decimal }
 
 // ---------------------------------------------------------------------------
 // AssetCategory
-// Standard 8 categories used across holdings, strategies, and weights.
-// Must match CHECK constraints in schema.sql.
+// Standard 3 categories used across holdings, strategies, and weights.
 // ---------------------------------------------------------------------------
 export type AssetCategory =
-  | 'Tech'
-  | 'Dividends'
-  | 'Bonds'
-  | 'Commodities'
+  | 'Index Funds'
+  | 'Stocks'
   | 'Cash'
-  | 'Emerging Markets'
-  | 'Small Cap'
-  | 'REITs'
 
 // ---------------------------------------------------------------------------
 // UserProfile
@@ -173,7 +167,7 @@ export interface RefreshJob {
 // Partial<Record<...>> because not all categories need to be present.
 // ---------------------------------------------------------------------------
 export type AllocationMap = Partial<Record<AssetCategory, number>>
-// Example: { Tech: 60, Dividends: 20, Cash: 20 }
+// Example: { 'Index Funds': 60, Stocks: 20, Cash: 20 }
 
 // ---------------------------------------------------------------------------
 // CreatorStrategy

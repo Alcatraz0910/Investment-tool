@@ -4,8 +4,7 @@ import type { Holding, AssetCategory } from '@/types'
 import { addHolding, updateHolding } from '@/app/dashboard/actions'
 
 const ASSET_CATEGORIES: AssetCategory[] = [
-  'Tech', 'Dividends', 'Bonds', 'Commodities',
-  'Cash', 'Emerging Markets', 'Small Cap', 'REITs',
+  'Index Funds', 'Stocks', 'Cash',
 ]
 
 interface HoldingModalProps {
