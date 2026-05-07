@@ -189,7 +189,7 @@
 - [x] 06-01-PLAN.md — Design system: globals.css body token, page.tsx max-w-4xl + glassmorphism shell, AnimatedTabPanel tab-fade wrapper
 
 **Wave 2** *(blocked on 06-01; 06-02 and 06-04 run in parallel)*
-- [ ] 06-02-PLAN.md — Action Plan panel: BuyListTable div card list + AnimatePresence accordion + PlanTab "Your Action Plan" + ContributionCalculator controlled with budget lift
+- [x] 06-02-PLAN.md — Action Plan panel: BuyListTable div card list + AnimatePresence accordion + PlanTab "Your Action Plan" + ContributionCalculator controlled with budget lift
 - [ ] 06-04-PLAN.md — Creator cards: StrategyCard glassmorphism + lastRefreshedAt + BlendSummary + TrustWeightSlider accent + ContradictionDiff reskin + creators-tab stagger
 
 **Wave 3** *(blocked on 06-00 + 06-01 + 06-02)*

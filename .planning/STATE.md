@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In Progress
-last_updated: "2026-05-07T21:00:00.000Z"
+last_updated: "2026-05-07T22:00:00.000Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 30
-  completed_plans: 26
-  percent: 87
+  completed_plans: 27
+  percent: 90
 ---
 
 # Pulse — Project State
@@ -21,14 +21,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-06)
 
 **Core value:** Given a monthly budget and a creator's strategy, tell the user exactly what to buy this month to move their portfolio toward that strategy — updated automatically whenever the creator's stance changes.
 
-**Current focus:** Phase 6 Dashboard UI — Wave 2 (06-02 / 06-04 in parallel)
+**Current focus:** Phase 6 Dashboard UI — Wave 2 complete; Wave 3 (06-03 / 06-04) next
 
 ## Current Phase
 
 Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 
 **Last activity:** 2026-05-07
-**Resume file:** `.planning/phases/06-dashboard-ui/06-02-PLAN.md`
+**Resume file:** `.planning/phases/06-dashboard-ui/06-03-PLAN.md`
 
 ## Phase Status
 
@@ -62,6 +62,10 @@ Phase 6: Dashboard UI — **In Progress** (2026-05-07) — 6 plans, 5 waves
 - saveCreatorWeight uses createClient() for auth + createServiceClient() for write (Pattern 7: service client bypasses RLS)
 - AnimatedTabPanel imports from 'framer-motion' (not 'motion/react') — matches package.json dependency name
 - dashboard shell: max-w-4xl, glassmorphism (backdrop-blur-xl bg-white/5), accent tokens replace indigo-500 hardcodes
+- budget state lifted to PlanTab (Open Question 1 resolved) — ContributionCalculator is now controlled
+- BuyListItem has no currentPct/targetPct — accordion shows allocationGapPct + rationale text only
+- AnimatePresence exit in jsdom is async — use aria-expanded for collapse assertions in vitest RTL tests
+- @vitejs/plugin-react required in vitest.config.ts for JSX transform in test files
 
 ## Notes
 
