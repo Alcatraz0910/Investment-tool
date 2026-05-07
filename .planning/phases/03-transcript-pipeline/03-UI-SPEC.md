@@ -70,10 +70,10 @@ Inherited from Phase 1/2. Phase 3 introduces no new type roles. All values match
 Phase 3 specific usage:
 - Creator display name: `text-base font-semibold text-white` (unchanged from Phase 2)
 - Step status line text: `text-sm text-zinc-400` (regular weight — informational, not actionable)
-- Transcript list column headers: `text-xs font-semibold text-zinc-400 uppercase tracking-wide`
+- Transcript list column headers: `text-sm font-semibold text-zinc-400 uppercase tracking-wide`
 - Transcript row title: `text-sm text-zinc-300` (truncated, single line)
 - Transcript row published date: `text-sm text-zinc-400`
-- Last refreshed timestamp: `text-xs text-zinc-500`
+- Last refreshed timestamp: `text-sm text-zinc-500`
 
 Source: `creators-tab.tsx` lines 85–86 (creator name/URL pattern), `page.tsx` line 129 (heading).
 
@@ -134,8 +134,10 @@ The existing row from Phase 2 is extended. Do NOT redesign. Append to the right 
 Layout rules:
 - [Refresh] button appended to the right of [✓ Tracking], before the expand toggle [⌄]
 - Expand toggle [⌄] is the rightmost element
-- "Last refreshed" timestamp sits below the creator name/URL block, `text-xs text-zinc-500`
-- If `last_refreshed_at` is NULL, render: `text-zinc-600 text-xs` "Never refreshed"
+- "Last refreshed" timestamp sits below the creator name/URL block, `text-sm text-zinc-500`
+- If `last_refreshed_at` is NULL, render: `text-zinc-600 text-sm` "Never refreshed"
+
+Primary visual anchor: the [Refresh] button (`bg-indigo-500`) is the only high-contrast element added per row.
 
 **[Refresh] button spec:**
 - Idle: `text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-400 rounded-md px-3 min-h-[36px] focus:outline-none focus:ring-2 focus:ring-indigo-500`
@@ -194,7 +196,7 @@ Revealed by expand toggle. Renders below the step status line, within the creato
 Container: `bg-zinc-900/50 border border-zinc-700/50 rounded-lg mt-2 mb-1 overflow-hidden`
 
 Column header row: `grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b border-zinc-700/50`
-- Headers: `text-xs font-semibold text-zinc-400 uppercase tracking-wide`
+- Headers: `text-sm font-semibold text-zinc-400 uppercase tracking-wide`
 - Columns: Title (flex-1), Published (fixed ~120px), Status (fixed ~90px)
 
 Data rows: `grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b border-zinc-700/30 last:border-0`
@@ -203,9 +205,9 @@ Data rows: `grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b border-zinc-
 - Status chip: inline badge (see below)
 
 **Status chips:**
-- "Embedded": `inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20`
-- "Fetched": `inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20`
-- "Pending": `inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-zinc-700/50 text-zinc-400 border border-zinc-600/50`
+- "Embedded": `inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20`
+- "Fetched": `inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20`
+- "Pending": `inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-zinc-700/50 text-zinc-400 border border-zinc-600/50`
 
 Empty state (no transcripts yet — never refreshed): render sub-table container with single row: `text-sm text-zinc-500 px-4 py-3 italic` "No transcripts yet. Refresh to fetch."
 
