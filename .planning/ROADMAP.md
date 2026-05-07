@@ -180,12 +180,31 @@
 
 **Requirements:** UI-01, UI-02, UI-03, UI-04, UI-05
 
-**Plans:**
-1. Design system: Tailwind theme config — Space Grey (#1C1C1E base, #2C2C2E surface, #3A3A3C border) + Electric Indigo (#6366F1 primary, #818CF8 hover) palette; glassmorphism card component (`backdrop-blur`, `bg-white/5`, `border-white/10`); Framer Motion layout animation tokens
-2. Action Plan panel: monthly Buy List UI with per-ticker cards (ticker, amount, category, allocation gap progress bar); disclaimer banner; "last updated" metadata
-3. Roadmap View: timeline visualization — "Creator's Vision" trajectory (target allocation at current contribution rate) vs "Your Current Path" (current portfolio extrapolated forward); built with Recharts or SVG
-4. Creator strategy cards + Blend Summary: per-creator card (allocation pie, confidence score, last-refresh date, contradiction flag if active); Confidence Slider per category; Blend Summary card showing creator influence breakdown
-5. Contribution Calculator: full-width slider section with real-time Buy List preview below it; smooth Framer Motion transition on recalculation
+**Plans:** 6 plans
+
+**Wave 0** *(blocks all subsequent waves)*
+- [ ] 06-00-PLAN.md — Test infra: install recharts + @testing-library/react + jsdom; configure vitest jsdom; create 5 Wave 0 test stubs
+
+**Wave 1** *(blocked on 06-00)*
+- [ ] 06-01-PLAN.md — Design system: globals.css body token, page.tsx max-w-4xl + glassmorphism shell, AnimatedTabPanel tab-fade wrapper
+
+**Wave 2** *(blocked on 06-01; 06-02 and 06-04 run in parallel)*
+- [ ] 06-02-PLAN.md — Action Plan panel: BuyListTable div card list + AnimatePresence accordion + PlanTab "Your Action Plan" + ContributionCalculator controlled with budget lift
+- [ ] 06-04-PLAN.md — Creator cards: StrategyCard glassmorphism + lastRefreshedAt + BlendSummary + TrustWeightSlider accent + ContradictionDiff reskin + creators-tab stagger
+
+**Wave 3** *(blocked on 06-00 + 06-01 + 06-02)*
+- [ ] 06-03-PLAN.md — Roadmap View: roadmap.ts computeRoadmap pure function + RoadmapView Recharts LineChart + PlanTab wiring
+
+**Wave 4** *(blocked on 06-02 + 06-03 + 06-04)*
+- [ ] 06-05-PLAN.md — Smoke tests: implement real assertions in 5 test stubs + human visual checkpoint
+
+**Cross-cutting constraints:**
+- `import { motion, AnimatePresence } from 'framer-motion'` (not `'motion/react'`) — matches package.json
+- `'use client'` required on RoadmapView.tsx (Recharts SSR restriction)
+- `decimal.js` for all £ arithmetic in roadmap.ts; convert to `number` only at Recharts data boundary
+- No "advice"/"recommend"/"suggest" in any user-facing string
+- Disclaimer "Creator-derived information — not financial advice" required on BuyListTable (all variants) and RoadmapView
+- Do NOT modify generator.ts, blender.ts, plan-actions.ts, or any data-fetching code
 
 **Success Criteria:**
 1. Dashboard renders with glassmorphism cards on Space Grey background with Electric Indigo accents; Framer Motion transitions play on mount
