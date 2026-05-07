@@ -56,8 +56,13 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
             step={1}
             value={budget}
             onChange={(e) => {
-              const v = Math.min(1000, Math.max(200, parseInt(e.target.value) || 200))
-              onBudgetChange(v)
+              // Allow free typing — clamp only on blur to avoid jarring mid-type snapping
+              const raw = parseInt(e.target.value, 10)
+              if (!isNaN(raw)) onBudgetChange(raw)
+            }}
+            onBlur={(e) => {
+              const clamped = Math.min(1000, Math.max(200, parseInt(e.target.value, 10) || 200))
+              onBudgetChange(clamped)
             }}
             className="w-20 bg-surface border border-border rounded-lg px-2 py-1 text-sm text-white text-right focus:outline-none focus:ring-2 focus:ring-accent"
             aria-label="Monthly contribution amount in pounds"
