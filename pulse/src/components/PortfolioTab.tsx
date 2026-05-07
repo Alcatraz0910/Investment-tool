@@ -1,9 +1,10 @@
 'use client'
 import { useState, useTransition, useActionState, startTransition } from 'react'
-import type { UserProfile, Holding } from '@/types'
+import type { UserProfile, Holding, AssetCategory } from '@/types'
 import { Decimal } from '@/types'
 import { HoldingModal } from '@/components/HoldingModal'
 import { deleteHolding, updateMonthlyBudget } from '@/app/dashboard/actions'
+import { setFillTicker } from '@/app/dashboard/plan-actions'
 
 interface PortfolioTabProps {
   profile: UserProfile | null
@@ -27,6 +28,7 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
   )
 
   const [deleteState, setDeleteState] = useState<{ error?: string }>({})
+  const [fillTickerState, setFillTickerState] = useState<{ error?: string }>({})
 
   function openAddModal() {
     setEditingHolding(undefined)
@@ -41,6 +43,16 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
   function closeModal() {
     setModalOpen(false)
     setEditingHolding(undefined)
+  }
+
+  function handleSetFillTicker(holdingId: string, category: AssetCategory) {
+    setFillTickerState({})
+    startT(async () => {
+      const result = await setFillTicker(holdingId, category)
+      if (result.error) {
+        setFillTickerState({ error: result.error })
+      }
+    })
   }
 
   async function handleDelete(holdingId: string) {
@@ -180,7 +192,17 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                   <span className="text-sm text-zinc-400 w-20 text-right">{holding.quantity.toFixed(2)}</span>
                   <span className="text-sm text-white w-24 text-right">£{holding.currentValue.toFixed(2)}</span>
                   <span className="text-sm text-zinc-400 w-32 text-right">{holding.category}</span>
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-2 ml-4 items-center">
+                    <button
+                      type="button"
+                      onClick={() => handleSetFillTicker(holding.id, holding.category)}
+                      disabled={isPending}
+                      aria-label={holding.isFillTicker ? 'Preferred buy target for this category' : 'Mark as preferred buy target'}
+                      title={holding.isFillTicker ? 'Preferred buy target for this category' : 'Mark as preferred buy target'}
+                      className={`text-lg min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded disabled:opacity-60 disabled:cursor-not-allowed ${holding.isFillTicker ? 'text-indigo-400 hover:text-indigo-300' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      {holding.isFillTicker ? '★' : '☆'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => openEditModal(holding)}
@@ -201,6 +223,13 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Fill-ticker error */}
+      {fillTickerState.error && (
+        <p role="alert" aria-live="polite" className="mt-2 text-sm text-red-400">
+          {fillTickerState.error}
+        </p>
       )}
 
       {/* Holding modal (add/edit) */}
