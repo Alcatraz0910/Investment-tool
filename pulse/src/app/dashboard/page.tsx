@@ -11,12 +11,15 @@ import { getCurrentTaxYear } from '@/lib/tax-year'
 import { blendStrategies } from '@/lib/strategy/blender'
 import type { BlendedStrategy, BlendInput } from '@/lib/strategy/blender'
 import { BlendSummary } from '@/app/dashboard/components/BlendSummary'
+import { generatePlan } from '@/lib/plan/generator'
+import { upsertBuyList } from '@/app/dashboard/plan-actions'
+import { PlanTab } from '@/app/dashboard/components/PlanTab'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
 }
 
-type Tab = 'portfolio' | 'creators' | 'isa'
+type Tab = 'portfolio' | 'creators' | 'isa' | 'plan'
 
 export default async function DashboardPage({
   searchParams,
@@ -30,7 +33,7 @@ export default async function DashboardPage({
 
   const params = await searchParams
   const rawTab = params.tab ?? 'portfolio'
-  const activeTab: Tab = ['portfolio', 'creators', 'isa'].includes(rawTab)
+  const activeTab: Tab = ['portfolio', 'creators', 'isa', 'plan'].includes(rawTab)
     ? (rawTab as Tab)
     : 'portfolio'
 
@@ -51,50 +54,46 @@ export default async function DashboardPage({
       }
     : null
 
-  // Fetch holdings (only if Portfolio tab)
+  // Fetch holdings — always fetched (plan generation needs holdings regardless of active tab)
   let holdings: Holding[] = []
-  if (activeTab === 'portfolio') {
-    const { data: rows } = await supabase
-      .from('holdings')
-      .select('id, user_id, ticker, category, quantity, current_value, is_fill_ticker, created_at, updated_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+  const { data: rows } = await supabase
+    .from('holdings')
+    .select('id, user_id, ticker, category, quantity, current_value, is_fill_ticker, created_at, updated_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
 
-    holdings = (rows ?? []).map((row) => ({
-      id: row.id,
-      userId: row.user_id,
-      ticker: row.ticker,
-      category: row.category,
-      quantity: new Decimal(row.quantity),
-      currentValue: new Decimal(row.current_value),
-      isFillTicker: row.is_fill_ticker ?? false,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    }))
-  }
+  holdings = (rows ?? []).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    ticker: row.ticker,
+    category: row.category,
+    quantity: new Decimal(row.quantity),
+    currentValue: new Decimal(row.current_value),
+    isFillTicker: row.is_fill_ticker as boolean,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  }))
 
-  // Fetch ISA contributions for current tax year (only if ISA tab)
+  // Fetch ISA contributions for current tax year — always fetched (plan needs isaRemaining)
   let contributions: ISAContribution[] = []
   const currentTaxYear = getCurrentTaxYear()
 
-  if (activeTab === 'isa') {
-    const { data: contribRows } = await supabase
-      .from('isa_contributions')
-      .select('id, user_id, amount, contribution_date, tax_year, notes, created_at')
-      .eq('user_id', user.id)
-      .eq('tax_year', currentTaxYear)
-      .order('contribution_date', { ascending: false })
+  const { data: contribRows } = await supabase
+    .from('isa_contributions')
+    .select('id, user_id, amount, contribution_date, tax_year, notes, created_at')
+    .eq('user_id', user.id)
+    .eq('tax_year', currentTaxYear)
+    .order('contribution_date', { ascending: false })
 
-    contributions = (contribRows ?? []).map((row) => ({
-      id: row.id,
-      userId: row.user_id,
-      amount: new Decimal(row.amount),
-      contributionDate: new Date(row.contribution_date),
-      taxYear: row.tax_year,
-      notes: row.notes ?? null,
-      createdAt: new Date(row.created_at),
-    }))
-  }
+  contributions = (contribRows ?? []).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    amount: new Decimal(row.amount),
+    contributionDate: new Date(row.contribution_date),
+    taxYear: row.tax_year,
+    notes: row.notes ?? null,
+    createdAt: new Date(row.created_at),
+  }))
 
   // Fetch creators, tracked IDs, last_refreshed_at, and transcripts (only if Creators tab)
   let creators: Creator[] = []
@@ -105,7 +104,7 @@ export default async function DashboardPage({
   let blend: BlendedStrategy | null = null
   let creatorNameMap: Record<string, string> = {}
 
-  if (activeTab === 'creators') {
+  if (activeTab === 'creators' || activeTab === 'plan') {
     const [{ data: creatorRows }, { data: trackRows }] = await Promise.all([
       supabase.from('creators').select('*').eq('is_active', true).order('display_name'),
       supabase.from('user_creators').select('creator_id, last_refreshed_at').eq('user_id', user.id),
@@ -259,10 +258,31 @@ export default async function DashboardPage({
     }
   }
 
+  // Server-side plan generation (D-05: auto-generate on page load)
+  const monthlyBudgetNumber = profile?.monthlyBudget.toNumber() ?? 500   // D-11: fallback to 500
+  const totalContributed = contributions.reduce(
+    (sum, c) => sum.plus(c.amount),
+    new Decimal(0),
+  )
+  const ISA_ANNUAL_LIMIT = new Decimal(20000)
+  const isaRemaining = Decimal.max(ISA_ANNUAL_LIMIT.minus(totalContributed), new Decimal(0))
+  const isaRemainingNumber = isaRemaining.toNumber()
+
+  const serverPlanResult = generatePlan(
+    holdings,
+    monthlyBudgetNumber,
+    blend,
+    isaRemainingNumber,
+  )
+
+  // Persist plan (D-07: always overwrite) — fire and forget (non-blocking)
+  void upsertBuyList(serverPlanResult)
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
     { id: 'creators', label: 'Creators' },
     { id: 'isa', label: 'ISA' },
+    { id: 'plan', label: 'Plan' },
   ]
 
   return (
@@ -332,6 +352,14 @@ export default async function DashboardPage({
             )}
             {activeTab === 'isa' && (
               <ISATab contributions={contributions} currentTaxYear={currentTaxYear} />
+            )}
+            {activeTab === 'plan' && (
+              <PlanTab
+                portfolio={holdings}
+                strategy={blend}
+                isaRemaining={isaRemainingNumber}
+                initialBudget={monthlyBudgetNumber}
+              />
             )}
           </div>
         </div>
