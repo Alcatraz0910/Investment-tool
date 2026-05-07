@@ -58,6 +58,11 @@ function GlassTooltip({ active, payload, label }: {
 }
 
 export function RoadmapView({ holdings, blend, monthlyBudget }: Props) {
+  // taxYear is computed on every render but its string value is stable within a session
+  // (UK tax year changes only once a year at 6 April midnight). If the page stays open
+  // across that boundary the chart will silently use the stale tax year until next refresh.
+  // This is acceptable for v1 — the app is manually refreshed. A future improvement would
+  // be to derive taxYear in a useState/useEffect that updates at midnight on 6 April.
   const taxYear = getCurrentTaxYear()
 
   const data = useMemo(
