@@ -32,7 +32,7 @@ VALUES
   ('https://www.youtube.com/@DamienTalksMoney', 'Damien Talks Money',  TRUE),
   ('https://www.youtube.com/@TobyNewbatt',      'Toby Newbatt',        TRUE),
   ('https://www.youtube.com/@MoneyUnshackled',  'Money Unshackled',    TRUE),
-  ('https://www.youtube.com/@SashaYanshin',     'Sasha Yanshin',       TRUE),
+  ('https://www.youtube.com/@TheHumblePenny',   'The Humble Penny',    TRUE),
   ('https://www.youtube.com/@PensionCraft',     'PensionCraft',        TRUE),
   ('https://www.youtube.com/@JamesShack',       'James Shack',         TRUE),
   ('https://www.youtube.com/@MeaningfulMoney',  'Meaningful Money',    TRUE)
