@@ -267,6 +267,7 @@ export async function runRefreshPipeline(
         }
 
         const vectors = await embedChunks(chunks)
+        if (vectors.length === 0) continue
 
         // Batch upsert to Pinecone (max 100 vectors per call — RESEARCH Pattern 8)
         const PUSH_BATCH = 100

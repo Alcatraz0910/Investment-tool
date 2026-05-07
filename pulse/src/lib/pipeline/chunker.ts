@@ -47,7 +47,7 @@ export function chunkText(
   while (start < tokens.length) {
     const end = Math.min(start + chunkSize, tokens.length)
     const slice = tokens.slice(start, end)
-    chunks.push(enc.decode(slice))
+    chunks.push(new TextDecoder().decode(enc.decode(slice)))
     if (end === tokens.length) break
     start += stride
   }
