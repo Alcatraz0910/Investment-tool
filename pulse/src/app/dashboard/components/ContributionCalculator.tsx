@@ -26,6 +26,9 @@ interface Props {
   onBudgetChange: (v: number) => void
 }
 
+const BUDGET_MIN = 200
+const BUDGET_MAX = 1000
+
 export function ContributionCalculator({ portfolio, strategy, isaRemaining, budget, onBudgetChange }: Props) {
   // D-12: client-side only, no network call — UNCHANGED from Phase 5
   const plan = useMemo(
@@ -41,8 +44,8 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
           <label className="text-sm text-zinc-400 shrink-0">Monthly budget</label>
           <input
             type="range"
-            min={200}
-            max={1000}
+            min={BUDGET_MIN}
+            max={BUDGET_MAX}
             step={1}
             value={budget}
             onChange={(e) => onBudgetChange(Number(e.target.value))}
@@ -51,8 +54,8 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
           />
           <input
             type="number"
-            min={200}
-            max={1000}
+            min={BUDGET_MIN}
+            max={BUDGET_MAX}
             step={1}
             value={budget}
             onChange={(e) => {
@@ -61,7 +64,7 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
               if (!isNaN(raw)) onBudgetChange(raw)
             }}
             onBlur={(e) => {
-              const clamped = Math.min(1000, Math.max(200, parseInt(e.target.value, 10) || 200))
+              const clamped = Math.min(BUDGET_MAX, Math.max(BUDGET_MIN, parseInt(e.target.value, 10) || BUDGET_MIN))
               onBudgetChange(clamped)
             }}
             className="w-20 bg-surface border border-border rounded-lg px-2 py-1 text-sm text-white text-right focus:outline-none focus:ring-2 focus:ring-accent"
