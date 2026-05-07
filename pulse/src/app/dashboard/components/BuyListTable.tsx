@@ -91,19 +91,12 @@ export function BuyListTable({ result }: Props) {
   }
 
   // --- buy-list ---
-  const { items, gapRows, isaWarning, effectiveBudget } = result
+  // ISA warning is owned by PlanTab (canonical top-banner placement per UI-SPEC).
+  // BuyListTable only renders buy list rows and gap rows.
+  const { items, gapRows, effectiveBudget } = result
 
   return (
     <div className="space-y-4">
-      {/* ISA warning (UI-SPEC: red-500 palette) */}
-      {isaWarning && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-          <p className="text-sm text-red-400">
-            Your monthly budget exceeds your remaining ISA allowance. Only the remaining allowance amount will be used.
-          </p>
-        </div>
-      )}
-
       {items.length === 0 && gapRows.length === 0 ? (
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 text-center">
           <p className="text-sm text-zinc-400">

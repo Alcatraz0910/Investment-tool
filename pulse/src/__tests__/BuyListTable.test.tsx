@@ -101,9 +101,10 @@ describe('BuyListTable (UI-02)', () => {
     expect(vwrlButton).toHaveAttribute('aria-expanded', 'false')
   })
 
-  it('ISA warning renders when isaWarning is true', () => {
+  it('ISA warning is NOT rendered by BuyListTable (owned by PlanTab per UI-SPEC)', () => {
+    // CR-03 fix: ISA warning moved to PlanTab — BuyListTable only renders buy rows.
     render(<BuyListTable result={buyListIsaWarning} />)
-    expect(screen.getByText(/remaining ISA allowance/i)).toBeTruthy()
+    expect(screen.queryByText(/remaining ISA allowance/i)).toBeNull()
   })
 
   it('renders glassmorphism row cards (no table element)', () => {
