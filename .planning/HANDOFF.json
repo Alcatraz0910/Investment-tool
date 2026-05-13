@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-13T00:00:00Z",
+  "phase": "7",
+  "phase_name": "CSV Portfolio Import",
+  "phase_dir": ".planning/phases/07-csv-portfolio-import",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": "discuss", "name": "Discuss Phase 7 — gather CONTEXT.md", "status": "done", "commit": "67c5a2d"},
+    {"id": "ui-spec", "name": "Create and verify 07-UI-SPEC.md", "status": "done", "commit": "wip"}
+  ],
+  "remaining_tasks": [
+    {"id": "plan", "name": "/gsd-plan-phase 7 — create PLAN.md files", "status": "not_started"},
+    {"id": "execute", "name": "/gsd-execute-phase 7", "status": "not_started"},
+    {"id": "verify", "name": "/gsd-verify-work", "status": "not_started"}
+  ],
+  "blockers": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Client-side CSV parsing via PapaParse with bom: true", "rationale": "Avoids Next.js 15.5 1MB server action body limit", "phase": "7"},
+    {"decision": "GBX→£ conversion tied to HL preset only, silent, decimal.js div(100)", "rationale": "D-13 locked decision", "phase": "7"},
+    {"decision": "Merge upserts on (user_id, ticker), preserves isFillTicker/category", "rationale": "D-07 locked decision", "phase": "7"},
+    {"decision": "Replace = DELETE all user holdings + INSERT valid CSV rows", "rationale": "D-08 locked decision", "phase": "7"},
+    {"decision": "Invalid rows skipped silently (shown in preview, don't block import)", "rationale": "D-09 locked decision", "phase": "7"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "Run /gsd-plan-phase 7 — UI gate will now pass (07-UI-SPEC.md exists). Skip research when prompted (CONTEXT.md D-01 through D-13 covers implementation thoroughly).",
+  "context_notes": "Phase 7 is self-contained. No new external services, no schema migrations (holdings table exists from Phase 2). PapaParse npm dep may need adding. importHoldings server action goes in pulse/src/app/dashboard/actions.ts. After import, router.refresh() or revalidatePath needed."
+}
