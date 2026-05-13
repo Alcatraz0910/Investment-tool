@@ -25,13 +25,12 @@ Given a monthly budget and a creator's strategy, tell the user exactly what to b
 - ✓ Glassmorphism dark-mode dashboard: Action Plan, Roadmap View, Contribution Calculator — v1.0
 - ✓ All output framed as creator-derived information, not financial advice — v1.0
 
-### Active (v1.1 candidates)
+### Active (v1.1)
 
-- [ ] TrueLayer UK Open Banking integration (live portfolio sync for Freetrade, AJ Bell, HL)
-- [ ] CSV statement upload as portfolio import fallback
-- [ ] Creator discovery / search (currently manual URL entry for custom creators)
-- [ ] Scheduled nightly transcript polling (cron job to auto-refresh creators)
-- [ ] Mobile-responsive layout (current dashboard targets desktop)
+- [ ] CSV statement upload — generic CSV with column mapping, replaces manual holding entry
+- [ ] Creator discovery/search — search YouTube channels by name
+- [ ] TradingView live prices — portfolio valuation + Buy List enrichment
+- [ ] Mobile-responsive layout — dashboard usable on phones
 
 ### Out of Scope
 
@@ -42,6 +41,16 @@ Given a monthly budget and a creator's strategy, tell the user exactly what to b
 - FCA authorisation / regulated advice — information-only framing throughout
 - Plaid integration — not suitable for UK market; TrueLayer is the standard UK provider
 - Trade execution — Pulse tells you what to buy; it does not place trades
+
+## Current Milestone: v1.1 Portfolio Intelligence
+
+**Goal:** Eliminate manual data entry friction and surface live market context across the Pulse workflow.
+
+**Target features:**
+- CSV Portfolio Import — generic CSV with auto-detect broker format, column mapping, preview before save
+- Creator Discovery/Search — search YouTube channels by name via YouTube Data API v3
+- TradingView Live Prices — real-time prices on portfolio valuation and Buy List
+- Mobile-Responsive Layout — full dashboard usable on phones
 
 ## Context
 
@@ -77,4 +86,22 @@ Given a monthly budget and a creator's strategy, tell the user exactly what to b
 | Dedicated creators route (v1.0) | Creator cards + strategy + refresh too complex for a tab | ✓ Validated |
 
 ---
-*Last updated: 2026-05-07 after v1.0 milestone*
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
+---
+*Last updated: 2026-05-13 — Milestone v1.1 started*
