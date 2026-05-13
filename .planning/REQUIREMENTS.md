@@ -66,32 +66,30 @@ Requirements for the Portfolio Intelligence milestone. Each maps to roadmap phas
 
 ## Traceability
 
-Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CSV-01 | — | Pending |
-| CSV-02 | — | Pending |
-| CSV-03 | — | Pending |
-| CSV-04 | — | Pending |
-| CSV-05 | — | Pending |
-| CSV-06 | — | Pending |
-| PRICE-01 | — | Pending |
-| PRICE-02 | — | Pending |
-| PRICE-03 | — | Pending |
-| PRICE-04 | — | Pending |
-| SRCH-01 | — | Pending |
-| SRCH-02 | — | Pending |
-| SRCH-03 | — | Pending |
-| MOB-01 | — | Pending |
-| MOB-02 | — | Pending |
-| MOB-03 | — | Pending |
+| CSV-01 | Phase 7 | Pending |
+| CSV-02 | Phase 7 | Pending |
+| CSV-03 | Phase 7 | Pending |
+| CSV-04 | Phase 7 | Pending |
+| CSV-05 | Phase 7 | Pending |
+| CSV-06 | Phase 7 | Pending |
+| PRICE-01 | Phase 8 | Pending |
+| PRICE-02 | Phase 8 | Pending |
+| PRICE-03 | Phase 8 | Pending |
+| PRICE-04 | Phase 8 | Pending |
+| SRCH-01 | Phase 9 | Pending |
+| SRCH-02 | Phase 9 | Pending |
+| SRCH-03 | Phase 9 | Pending |
+| MOB-01 | Phase 10 | Pending |
+| MOB-02 | Phase 10 | Pending |
+| MOB-03 | Phase 10 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 16 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-13*
-*Last updated: 2026-05-13 after initial v1.1 definition*
+*Last updated: 2026-05-13 — traceability filled after roadmap creation*

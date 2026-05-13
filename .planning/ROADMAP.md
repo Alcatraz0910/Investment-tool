@@ -3,6 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1–6 (shipped 2026-05-07) — [archive](.planning/milestones/v1.0-ROADMAP.md)
+- 🔲 **v1.1 Portfolio Intelligence** — Phases 7–10 (in progress)
 
 ## Phases
 
@@ -20,6 +21,63 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
 
 </details>
 
+### v1.1 Portfolio Intelligence
+
+- [ ] **Phase 7: CSV Portfolio Import** — User can bulk-import holdings from a broker CSV file (HL/AJ Bell presets + generic mapper)
+- [ ] **Phase 8: Live Price Data** — Portfolio shows current market prices and total value per holding; Buy List enriched with current price per ticker
+- [ ] **Phase 9: Creator Search** — User can discover and track creators by name without knowing the channel URL
+- [ ] **Phase 10: Mobile Layout** — All dashboard tabs are fully usable on a 375px phone screen with touch-friendly targets
+
+## Phase Details
+
+### Phase 7: CSV Portfolio Import
+**Goal**: Users can populate or update their portfolio holdings by uploading a broker CSV, eliminating manual row-by-row entry
+**Depends on**: Nothing (self-contained; no new external services)
+**Requirements**: CSV-01, CSV-02, CSV-03, CSV-04, CSV-05, CSV-06
+**Success Criteria** (what must be TRUE):
+  1. User can drag a CSV file onto the Portfolio page (or use file picker) and see a column-mapping UI appear
+  2. When uploading an HL or AJ Bell export, column headers are pre-filled without manual mapping
+  3. User can review a preview table of parsed rows before any data is written to the database
+  4. User can choose to merge new rows into existing holdings or replace all holdings, then confirm import
+  5. GBX-denominated prices (HL pence exports) are silently converted to £ so portfolio values are correct after import
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 8: Live Price Data
+**Goal**: Users can see current market prices and portfolio value without leaving Pulse, and the Buy List shows what each recommended ticker costs today
+**Depends on**: Phase 7 (real holdings data required for meaningful price display testing)
+**Requirements**: PRICE-01, PRICE-02, PRICE-03, PRICE-04
+**Success Criteria** (what must be TRUE):
+  1. Portfolio page shows a current price, total value, and an as-of timestamp for each holding after prices are refreshed
+  2. Buy List shows current price per ticker alongside the £ target amount produced by generatePlan
+  3. A Refresh Prices button triggers a server-side batch fetch; the UI updates without a full page reload
+  4. An optional TradingView chart widget is visible per holding as a decorative overlay (display-only; does not alter plan logic)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 9: Creator Search
+**Goal**: Users can discover and track creators by searching YouTube by name, without needing to know or paste a channel URL
+**Depends on**: Nothing (independent of Phases 7–8; YouTube API already provisioned)
+**Requirements**: SRCH-01, SRCH-02, SRCH-03
+**Success Criteria** (what must be TRUE):
+  1. User can type a creator name or keyword into a search bar on the Creators page and see a list of matching YouTube channels
+  2. Each search result shows a channel thumbnail, name, and subscriber count before the user decides to track
+  3. One-click tracking adds the channel to the user's tracked list using the existing addCustomCreator flow
+  4. The existing manual channel URL entry field remains available as a fallback alongside the search bar
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 10: Mobile Layout
+**Goal**: All dashboard tabs are fully usable on a 375px phone, with touch-friendly controls and no horizontal overflow
+**Depends on**: Phases 7, 8, 9 (CSS pass must cover all new components added in prior phases)
+**Requirements**: MOB-01, MOB-02, MOB-03
+**Success Criteria** (what must be TRUE):
+  1. All five dashboard tabs (Action Plan, Roadmap, Calculator, Portfolio, Creators) render without horizontal scroll at 375px viewport width
+  2. Trust weight sliders have tap targets of at least 44px so they are usable with a finger on iOS and Android
+  3. Holdings and Buy List tables collapse to a card layout on small screens so all data is readable without horizontal scrolling
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -30,3 +88,7 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
 | 4. Strategy Extraction & Blending | v1.0 | 5/5 | Complete | 2026-05-07 |
 | 5. Plan Generator | v1.0 | 4/4 | Complete | 2026-05-07 |
 | 6. Dashboard UI | v1.0 | 6/6 | Complete | 2026-05-07 |
+| 7. CSV Portfolio Import | v1.1 | 0/? | Not started | — |
+| 8. Live Price Data | v1.1 | 0/? | Not started | — |
+| 9. Creator Search | v1.1 | 0/? | Not started | — |
+| 10. Mobile Layout | v1.1 | 0/? | Not started | — |
