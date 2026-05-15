@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Papa from 'papaparse'
 import {
   detectBroker,
+  extractDataSection,
   parseRows,
   type BrokerPreset,
   type ParsedRow,
@@ -109,7 +110,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
   }
 
   // ── Process selected/dropped file ────────────────────────────────────────
-  function processFile(selectedFile: File) {
+  async function processFile(selectedFile: File) {
     if (!selectedFile.name.endsWith('.csv')) {
       setFileError('Please upload a .csv file')
       return
@@ -117,6 +118,11 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
     setFileError('')
     setFile(selectedFile)
     setDetectedBroker(null)
+
+    // Pre-process: strip broker metadata rows (e.g. HL account summary header)
+    // before PapaParse so the first line it sees is the actual column header row.
+    const rawText = await selectedFile.text()
+    const csvText = extractDataSection(rawText)
 
     // @types/papaparse omits `bom` from ParseLocalConfig — cast to bypass
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -152,7 +158,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
         }
       },
     }
-    Papa.parse<Record<string, string>>(selectedFile, parseConfig)
+    Papa.parse<Record<string, string>>(csvText, parseConfig)
   }
 
   // ── Drag-and-drop handlers ───────────────────────────────────────────────

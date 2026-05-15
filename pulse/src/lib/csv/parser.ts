@@ -17,11 +17,13 @@ export type BrokerPreset = {
 export const BROKER_PRESETS: BrokerPreset[] = [
   {
     name: 'Hargreaves Lansdown',
-    requiredHeaders: ['Stock', 'Units Held'],
-    tickerCol: 'Stock',
-    quantityCol: 'Units Held',
-    valueCol: 'Value (p)',
-    gbx: true,
+    // HL account summary CSV has metadata rows above the data table.
+    // The data table starts with "Code" as the first column header.
+    requiredHeaders: ['Code', 'Units'],
+    tickerCol: 'Code',
+    quantityCol: 'Units',
+    valueCol: 'Value (£)',
+    gbx: false,  // Value (£) column is already in pounds
   },
   {
     name: 'AJ Bell',
@@ -59,6 +61,24 @@ export type ColumnMapping = {
 // ---------------------------------------------------------------------------
 // detectBroker
 // ---------------------------------------------------------------------------
+
+/**
+ * Strips metadata rows that precede the actual data table in multi-section
+ * broker exports (e.g. HL account summary). Scans lines until it finds one
+ * whose first cell matches a known data-table header, then returns the CSV
+ * from that line onwards. Falls back to the original text when not found.
+ */
+export function extractDataSection(csvText: string): string {
+  const DATA_MARKERS = ['Code']   // HL: first column of the holdings table
+  const lines = csvText.split(/\r?\n/)
+  for (let i = 0; i < lines.length; i++) {
+    const firstCell = lines[i].split(',')[0].replace(/^"(.*)"$/, '$1').trim()
+    if (DATA_MARKERS.includes(firstCell)) {
+      return lines.slice(i).join('\n')
+    }
+  }
+  return csvText
+}
 
 /**
  * Returns the first matching BrokerPreset whose requiredHeaders are ALL present

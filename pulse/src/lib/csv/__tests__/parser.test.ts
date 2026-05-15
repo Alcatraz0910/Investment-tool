@@ -1,5 +1,6 @@
 import {
   detectBroker,
+  extractDataSection,
   sanitiseTicker,
   convertGbxToGbp,
   classifyRow,
@@ -8,13 +9,23 @@ import {
 
 describe('detectBroker', () => {
   it('detects Hargreaves Lansdown by required headers', () => {
-    const headers = ['Stock', 'Units Held', 'Value (p)', 'Value (£)', 'Cost']
+    const headers = ['Code', 'Description', 'Units', 'Price (p)', 'Value (£)', 'Cost (£)']
     expect(detectBroker(headers)?.name).toBe('Hargreaves Lansdown')
   })
 
-  it('HL preset has gbx: true', () => {
+  it('HL preset has gbx: false (Value (£) already in pounds)', () => {
     const hl = BROKER_PRESETS.find(p => p.name === 'Hargreaves Lansdown')
-    expect(hl?.gbx).toBe(true)
+    expect(hl?.gbx).toBe(false)
+  })
+
+  it('HL preset tickerCol is Code', () => {
+    const hl = BROKER_PRESETS.find(p => p.name === 'Hargreaves Lansdown')
+    expect(hl?.tickerCol).toBe('Code')
+  })
+
+  it('HL preset quantityCol is Units', () => {
+    const hl = BROKER_PRESETS.find(p => p.name === 'Hargreaves Lansdown')
+    expect(hl?.quantityCol).toBe('Units')
   })
 
   it('detects AJ Bell by required headers', () => {
@@ -33,8 +44,47 @@ describe('detectBroker', () => {
   })
 
   it('returns null when only partial required headers present', () => {
-    const headers = ['Stock', 'Price']  // Missing 'Units Held'
+    const headers = ['Code', 'Price']  // Missing 'Units'
     expect(detectBroker(headers)).toBeNull()
+  })
+})
+
+describe('extractDataSection', () => {
+  const hlCsv = [
+    'HL Stocks & Shares ISA',
+    'Client Name:,John Smith',
+    'Client Number:,12345678',
+    'Spreadsheet created at,2025-01-01',
+    'Stock value:,£10000.00',
+    'Total cash:,£0.00',
+    'Amount available to invest:,£0.00',
+    'Total value:,£10000.00',
+    '',
+    'Code,Description,Units,Price (p),Value (£),Cost (£),Gain/Loss (£),Gain/Loss (%)',
+    'VWRL,Vanguard FTSE All-World ETF,50,8500.00,4250.00,4000.00,250.00,6.25',
+    'SGLN,iShares Physical Gold,100,2000.00,2000.00,1800.00,200.00,11.11',
+  ].join('\n')
+
+  it('strips HL metadata rows and returns from Code row onwards', () => {
+    const result = extractDataSection(hlCsv)
+    expect(result.startsWith('Code,')).toBe(true)
+  })
+
+  it('preserves all data rows after the header', () => {
+    const result = extractDataSection(hlCsv)
+    expect(result).toContain('VWRL')
+    expect(result).toContain('SGLN')
+  })
+
+  it('returns original text when no known data marker found', () => {
+    const genericCsv = 'Symbol,Qty,Price\nAAPL,10,150'
+    expect(extractDataSection(genericCsv)).toBe(genericCsv)
+  })
+
+  it('handles quoted first cell', () => {
+    const quotedCsv = '"Code","Description","Units"\n"VWRL","Vanguard",50'
+    const result = extractDataSection(quotedCsv)
+    expect(result.startsWith('"Code"')).toBe(true)
   })
 })
 
