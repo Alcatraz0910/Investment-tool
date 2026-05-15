@@ -2,6 +2,7 @@
 import { useState, useTransition, useActionState, startTransition } from 'react'
 import type { AssetCategory } from '@/types'
 import { HoldingModal } from '@/components/HoldingModal'
+import ImportCSVModal from '@/components/ImportCSVModal'
 import { deleteHolding, updateMonthlyBudget } from '@/app/dashboard/actions'
 import { setFillTicker, clearFillTicker } from '@/app/dashboard/plan-actions'
 
@@ -33,6 +34,7 @@ interface PortfolioTabProps {
 
 export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
   const [editingHolding, setEditingHolding] = useState<ClientHolding | undefined>(undefined)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [budgetEditMode, setBudgetEditMode] = useState(false)
@@ -154,13 +156,23 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
       {/* Holdings list header */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-white">Holdings</h2>
-        <button
-          type="button"
-          onClick={openAddModal}
-          className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-4 py-2 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          Add Holding
-        </button>
+        <div className="flex items-center gap-2">
+          {/* "Import CSV" button — ghost style matching UI-SPEC */}
+          <button
+            type="button"
+            onClick={() => setImportModalOpen(true)}
+            className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-zinc-300 hover:text-white hover:border-zinc-500 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            Import CSV
+          </button>
+          <button
+            type="button"
+            onClick={openAddModal}
+            className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-4 py-2 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            Add Holding
+          </button>
+        </div>
       </div>
 
       {/* Holdings list */}
@@ -260,6 +272,14 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
         onClose={closeModal}
         holding={editingHolding}
       />
+
+      {/* Import CSV modal */}
+      {importModalOpen && (
+        <ImportCSVModal
+          onClose={() => setImportModalOpen(false)}
+          existingTickers={new Set(holdings.map(h => h.ticker))}
+        />
+      )}
     </div>
   )
 }
