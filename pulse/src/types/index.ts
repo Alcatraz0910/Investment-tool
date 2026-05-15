@@ -92,6 +92,7 @@ export interface Holding {
   id: string
   userId: string
   ticker: string
+  name?: string               // Optional display name (e.g. "Vanguard FTSE All-World ETF")
   category: AssetCategory
   quantity: Decimal           // Number of shares/units
   currentValue: Decimal       // £ value — wrap DB NUMERIC in new Decimal() on read

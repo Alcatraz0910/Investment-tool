@@ -13,6 +13,7 @@ export async function addHolding(formData: FormData): Promise<ActionResult> {
   if (!user) return { error: 'Something went wrong. Please try again.' }
 
   const ticker = (formData.get('ticker') as string | null)?.trim().toUpperCase() ?? ''
+  const name = (formData.get('name') as string | null)?.trim() ?? ''
   const quantity = formData.get('quantity') as string | null
   const currentValue = formData.get('currentValue') as string | null
   const category = formData.get('category') as AssetCategory | null
@@ -26,6 +27,7 @@ export async function addHolding(formData: FormData): Promise<ActionResult> {
   const { error } = await supabase.from('holdings').insert({
     user_id: user.id,
     ticker,
+    name: name || null,
     category,
     quantity: quantity,
     current_value: currentValue,
@@ -42,6 +44,7 @@ export async function updateHolding(holdingId: string, formData: FormData): Prom
   if (!user) return { error: 'Something went wrong. Please try again.' }
 
   const ticker = (formData.get('ticker') as string | null)?.trim().toUpperCase() ?? ''
+  const name = (formData.get('name') as string | null)?.trim() ?? ''
   const quantity = formData.get('quantity') as string | null
   const currentValue = formData.get('currentValue') as string | null
   const category = formData.get('category') as AssetCategory | null
@@ -52,7 +55,7 @@ export async function updateHolding(holdingId: string, formData: FormData): Prom
   if (!category) return { error: 'Category is required.' }
 
   const { error } = await supabase.from('holdings')
-    .update({ ticker, category, quantity, current_value: currentValue, updated_at: new Date().toISOString() })
+    .update({ ticker, name: name || null, category, quantity, current_value: currentValue, updated_at: new Date().toISOString() })
     .eq('id', holdingId)
     .eq('user_id', user.id)   // RLS + app-level scope: only update own holdings
 
@@ -82,6 +85,7 @@ export async function deleteHolding(holdingId: string): Promise<ActionResult> {
 
 export type ImportRow = {
   ticker: string        // sanitised by client (uppercase, no .L suffix)
+  name: string          // display name from CSV name column, or empty string
   quantity: string      // raw string from PapaParse — stored as-is
   value: string         // £ string at 2dp — GBX already converted client-side
   category: AssetCategory  // default 'Stocks' if no category column
@@ -126,6 +130,7 @@ export async function importHoldings(
         validRows.map(r => ({
           user_id: user.id,
           ticker: r.ticker,
+          name: r.name || null,
           quantity: r.quantity,
           current_value: r.value,
           category: r.category,
@@ -165,6 +170,7 @@ export async function importHoldings(
           .insert({
             user_id: user.id,
             ticker: row.ticker,
+            name: row.name || null,
             quantity: row.quantity,
             current_value: row.value,
             category: row.category,

@@ -60,7 +60,7 @@ export default async function DashboardPage({
   let holdings: Holding[] = []
   const { data: rows } = await supabase
     .from('holdings')
-    .select('id, user_id, ticker, category, quantity, current_value, is_fill_ticker, created_at, updated_at')
+    .select('id, user_id, ticker, name, category, quantity, current_value, is_fill_ticker, created_at, updated_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -68,6 +68,7 @@ export default async function DashboardPage({
     id: row.id,
     userId: row.user_id,
     ticker: row.ticker,
+    name: row.name ?? undefined,
     category: row.category,
     quantity: new Decimal(row.quantity),
     currentValue: new Decimal(row.current_value),

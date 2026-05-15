@@ -144,6 +144,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
           setTimeout(() => {
             const mapping: ColumnMapping = {
               tickerCol: broker.tickerCol,
+              nameCol: broker.nameCol ?? null,
               quantityCol: broker.quantityCol,
               valueCol: broker.valueCol,
               categoryCol: null,
@@ -179,11 +180,13 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
     }
     setMappingError('')
     const tickerCol = Object.entries(columnMapping).find(([, v]) => v === 'Ticker *')?.[0] ?? ''
+    const nameCol = Object.entries(columnMapping).find(([, v]) => v === 'Name')?.[0] ?? null
     const quantityCol = Object.entries(columnMapping).find(([, v]) => v === 'Quantity *')?.[0] ?? ''
     const valueCol = Object.entries(columnMapping).find(([, v]) => v === 'Value (£)')?.[0] ?? ''
     const categoryCol = Object.entries(columnMapping).find(([, v]) => v === 'Category')?.[0] ?? null
     const mapping: ColumnMapping = {
       tickerCol,
+      nameCol,
       quantityCol,
       valueCol,
       categoryCol,
@@ -197,7 +200,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
   function handleConfirm() {
     const importRows = previewRows
       .filter(r => r.status !== 'invalid')
-      .map(r => ({ ticker: r.ticker, quantity: r.quantity, value: r.value, category: r.category }))
+      .map(r => ({ ticker: r.ticker, name: r.name, quantity: r.quantity, value: r.value, category: r.category }))
     startTransition(async () => {
       const result = await importHoldings(importRows, mergeMode)
       if (result.error) {
@@ -395,6 +398,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
                           onChange={(e) => setColumnMapping(prev => ({ ...prev, [header]: e.target.value }))}
                         >
                           <option value="Ticker *">Ticker *</option>
+                          <option value="Name">Name</option>
                           <option value="Quantity *">Quantity *</option>
                           <option value="Value (£)">Value (£)</option>
                           <option value="Category">Category</option>
@@ -450,6 +454,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
                       <thead>
                         <tr className="text-zinc-500 text-xs font-medium uppercase tracking-wide pb-2 border-b border-white/10">
                           <th className="text-left pb-2 pr-2">Ticker</th>
+                          <th className="text-left pb-2 pr-2">Name</th>
                           <th className="text-left pb-2 pr-2">Qty</th>
                           <th className="text-left pb-2 pr-2">Value (£)</th>
                           <th className="text-left pb-2 pr-2">Category</th>
@@ -463,6 +468,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
                             className={`border-b border-white/5 last:border-0 ${row.status === 'invalid' ? 'opacity-60' : ''}`}
                           >
                             <td className="py-3 pr-2 text-white">{row.ticker}</td>
+                            <td className="py-3 pr-2 text-zinc-400 text-xs max-w-[120px] truncate">{row.name || '—'}</td>
                             <td className="py-3 pr-2 text-white">{row.quantity}</td>
                             <td className="py-3 pr-2 text-white">£{row.value}</td>
                             <td className="py-3 pr-2 text-white">{row.category}</td>

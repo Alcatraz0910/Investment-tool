@@ -14,6 +14,7 @@ interface HoldingModalProps {
   holding?: {
     id: string
     ticker: string
+    name?: string
     quantity: number
     currentValue: number
     category: AssetCategory
@@ -102,6 +103,21 @@ export function HoldingModal({ isOpen, onClose, holding }: HoldingModalProps) {
                 placeholder="e.g. VWRP"
                 maxLength={20}
                 required
+                className="w-full px-4 py-3 min-h-[44px] bg-zinc-900 border border-zinc-700 rounded-md text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Name (optional) */}
+            <div className="flex flex-col gap-1">
+              <label htmlFor="name" className="text-sm font-semibold text-white">
+                Name <span className="text-zinc-500 font-normal">(optional)</span>
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                defaultValue={holding?.name ?? ''}
+                placeholder="e.g. Vanguard FTSE All-World ETF"
                 className="w-full px-4 py-3 min-h-[44px] bg-zinc-900 border border-zinc-700 rounded-md text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>

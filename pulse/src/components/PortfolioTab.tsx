@@ -19,6 +19,7 @@ interface ClientHolding {
   id: string
   userId: string
   ticker: string
+  name?: string
   category: AssetCategory
   quantity: number
   currentValue: number
@@ -222,7 +223,10 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                 </div>
               ) : (
                 <>
-                  <span className="text-base font-semibold text-white flex-1">{holding.ticker}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="text-base font-semibold text-white">{holding.ticker}</span>
+                    {holding.name && <span className="block text-xs text-zinc-400 truncate">{holding.name}</span>}
+                  </span>
                   <span className="text-sm text-zinc-400 w-20 text-right">{holding.quantity.toFixed(2)}</span>
                   <span className="text-sm text-white w-24 text-right">£{holding.currentValue.toFixed(2)}</span>
                   <span className="text-sm text-zinc-400 w-32 text-right">{holding.category}</span>

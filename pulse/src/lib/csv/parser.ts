@@ -9,6 +9,7 @@ export type BrokerPreset = {
   name: string
   requiredHeaders: string[]
   tickerCol: string
+  nameCol?: string            // Optional column containing the holding's display name
   quantityCol: string
   valueCol: string
   gbx: boolean  // true = values are in GBX (pence); divide by 100 for £
@@ -21,6 +22,7 @@ export const BROKER_PRESETS: BrokerPreset[] = [
     // The data table starts with "Code" as the first column header.
     requiredHeaders: ['Code', 'Units'],
     tickerCol: 'Code',
+    nameCol: 'Description',
     quantityCol: 'Units',
     valueCol: 'Value (£)',
     gbx: false,  // Value (£) column is already in pounds
@@ -43,6 +45,7 @@ export type RowStatus = 'valid' | 'duplicate' | 'invalid'
 
 export type ParsedRow = {
   ticker: string        // sanitised: uppercase, no .L suffix
+  name: string          // display name from nameCol, or empty string
   quantity: string      // raw string (decimal.js parses in server action)
   value: string         // £ string at 2dp (GBX already converted client-side)
   category: AssetCategory
@@ -52,6 +55,7 @@ export type ParsedRow = {
 
 export type ColumnMapping = {
   tickerCol: string
+  nameCol: string | null
   quantityCol: string
   valueCol: string
   categoryCol: string | null
@@ -164,6 +168,7 @@ export function parseRows(
     const rawQty = row[mapping.quantityCol] ?? ''
     const rawVal = row[mapping.valueCol] ?? ''
     const ticker = sanitiseTicker(rawTicker)
+    const name = (mapping.nameCol ? row[mapping.nameCol] ?? '' : '').trim()
     // Strip thousands commas and £ prefix before numeric parsing.
     // HL exports format values as "4,250.00" which breaks NUMERIC casts in Supabase.
     const cleanedVal = rawVal.replace(/[,£]/g, '').trim()
@@ -173,6 +178,6 @@ export function parseRows(
         ? (row[mapping.categoryCol].trim() as AssetCategory)
         : 'Stocks'
     const status = classifyRow(rawTicker, rawQty, valueStr, existingTickers)
-    return { ticker, quantity: rawQty.trim(), value: valueStr, category, status, rawTicker }
+    return { ticker, name, quantity: rawQty.trim(), value: valueStr, category, status, rawTicker }
   })
 }
