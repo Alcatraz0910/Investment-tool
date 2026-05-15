@@ -54,7 +54,7 @@ describe('importHoldings', () => {
     })
 
     const result = await importHoldings(
-      [{ ticker: 'AAPL', quantity: '10', value: '150.00', category: 'Stocks' }],
+      [{ ticker: 'AAPL', name: '', quantity: '10', value: '150.00', category: 'Stocks' }],
       'merge'
     )
 
@@ -81,7 +81,7 @@ describe('importHoldings', () => {
     })
 
     const result = await importHoldings(
-      [{ ticker: '', quantity: '10', value: '100.00', category: 'Stocks' }],
+      [{ ticker: '', name: '', quantity: '10', value: '100.00', category: 'Stocks' }],
       'replace'
     )
 

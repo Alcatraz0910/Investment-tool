@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import Anthropic from '@anthropic-ai/sdk'
 import type { AssetCategory } from '@/types'
 
 // Return type for all mutation actions
@@ -116,34 +117,44 @@ export async function importHoldings(
   const validRows = rows.filter(r => r.ticker && r.quantity && r.value)
   if (validRows.length === 0) return { error: 'No valid rows to import.' }
 
+  // Build a row payload — only include `name` when non-empty so that rows
+  // without a name don't fail if the migration hasn't been applied yet.
+  const buildPayload = (r: ImportRow, userId: string) => ({
+    user_id: userId,
+    ticker: r.ticker,
+    ...(r.name ? { name: r.name } : {}),
+    quantity: r.quantity,
+    current_value: r.value,
+    category: r.category,
+  })
+
+  const dbError = (err: { message?: string; code?: string }) => {
+    console.error('[importHoldings]', err)
+    if (err.code === '42703') {
+      return { error: 'Database schema is out of date. Run this in your Supabase SQL editor: ALTER TABLE public.holdings ADD COLUMN IF NOT EXISTS name TEXT;' }
+    }
+    return { error: `Import failed: ${err.message ?? 'unknown error'}` }
+  }
+
   if (mode === 'replace') {
     // Delete all current holdings for this user, then insert all valid rows
     const { error: delErr } = await supabase
       .from('holdings')
       .delete()
       .eq('user_id', user.id)
-    if (delErr) return { error: 'Something went wrong. Please try again.' }
+    if (delErr) return dbError(delErr)
 
     const { error: insErr } = await supabase
       .from('holdings')
-      .insert(
-        validRows.map(r => ({
-          user_id: user.id,
-          ticker: r.ticker,
-          name: r.name || null,
-          quantity: r.quantity,
-          current_value: r.value,
-          category: r.category,
-        }))
-      )
-    if (insErr) return { error: 'Something went wrong. Please try again.' }
+      .insert(validRows.map(r => buildPayload(r, user.id)))
+    if (insErr) return dbError(insErr)
   } else {
     // merge: SELECT existing → build ticker→id map → UPDATE matched, INSERT new
     const { data: existing, error: fetchErr } = await supabase
       .from('holdings')
       .select('id, ticker')
       .eq('user_id', user.id)
-    if (fetchErr) return { error: 'Something went wrong. Please try again.' }
+    if (fetchErr) return dbError(fetchErr)
 
     const existingMap = new Map<string, string>(
       (existing ?? []).map(h => [h.ticker as string, h.id as string])
@@ -162,26 +173,87 @@ export async function importHoldings(
           })
           .eq('id', existingId)
           .eq('user_id', user.id)
-        if (updErr) return { error: 'Something went wrong. Please try again.' }
+        if (updErr) return dbError(updErr)
       } else {
         // INSERT new holding
         const { error: insErr } = await supabase
           .from('holdings')
-          .insert({
-            user_id: user.id,
-            ticker: row.ticker,
-            name: row.name || null,
-            quantity: row.quantity,
-            current_value: row.value,
-            category: row.category,
-          })
-        if (insErr) return { error: 'Something went wrong. Please try again.' }
+          .insert(buildPayload(row, user.id))
+        if (insErr) return dbError(insErr)
       }
     }
   }
 
   revalidatePath('/dashboard')
   return { imported: validRows.length, skipped: rows.length - validRows.length }
+}
+
+// ---------------------------------------------------------------------------
+// suggestColumnMapping — AI-powered first-pass column suggestion (Phase 7 AI)
+// ---------------------------------------------------------------------------
+
+const VALID_FIELD_LABELS = ['Ticker *', 'Quantity *', 'Value (£)', 'Name', 'Category', 'Skip'] as const
+type FieldLabel = typeof VALID_FIELD_LABELS[number]
+
+function normaliseAiLabel(label: string): FieldLabel {
+  if (label === 'Value') return 'Value (£)'
+  return VALID_FIELD_LABELS.includes(label as FieldLabel) ? (label as FieldLabel) : 'Skip'
+}
+
+/**
+ * Calls Claude to suggest CSV column → field mappings for an unknown CSV.
+ * Returns a best-effort mapping; caller must validate and let user override.
+ * Silently returns empty mapping on failure — UI falls back to manual entry.
+ */
+export async function suggestColumnMapping(
+  headers: string[],
+  sampleRows: Record<string, string>[]
+): Promise<{ mapping: Record<string, FieldLabel> }> {
+  if (headers.length === 0) return { mapping: {} }
+
+  const client = new Anthropic()
+  const FIELD_OPTIONS = ['Ticker *', 'Quantity *', 'Value', 'Name', 'Category', 'Skip']
+  const prompt = `You are analyzing a CSV export from a stock brokerage or portfolio tracker.
+Map each CSV column to exactly one label from this list:
+${FIELD_OPTIONS.map((f, i) => `${i + 1}. ${f}`).join('\n')}
+
+Definitions:
+- "Ticker *": stock ticker or code (e.g. AAPL, TSCO, LLOY, Code)
+- "Quantity *": number of shares or units held
+- "Value": current market value (any currency — pounds, pence, or other)
+- "Name": human-readable company or fund name
+- "Category": asset type (Stocks / Index Funds / Cash)
+- "Skip": not needed
+
+CSV headers: ${headers.join(', ')}
+
+Sample rows (up to 3):
+${JSON.stringify(sampleRows.slice(0, 3), null, 2)}
+
+Return ONLY valid JSON where every header is a key and every value is one of: ${FIELD_OPTIONS.map(f => `"${f}"`).join(', ')}.`
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = message.content[0].type === 'text' ? message.content[0].text : ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { mapping: {} }
+
+    const parsed = JSON.parse(jsonMatch[0]) as Record<string, string>
+    const mapping: Record<string, FieldLabel> = {}
+    for (const [col, label] of Object.entries(parsed)) {
+      if (headers.includes(col)) {
+        mapping[col] = normaliseAiLabel(label)
+      }
+    }
+    return { mapping }
+  } catch {
+    return { mapping: {} }
+  }
 }
 
 export async function updateMonthlyBudget(formData: FormData): Promise<ActionResult> {

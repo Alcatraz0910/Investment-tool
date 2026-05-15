@@ -6,14 +6,24 @@ started: 2026-05-15
 updated: 2026-05-15
 ---
 
+## Pre-Test: Run Migration
+
+Before testing, run this in the Supabase SQL editor (Dashboard → SQL Editor):
+
+```sql
+ALTER TABLE public.holdings ADD COLUMN IF NOT EXISTS name TEXT;
+```
+
+Required for HL CSV imports that include the Description column. Safe to re-run (IF NOT EXISTS).
+
 ## Current Test
 
 [awaiting human testing — requires live Supabase connection]
 
 ## Tests
 
-### 1. Full generic CSV import flow
-expected: Upload a generic .csv → map Ticker + Quantity columns → see preview table → select Merge mode → Confirm Import → spinner shows → modal closes → holdings table updates with imported rows → focus returns to "Import CSV" button
+### 1. Full generic CSV import flow (with AI suggestions)
+expected: Upload a generic .csv → "Claude analyzing…" spinner shows → column mapping dropdowns pre-filled with AI suggestions (AI badge on suggested rows) → review/adjust → Next → preview table → Merge mode → Confirm Import → spinner → modal closes → holdings updated
 result: [pending]
 
 ### 2. HL CSV auto-detect + GBX preview rendering

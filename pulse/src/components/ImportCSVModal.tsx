@@ -10,7 +10,7 @@ import {
   type ParsedRow,
   type ColumnMapping,
 } from '@/lib/csv/parser'
-import { importHoldings } from '@/app/dashboard/actions'
+import { importHoldings, suggestColumnMapping } from '@/app/dashboard/actions'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,6 +65,8 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
   // ── Column mapping (step 2) ──────────────────────────────────────────────
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})  // csvCol → field
   const [mappingError, setMappingError] = useState('')
+  const [isAiSuggesting, setIsAiSuggesting] = useState(false)
+  const [aiSuggestedCols, setAiSuggestedCols] = useState<Set<string>>(new Set())
 
   // ── Preview (step 3) ────────────────────────────────────────────────────
   const [previewRows, setPreviewRows] = useState<ParsedRow[]>([])
@@ -156,6 +158,40 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
         } else {
           setTotalSteps(3)
           setStep(2)  // step 2 of 3 = column mapping
+          setIsAiSuggesting(true)
+          setAiSuggestedCols(new Set())
+          setColumnMapping({})
+          suggestColumnMapping(headers, rows.slice(0, 3)).then(result => {
+            const suggestedCols = new Set<string>()
+            const mapping: Record<string, string> = {}
+            for (const [col, label] of Object.entries(result.mapping)) {
+              if (label !== 'Skip') {
+                mapping[col] = label
+                suggestedCols.add(col)
+              }
+            }
+            // Keyword fallback: fill any unmapped headers the AI missed
+            const assignedFields = new Set(Object.values(mapping))
+            for (const h of headers) {
+              if (h in mapping) continue
+              const lower = h.toLowerCase()
+              if (!assignedFields.has('Ticker *') && (lower.includes('ticker') || lower.includes('code') || lower.includes('epic') || lower.includes('isin'))) {
+                mapping[h] = 'Ticker *'; suggestedCols.add(h); assignedFields.add('Ticker *')
+              } else if (!assignedFields.has('Quantity *') && (lower.includes('unit') || lower.includes('qty') || lower.includes('quantity') || lower.includes('shares') || lower.includes('holding'))) {
+                mapping[h] = 'Quantity *'; suggestedCols.add(h); assignedFields.add('Quantity *')
+              } else if (!assignedFields.has('Value (£)') && (lower.includes('value') || lower.includes('worth') || lower === 'market value')) {
+                mapping[h] = 'Value (£)'; suggestedCols.add(h); assignedFields.add('Value (£)')
+              } else if (!assignedFields.has('Name') && (lower.includes('name') || lower.includes('description') || lower.includes('company') || lower.includes('stock'))) {
+                mapping[h] = 'Name'; suggestedCols.add(h); assignedFields.add('Name')
+              }
+            }
+            setColumnMapping(mapping)
+            setAiSuggestedCols(suggestedCols)
+          }).catch(() => {
+            // Silently ignore — user falls back to manual mapping
+          }).finally(() => {
+            setIsAiSuggesting(false)
+          })
         }
       },
     }
@@ -245,7 +281,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
 
       {/* Modal card */}
       <motion.div
-        className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto mx-4"
+        className="relative bg-zinc-800 border border-zinc-700 rounded-xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto mx-4"
         initial={{ opacity: 0, scale: 0.97, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -297,7 +333,7 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
               {/* Drop zone */}
               <div
                 className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 min-h-[120px] cursor-pointer transition-colors duration-150 ${
-                  isDragOver ? 'border-accent bg-accent/5' : file ? 'border-green-500/40 bg-green-500/5' : 'border-zinc-600'
+                  isDragOver ? 'border-accent bg-accent/10' : file ? 'border-green-500/50 bg-green-500/10' : 'border-zinc-600 bg-zinc-900/50'
                 }`}
                 onDrop={handleDrop}
                 onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
@@ -379,7 +415,20 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
               exit="exit"
               transition={stepTransition}
             >
-              <p className="text-zinc-300 text-sm font-semibold mb-4">Assign CSV columns</p>
+              <div className="flex items-center gap-2 mb-4">
+                <p className="text-zinc-300 text-sm font-semibold">Assign CSV columns</p>
+                {isAiSuggesting && (
+                  <span className="flex items-center gap-1.5 text-xs text-accent">
+                    <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10" strokeLinecap="round"/>
+                    </svg>
+                    Claude analyzing…
+                  </span>
+                )}
+                {!isAiSuggesting && aiSuggestedCols.size > 0 && (
+                  <span className="text-xs text-zinc-500">AI pre-filled — review and adjust</span>
+                )}
+              </div>
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="text-zinc-500 text-xs font-medium uppercase tracking-wide pb-2 border-b border-white/10">
@@ -390,11 +439,17 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
                 <tbody>
                   {parsedHeaders.map(header => (
                     <tr key={header} className="border-b border-white/5 last:border-0">
-                      <td className="py-3 pr-4 text-white text-sm">{header}</td>
+                      <td className="py-3 pr-4 text-sm">
+                        <span className="text-white">{header}</span>
+                        {aiSuggestedCols.has(header) && !isAiSuggesting && (
+                          <span className="ml-2 px-1.5 py-0.5 text-[10px] rounded bg-accent/15 text-accent border border-accent/20">AI</span>
+                        )}
+                      </td>
                       <td className="py-3">
                         <select
-                          className="bg-surface border border-border rounded-md px-3 py-2 text-sm text-white w-40 focus:outline-none focus:ring-2 focus:ring-accent"
+                          className="bg-zinc-900 border border-zinc-600 rounded-md px-3 py-2 text-sm text-white w-40 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
                           value={columnMapping[header] ?? 'Skip'}
+                          disabled={isAiSuggesting}
                           onChange={(e) => setColumnMapping(prev => ({ ...prev, [header]: e.target.value }))}
                         >
                           <option value="Ticker *">Ticker *</option>
@@ -424,7 +479,8 @@ export default function ImportCSVModal({ onClose, existingTickers }: ImportCSVMo
                 <button
                   type="button"
                   onClick={handleMappingNext}
-                  className="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg text-sm font-semibold min-h-[44px] focus:outline-none focus:ring-2 focus:ring-accent"
+                  disabled={isAiSuggesting}
+                  className="bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold min-h-[44px] focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   Next
                 </button>

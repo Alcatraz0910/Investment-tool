@@ -88,11 +88,13 @@ export function extractDataSection(csvText: string): string {
  * Returns the first matching BrokerPreset whose requiredHeaders are ALL present
  * in the CSV header array, or null (generic CSV — show column mapping step).
  * Caller MUST have parsed with bom: true to avoid BOM on first header.
+ * Headers are normalised (trimmed, lowercased) for comparison.
  */
 export function detectBroker(headers: string[]): BrokerPreset | null {
+  const normalised = headers.map(h => h.trim().toLowerCase())
   return (
     BROKER_PRESETS.find(preset =>
-      preset.requiredHeaders.every(h => headers.includes(h))
+      preset.requiredHeaders.every(h => normalised.includes(h.trim().toLowerCase()))
     ) ?? null
   )
 }
@@ -154,6 +156,19 @@ export function classifyRow(
 // ---------------------------------------------------------------------------
 
 /**
+ * Case-insensitive column lookup — handles minor encoding or spacing differences
+ * between preset column names and what PapaParse returns from the actual file.
+ */
+function getCol(row: Record<string, string>, colName: string): string {
+  if (colName in row) return row[colName] ?? ''
+  const lower = colName.trim().toLowerCase()
+  for (const [k, v] of Object.entries(row)) {
+    if (k.trim().toLowerCase() === lower) return v ?? ''
+  }
+  return ''
+}
+
+/**
  * Converts raw PapaParse rows into typed ParsedRow[] using a column mapping.
  * Applies GBX→£ conversion when mapping.gbx is true.
  * Rows with missing required columns default to category 'Stocks' (D-11).
@@ -164,20 +179,21 @@ export function parseRows(
   existingTickers: Set<string>
 ): ParsedRow[] {
   return rawRows.map(row => {
-    const rawTicker = row[mapping.tickerCol] ?? ''
-    const rawQty = row[mapping.quantityCol] ?? ''
-    const rawVal = row[mapping.valueCol] ?? ''
+    const rawTicker = getCol(row, mapping.tickerCol)
+    const rawQty = getCol(row, mapping.quantityCol)
+    const rawVal = getCol(row, mapping.valueCol)
     const ticker = sanitiseTicker(rawTicker)
-    const name = (mapping.nameCol ? row[mapping.nameCol] ?? '' : '').trim()
+    const name = (mapping.nameCol ? getCol(row, mapping.nameCol) : '').trim()
     // Strip thousands commas and £ prefix before numeric parsing.
     // HL exports format values as "4,250.00" which breaks NUMERIC casts in Supabase.
     const cleanedVal = rawVal.replace(/[,£]/g, '').trim()
     const valueStr = mapping.gbx ? convertGbxToGbp(cleanedVal || '0') : cleanedVal || '0'
-    const category: AssetCategory =
-      mapping.categoryCol && row[mapping.categoryCol]
-        ? (row[mapping.categoryCol].trim() as AssetCategory)
-        : 'Stocks'
-    const status = classifyRow(rawTicker, rawQty, valueStr, existingTickers)
-    return { ticker, name, quantity: rawQty.trim(), value: valueStr, category, status, rawTicker }
+    const categoryRaw = mapping.categoryCol ? getCol(row, mapping.categoryCol) : ''
+    const category: AssetCategory = categoryRaw.trim()
+      ? (categoryRaw.trim() as AssetCategory)
+      : 'Stocks'
+    const cleanedQty = rawQty.replace(/,/g, '').trim()
+    const status = classifyRow(rawTicker, cleanedQty, valueStr, existingTickers)
+    return { ticker, name, quantity: cleanedQty, value: valueStr, category, status, rawTicker }
   })
 }
