@@ -136,8 +136,8 @@ export function classifyRow(
   const ticker = sanitiseTicker(rawTicker)
   if (!ticker) return 'invalid'
 
-  const qty = parseFloat(rawQuantity)
-  const val = parseFloat(rawValue)
+  const qty = parseFloat(rawQuantity.replace(/,/g, ''))
+  const val = parseFloat(rawValue.replace(/[,£]/g, ''))
   if (isNaN(qty) || qty < 0) return 'invalid'
   if (isNaN(val) || val < 0) return 'invalid'
 
@@ -164,7 +164,10 @@ export function parseRows(
     const rawQty = row[mapping.quantityCol] ?? ''
     const rawVal = row[mapping.valueCol] ?? ''
     const ticker = sanitiseTicker(rawTicker)
-    const valueStr = mapping.gbx ? convertGbxToGbp(rawVal || '0') : rawVal.trim()
+    // Strip thousands commas and £ prefix before numeric parsing.
+    // HL exports format values as "4,250.00" which breaks NUMERIC casts in Supabase.
+    const cleanedVal = rawVal.replace(/[,£]/g, '').trim()
+    const valueStr = mapping.gbx ? convertGbxToGbp(cleanedVal || '0') : cleanedVal || '0'
     const category: AssetCategory =
       mapping.categoryCol && row[mapping.categoryCol]
         ? (row[mapping.categoryCol].trim() as AssetCategory)
