@@ -40,7 +40,11 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
   3. User can review a preview table of parsed rows before any data is written to the database
   4. User can choose to merge new rows into existing holdings or replace all holdings, then confirm import
   5. GBX-denominated prices (HL pence exports) are silently converted to £ so portfolio values are correct after import
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 07-01-PLAN.md — CSV Parser Utilities (PapaParse, broker detection, GBX conversion, row classification)
+- [ ] 07-02-PLAN.md — importHoldings server action (merge + replace modes)
+- [ ] 07-03-PLAN.md — ImportCSVModal multi-step UI (Upload → Map → Preview + Confirm)
+- [ ] 07-04-PLAN.md — PortfolioTab integration (Import CSV button + modal mount + manual smoke test)
 **UI hint**: yes
 
 ### Phase 8: Live Price Data
