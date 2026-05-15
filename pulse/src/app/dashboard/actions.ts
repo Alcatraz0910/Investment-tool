@@ -76,6 +76,108 @@ export async function deleteHolding(holdingId: string): Promise<ActionResult> {
   return {}
 }
 
+// ---------------------------------------------------------------------------
+// importHoldings — bulk import from CSV upload (Phase 7, CSV-05)
+// ---------------------------------------------------------------------------
+
+export type ImportRow = {
+  ticker: string        // sanitised by client (uppercase, no .L suffix)
+  quantity: string      // raw string from PapaParse — stored as-is
+  value: string         // £ string at 2dp — GBX already converted client-side
+  category: AssetCategory  // default 'Stocks' if no category column
+}
+
+export type ImportResult = {
+  error?: string
+  imported?: number
+  skipped?: number
+}
+
+/**
+ * Bulk-imports holdings from a CSV upload.
+ * merge: SELECT existing → UPDATE matched (quantity+currentValue only, D-07) → INSERT new
+ * replace: DELETE all holdings for user → INSERT all valid rows
+ * Invalid rows (empty ticker, non-numeric quantity/value) are pre-filtered client-side
+ * and must NOT appear in rows[]. Server validates count > 0 only.
+ */
+export async function importHoldings(
+  rows: ImportRow[],
+  mode: 'merge' | 'replace'
+): Promise<ImportResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Something went wrong. Please try again.' }
+
+  // Only import rows the client classified as valid (status === 'valid' or 'duplicate')
+  const validRows = rows.filter(r => r.ticker && r.quantity && r.value)
+  if (validRows.length === 0) return { error: 'No valid rows to import.' }
+
+  if (mode === 'replace') {
+    // Delete all current holdings for this user, then insert all valid rows
+    const { error: delErr } = await supabase
+      .from('holdings')
+      .delete()
+      .eq('user_id', user.id)
+    if (delErr) return { error: 'Something went wrong. Please try again.' }
+
+    const { error: insErr } = await supabase
+      .from('holdings')
+      .insert(
+        validRows.map(r => ({
+          user_id: user.id,
+          ticker: r.ticker,
+          quantity: r.quantity,
+          current_value: r.value,
+          category: r.category,
+        }))
+      )
+    if (insErr) return { error: 'Something went wrong. Please try again.' }
+  } else {
+    // merge: SELECT existing → build ticker→id map → UPDATE matched, INSERT new
+    const { data: existing, error: fetchErr } = await supabase
+      .from('holdings')
+      .select('id, ticker')
+      .eq('user_id', user.id)
+    if (fetchErr) return { error: 'Something went wrong. Please try again.' }
+
+    const existingMap = new Map<string, string>(
+      (existing ?? []).map(h => [h.ticker as string, h.id as string])
+    )
+
+    for (const row of validRows) {
+      const existingId = existingMap.get(row.ticker)
+      if (existingId) {
+        // UPDATE quantity + current_value only — preserve isFillTicker and category (D-07)
+        const { error: updErr } = await supabase
+          .from('holdings')
+          .update({
+            quantity: row.quantity,
+            current_value: row.value,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingId)
+          .eq('user_id', user.id)
+        if (updErr) return { error: 'Something went wrong. Please try again.' }
+      } else {
+        // INSERT new holding
+        const { error: insErr } = await supabase
+          .from('holdings')
+          .insert({
+            user_id: user.id,
+            ticker: row.ticker,
+            quantity: row.quantity,
+            current_value: row.value,
+            category: row.category,
+          })
+        if (insErr) return { error: 'Something went wrong. Please try again.' }
+      }
+    }
+  }
+
+  revalidatePath('/dashboard')
+  return { imported: validRows.length, skipped: rows.length - validRows.length }
+}
+
 export async function updateMonthlyBudget(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
