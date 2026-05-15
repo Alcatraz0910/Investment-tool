@@ -41,10 +41,10 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
   4. User can choose to merge new rows into existing holdings or replace all holdings, then confirm import
   5. GBX-denominated prices (HL pence exports) are silently converted to £ so portfolio values are correct after import
 **Plans**: 4 plans
-- [ ] 07-01-PLAN.md — CSV Parser Utilities (PapaParse, broker detection, GBX conversion, row classification)
-- [ ] 07-02-PLAN.md — importHoldings server action (merge + replace modes)
-- [ ] 07-03-PLAN.md — ImportCSVModal multi-step UI (Upload → Map → Preview + Confirm)
-- [ ] 07-04-PLAN.md — PortfolioTab integration (Import CSV button + modal mount + manual smoke test)
+- [x] 07-01-PLAN.md — CSV Parser Utilities (PapaParse, broker detection, GBX conversion, row classification)
+- [x] 07-02-PLAN.md — importHoldings server action (merge + replace modes)
+- [x] 07-03-PLAN.md — ImportCSVModal multi-step UI (Upload → Map → Preview + Confirm)
+- [x] 07-04-PLAN.md — PortfolioTab integration (Import CSV button + modal mount + manual smoke test)
 **UI hint**: yes
 
 ### Phase 8: Live Price Data
@@ -92,7 +92,7 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
 | 4. Strategy Extraction & Blending | v1.0 | 5/5 | Complete | 2026-05-07 |
 | 5. Plan Generator | v1.0 | 4/4 | Complete | 2026-05-07 |
 | 6. Dashboard UI | v1.0 | 6/6 | Complete | 2026-05-07 |
-| 7. CSV Portfolio Import | v1.1 | 0/? | Not started | — |
+| 7. CSV Portfolio Import | v1.1 | 4/4 | Human verification pending | — |
 | 8. Live Price Data | v1.1 | 0/? | Not started | — |
 | 9. Creator Search | v1.1 | 0/? | Not started | — |
 | 10. Mobile Layout | v1.1 | 0/? | Not started | — |
