@@ -278,7 +278,7 @@ export default async function DashboardPage({
     currentValue: h.currentValue.toNumber(),
     quantity: h.quantity.toNumber(),
     currentPrice: h.currentPrice ? new Decimal(h.currentPrice).toNumber() : null,
-    priceFetchedAt: h.priceFetchedAt ?? null,
+    priceFetchedAt: h.priceFetchedAt?.toISOString() ?? null,
   }))
 
   // Server-side plan generation (D-05: auto-generate on page load)

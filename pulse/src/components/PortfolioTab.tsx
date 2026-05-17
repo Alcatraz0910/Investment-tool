@@ -27,7 +27,7 @@ interface ClientHolding {
   currentValue: number
   isFillTicker: boolean
   currentPrice: number | null      // null = never fetched
-  priceFetchedAt: Date | null      // null = never fetched
+  priceFetchedAt: string | null     // ISO string; null = never fetched
   createdAt: Date
   updatedAt: Date
 }
@@ -289,12 +289,12 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                       {holding.priceFetchedAt ? (
                         <span
                           className={
-                            Date.now() - holding.priceFetchedAt.getTime() > 24 * 60 * 60 * 1000
+                            Date.now() - new Date(holding.priceFetchedAt).getTime() > 24 * 60 * 60 * 1000
                               ? 'text-amber-400'
                               : 'text-zinc-400'
                           }
                         >
-                          {holding.priceFetchedAt.toLocaleString('en-GB')}
+                          {new Date(holding.priceFetchedAt).toLocaleString('en-GB')}
                         </span>
                       ) : null}
                     </span>

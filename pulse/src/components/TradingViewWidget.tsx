@@ -14,13 +14,15 @@ export function TradingViewWidget({ symbol, height = 220 }: Props) {
     // Clear prior render — prevents double-chart in React StrictMode (two useEffect calls)
     containerRef.current.innerHTML = ''
 
-    const [exchange, ticker] = symbol.split(':')  // 'LSE', 'VWRL'
+    const parts = symbol.split(':')
+    const exchange = parts.length >= 2 ? parts[0] : 'LSE'
+    const ticker = parts.length >= 2 ? parts[1] : parts[0]
 
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js'
     script.type = 'text/javascript'
     script.async = true
-    script.innerHTML = JSON.stringify({
+    script.textContent = JSON.stringify({
       symbols: [[ticker, `${exchange}:${ticker}|1D`]],  // [['VWRL', 'LSE:VWRL|1D']]
       chartOnly: false,
       width: '100%',

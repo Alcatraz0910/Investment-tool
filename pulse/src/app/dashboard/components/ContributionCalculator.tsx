@@ -97,6 +97,7 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
       {/* Buy List — Phase 8: Refresh Prices button and price column */}
       <div className="flex justify-end mb-2">
         <button
+          type="button"
           onClick={handleRefreshBuyListPrices}
           disabled={pricesPending}
           className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-3 min-h-[44px] disabled:opacity-75"

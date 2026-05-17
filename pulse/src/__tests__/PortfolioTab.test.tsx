@@ -41,8 +41,8 @@ vi.mock('@/components/ImportCSVModal', () => ({
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const freshDate = new Date(Date.now() - 1000 * 60 * 30)       // 30 min ago (fresh)
-const staleDate = new Date(Date.now() - 1000 * 60 * 60 * 25)  // 25 hours ago (stale)
+const freshDate = new Date(Date.now() - 1000 * 60 * 30).toISOString()       // 30 min ago (fresh)
+const staleDate = new Date(Date.now() - 1000 * 60 * 60 * 25).toISOString()  // 25 hours ago (stale)
 
 interface ClientHolding {
   id: string
@@ -54,7 +54,7 @@ interface ClientHolding {
   currentValue: number
   isFillTicker: boolean
   currentPrice: number | null
-  priceFetchedAt: Date | null
+  priceFetchedAt: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -120,7 +120,7 @@ describe('PortfolioTab — price display (Phase 8)', () => {
     // The timestamp span should have text-zinc-400 (fresh) not text-amber-400 (stale)
     const allSpans = document.querySelectorAll('span.text-zinc-400')
     // At least one span with text-zinc-400 must contain the localised timestamp text
-    const timestampText = freshDate.toLocaleString('en-GB')
+    const timestampText = new Date(freshDate).toLocaleString('en-GB')
     const match = Array.from(allSpans).find(el => el.textContent === timestampText)
     expect(match).toBeTruthy()
     expect(match?.classList.contains('text-amber-400')).toBe(false)
@@ -133,7 +133,7 @@ describe('PortfolioTab — price display (Phase 8)', () => {
         holdings={[makeHolding({ priceFetchedAt: staleDate })]}
       />
     )
-    const timestampText = staleDate.toLocaleString('en-GB')
+    const timestampText = new Date(staleDate).toLocaleString('en-GB')
     const amberSpans = document.querySelectorAll('span.text-amber-400')
     const match = Array.from(amberSpans).find(el => el.textContent === timestampText)
     expect(match).toBeTruthy()
