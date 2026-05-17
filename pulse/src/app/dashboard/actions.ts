@@ -4,9 +4,25 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import Anthropic from '@anthropic-ai/sdk'
 import type { AssetCategory } from '@/types'
+import { Decimal } from 'decimal.js'
+import YahooFinance from 'yahoo-finance2'
+const yahooFinance = new YahooFinance()
 
 // Return type for all mutation actions
 type ActionResult = { error?: string }
+
+// ---------------------------------------------------------------------------
+// Phase 8: Live Price Data — types and helpers
+// ---------------------------------------------------------------------------
+
+export type PriceResult = { ticker: string; price: number | null; error?: string }
+export type RefreshPricesResult = { results?: PriceResult[]; error?: string }
+export type FetchPricesResult = { prices?: Record<string, number | null>; error?: string }
+
+const TICKER_RE = /^[A-Z0-9.]{1,20}$/
+function isValidTicker(t: string): boolean {
+  return TICKER_RE.test(t)
+}
 
 export async function addHolding(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient()
@@ -333,4 +349,91 @@ export async function saveCreatorWeight({
 
   revalidatePath('/dashboard')
   return {}
+}
+
+// ---------------------------------------------------------------------------
+// refreshHoldingPrices — batch-fetch LSE prices and persist to holdings table
+// ---------------------------------------------------------------------------
+
+export async function refreshHoldingPrices(): Promise<RefreshPricesResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Something went wrong. Please try again.' }
+
+  const { data: holdingRows, error: fetchErr } = await supabase
+    .from('holdings')
+    .select('id, ticker')
+    .eq('user_id', user.id)
+
+  if (fetchErr) return { error: 'Could not load holdings.' }
+  if (!holdingRows || holdingRows.length === 0) return { results: [] }
+
+  const results: PriceResult[] = await Promise.all(
+    holdingRows.map(async ({ ticker }) => {
+      if (!isValidTicker(ticker)) return { ticker, price: null, error: 'invalid ticker' }
+      try {
+        const q = await yahooFinance.quote(`${ticker}.L`, {}, { validateResult: false })
+        let price = q.regularMarketPrice ?? null
+        if (price !== null && q.currency === 'GBp') {
+          price = new Decimal(price).div(100).toNumber()
+        }
+        return { ticker, price }
+      } catch {
+        return { ticker, price: null, error: 'fetch failed' }
+      }
+    })
+  )
+
+  const now = new Date().toISOString()
+  for (const { ticker, price } of results) {
+    if (price === null) continue
+    const { error: updateErr } = await supabase
+      .from('holdings')
+      .update({
+        current_price: price.toString(),
+        price_fetched_at: now,
+      })
+      .eq('user_id', user.id)
+      .eq('ticker', ticker)
+    if (updateErr?.code === '42703') {
+      return { error: 'Database schema is out of date. Run the Phase 8 migration in Supabase SQL Editor.' }
+    }
+  }
+
+  revalidatePath('/dashboard')
+  return { results }
+}
+
+// ---------------------------------------------------------------------------
+// fetchTickerPrices — ephemeral price fetch for Buy List (no DB write)
+// ---------------------------------------------------------------------------
+
+export async function fetchTickerPrices(tickers: string[]): Promise<FetchPricesResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Something went wrong. Please try again.' }
+
+  if (tickers.length > 50) return { error: 'Too many tickers requested.' }
+
+  const prices: Record<string, number | null> = {}
+  await Promise.all(
+    tickers.map(async (ticker) => {
+      if (!isValidTicker(ticker)) {
+        prices[ticker] = null
+        return
+      }
+      try {
+        const q = await yahooFinance.quote(`${ticker}.L`, {}, { validateResult: false })
+        let price = q.regularMarketPrice ?? null
+        if (price !== null && q.currency === 'GBp') {
+          price = new Decimal(price).div(100).toNumber()
+        }
+        prices[ticker] = price
+      } catch {
+        prices[ticker] = null
+      }
+    })
+  )
+
+  return { prices }
 }
