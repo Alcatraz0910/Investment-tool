@@ -97,6 +97,8 @@ export interface Holding {
   quantity: Decimal           // Number of shares/units
   currentValue: Decimal       // £ value — wrap DB NUMERIC in new Decimal() on read
   isFillTicker: boolean       // TRUE = preferred buy target for this category (D-01, Phase 5)
+  currentPrice?: Decimal | null    // null until first price refresh (Phase 8)
+  priceFetchedAt?: Date | null     // null until first price refresh (Phase 8)
   createdAt: Date
   updatedAt: Date
 }
