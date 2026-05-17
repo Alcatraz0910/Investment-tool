@@ -1,72 +1,39 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-15T14:30:00.000Z",
-  "phase": "7",
-  "phase_name": "CSV Portfolio Import",
-  "phase_dir": ".planning/phases/07-csv-portfolio-import",
-  "plan": 4,
+  "timestamp": "2026-05-17T19:00:00.000Z",
+  "phase": "8",
+  "phase_name": "Live Price Data",
+  "phase_dir": ".planning/phases/08-live-price-data",
+  "plan": 3,
   "task": null,
   "total_tasks": null,
-  "status": "paused",
+  "status": "human_verification_pending",
   "completed_tasks": [
-    {"id": "07-01", "name": "CSV Parser Utilities", "status": "done", "commit": "ab05a59"},
-    {"id": "07-02", "name": "importHoldings Server Action", "status": "done", "commit": "2cc542b"},
-    {"id": "07-03", "name": "ImportCSVModal Component", "status": "done", "commit": "fad92c6"},
-    {"id": "07-04", "name": "PortfolioTab Integration", "status": "done", "commit": "4ccbadd"},
-    {"id": "bug-1", "name": "HL CSV metadata rows fix + preset correction", "status": "done", "commit": "8e5fad0"},
-    {"id": "bug-2", "name": "Comma/£ stripping for Supabase NUMERIC insert", "status": "done", "commit": "14fbdfc"},
-    {"id": "feat-1", "name": "Stock name field across all layers", "status": "done", "commit": "5633dd4"},
-    {"id": "session-2-ui", "name": "Modal transparency fix (bg-white/5 → bg-zinc-800)", "status": "done", "commit": "uncommitted"},
-    {"id": "session-2-detection", "name": "HL detection robustness — normalised headers, getCol helper", "status": "done", "commit": "uncommitted"},
-    {"id": "session-2-ai", "name": "AI column suggestion (suggestColumnMapping server action)", "status": "done", "commit": "uncommitted"},
-    {"id": "session-2-errors", "name": "Improved error messages — actual Supabase errors surfaced (42703 → schema message)", "status": "done", "commit": "uncommitted"},
-    {"id": "session-2-qty", "name": "Quantity comma stripping (2,461.696 → 2461.696)", "status": "done", "commit": "uncommitted"}
+    {"id": "08-01", "name": "Foundation — yahoo-finance2, SQL migration, server actions, types, tests", "status": "done"},
+    {"id": "08-02", "name": "Portfolio Tab UI — TradingViewWidget, price columns, chart toggle", "status": "done"},
+    {"id": "08-03", "name": "Buy List Tab UI — BuyListTable Price column, ContributionCalculator Refresh", "status": "done"},
+    {"id": "code-review-fixes", "name": "CR-02/CR-03/WR-03/WR-05 fixes from code review", "status": "done"}
   ],
-  "remaining_tasks": [
-    {"id": "migration", "name": "Run Supabase name column migration", "status": "not_started"},
-    {"id": "uat-1", "name": "Full generic CSV import smoke test — AI suggestions + confirm import", "status": "not_started"},
-    {"id": "uat-2", "name": "HL CSV auto-detect + broker banner + preview rendering", "status": "not_started"},
-    {"id": "uat-3", "name": "AJ Bell auto-detect flow", "status": "not_started"}
-  ],
-  "blockers": [
-    {
-      "description": "Supabase name column migration not yet run — import will fail for rows with non-empty names until applied",
-      "type": "human_action",
-      "workaround": "Code now only sends name when non-empty, so generic CSVs without names will import. HL CSVs with Description column still need the migration."
-    },
-    {
-      "description": "HL broker detection may still not be auto-detecting — user's CSV went to generic path despite headers Code/Units/Value(£). Root cause uncertain; detectBroker now case-normalises headers which may fix it.",
-      "type": "technical",
-      "workaround": "User can manually map columns in generic path. getCol() now does case-insensitive column lookup so value column will resolve correctly even if not auto-detected."
-    }
-  ],
+  "remaining_tasks": [],
+  "blockers": [],
   "human_actions_pending": [
     {
-      "action": "Run in Supabase SQL Editor: ALTER TABLE public.holdings ADD COLUMN IF NOT EXISTS name TEXT;",
-      "context": "Required for HL CSV imports that populate the Description/name column. Code is resilient (omits name field if empty) but HL rows with names will still fail without this.",
+      "action": "Run SQL migration in Supabase SQL Editor",
+      "context": "ALTER TABLE public.holdings ADD COLUMN IF NOT EXISTS current_price NUMERIC, ADD COLUMN IF NOT EXISTS price_fetched_at TIMESTAMPTZ; — file at supabase/migrations/20260517_phase8_price_columns.sql",
       "blocking": true
     },
     {
-      "action": "Complete 3-item smoke test in 07-HUMAN-UAT.md with live Supabase connection",
-      "context": "UAT item 1 now covers AI suggestion flow. Quantity comma stripping was just fixed — re-test all items.",
+      "action": "Live test the 4 items in 08-HUMAN-UAT.md",
+      "context": "Refresh Prices on Portfolio tab, Refresh Prices on Buy List tab, TradingView chart toggle, error handling. Requires running dev server with migration applied.",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Modal background: bg-zinc-800 solid instead of bg-white/5 glassmorphism", "rationale": "bg-white/5 on dark #1C1C1E background = nearly transparent, form fields unreadable", "phase": "7"},
-    {"decision": "AI prompt uses 'Value' label (no £) to avoid encoding ambiguity", "rationale": "Claude haiku may encode or omit the £ sign; normaliseAiLabel() maps 'Value' → 'Value (£)'", "phase": "7"},
-    {"decision": "Keyword fallback after AI suggestions: value/worth/market value → Value(£), excludes 'price'", "rationale": "Price column = per-share price, not holding value. 'market value' exact match only for market keyword.", "phase": "7"},
-    {"decision": "buildPayload only includes name field when non-empty", "rationale": "Resilience: if name column migration not run, rows without names still import cleanly (no 42703 error)", "phase": "7"},
-    {"decision": "dbError() helper returns Supabase error code 42703 as human-readable schema migration message", "rationale": "Generic 'Something went wrong' was hiding the actual cause (missing name column)", "phase": "7"},
-    {"decision": "Strip commas from quantity in parseRows (same pattern as value)", "rationale": "HL formats 2461.696 as '2,461.696' — NUMERIC cast in Supabase rejects comma-formatted strings", "phase": "7"}
+    {"decision": "yahoo-finance2 v3 uses class-based API — instance-based not static", "rationale": "Executor discovered at install time; auto-corrected", "phase": "8"},
+    {"decision": "priceFetchedAt serialized as ISO string across RSC boundary", "rationale": "Date instances cannot cross Next.js 15 RSC→client boundary; CR-02 fix", "phase": "8"},
+    {"decision": "Executor wrote Phase 8 files to main tree and worktree simultaneously", "rationale": "Known executor behaviour; resolved by discarding main-tree copies and using worktree-committed versions at merge time", "phase": "8"}
   ],
-  "uncommitted_files": [
-    "pulse/src/app/dashboard/actions.ts",
-    "pulse/src/components/ImportCSVModal.tsx",
-    "pulse/src/lib/csv/parser.ts",
-    "pulse/src/app/dashboard/__tests__/import-actions.test.ts",
-    ".planning/phases/07-csv-portfolio-import/07-HUMAN-UAT.md"
-  ],
-  "next_action": "1. User runs Supabase migration (ALTER TABLE public.holdings ADD COLUMN IF NOT EXISTS name TEXT). 2. User re-tests CSV import (all 3 UAT items). 3. If HL still not auto-detected, add console.log to processFile to capture raw headers PapaParse returns. 4. Once UAT passes, commit this session's work and close Phase 7.",
-  "context_notes": "All planned Phase 7 code is implemented. This session fixed: modal transparency, HL detection normalisation, AI column suggestions, improved errors, quantity comma stripping. Two unknowns remain: (1) whether HL auto-detection now works with normalised headers, (2) whether import completes end-to-end after migration. The code is resilient — generic CSVs without names should now import cleanly even before migration."
+  "uncommitted_files": [],
+  "next_action": "User says 'approved' after live testing → run update_roadmap (mark phase 8 complete) then /gsd-discuss-phase 9 or /gsd-plan-phase 9",
+  "context_notes": "All 3 plans executed, code review done (5 blockers found, 4 fixed inline — CR-01 saveCreatorWeight RLS is pre-existing Phase 6 issue, CR-04 BUDGET_MAX is pre-existing). 140 tests pass. VERIFICATION.md status: human_needed. HUMAN-UAT.md created with 4 live-test items."
 }
