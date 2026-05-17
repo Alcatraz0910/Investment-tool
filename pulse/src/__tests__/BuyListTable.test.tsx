@@ -112,3 +112,33 @@ describe('BuyListTable (UI-02)', () => {
     expect(container.querySelector('table')).toBeNull()
   })
 })
+
+describe('BuyListTable — Price column (Phase 8)', () => {
+  it('renders £-formatted price when prices prop provides a value', () => {
+    const prices = { VWRL: 114.22 }
+    render(<BuyListTable result={buyListResult} prices={prices} />)
+    expect(screen.getByText('£114.22')).toBeInTheDocument()
+  })
+
+  it('renders em dash when price in prices map is null', () => {
+    const prices = { VWRL: null }
+    render(<BuyListTable result={buyListResult} prices={prices} />)
+    // Both VWRL and AAPL have no fetched price — all price cells show em dash
+    const emDashes = screen.getAllByText('—')
+    expect(emDashes.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('renders em dash when prices prop is not provided', () => {
+    render(<BuyListTable result={buyListResult} />)
+    // No prices prop — all price cells show em dash (U+2014)
+    const emDashes = screen.getAllByText('—')
+    expect(emDashes.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('renders em dash when ticker is not present in prices map', () => {
+    const prices = {}  // empty map — VWRL not present
+    render(<BuyListTable result={buyListResult} prices={prices} />)
+    const emDashes = screen.getAllByText('—')
+    expect(emDashes.length).toBeGreaterThanOrEqual(1)
+  })
+})
