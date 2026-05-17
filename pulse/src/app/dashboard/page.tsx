@@ -60,7 +60,7 @@ export default async function DashboardPage({
   let holdings: Holding[] = []
   const { data: rows } = await supabase
     .from('holdings')
-    .select('id, user_id, ticker, name, category, quantity, current_value, is_fill_ticker, created_at, updated_at')
+    .select('id, user_id, ticker, name, category, quantity, current_value, is_fill_ticker, current_price, price_fetched_at, created_at, updated_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -73,6 +73,8 @@ export default async function DashboardPage({
     quantity: new Decimal(row.quantity),
     currentValue: new Decimal(row.current_value),
     isFillTicker: row.is_fill_ticker as boolean,
+    currentPrice: row.current_price ? new Decimal(row.current_price) : null,
+    priceFetchedAt: row.price_fetched_at ? new Date(row.price_fetched_at) : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   }))
@@ -275,6 +277,8 @@ export default async function DashboardPage({
     ...h,
     currentValue: h.currentValue.toNumber(),
     quantity: h.quantity.toNumber(),
+    currentPrice: h.currentPrice ? new Decimal(h.currentPrice).toNumber() : null,
+    priceFetchedAt: h.priceFetchedAt ?? null,
   }))
 
   // Server-side plan generation (D-05: auto-generate on page load)
