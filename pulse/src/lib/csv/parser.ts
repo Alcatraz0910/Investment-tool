@@ -20,10 +20,11 @@ export const BROKER_PRESETS: BrokerPreset[] = [
     name: 'Hargreaves Lansdown',
     // HL account summary CSV has metadata rows above the data table.
     // The data table starts with "Code" as the first column header.
-    requiredHeaders: ['Code', 'Units'],
+    // Actual HL export columns verified from live export: Code, Stock, Units held, Value (£)
+    requiredHeaders: ['Code', 'Units held'],
     tickerCol: 'Code',
-    nameCol: 'Description',
-    quantityCol: 'Units',
+    nameCol: 'Stock',
+    quantityCol: 'Units held',
     valueCol: 'Value (£)',
     gbx: false,  // Value (£) column is already in pounds
   },
@@ -164,6 +165,13 @@ function getCol(row: Record<string, string>, colName: string): string {
   const lower = colName.trim().toLowerCase()
   for (const [k, v] of Object.entries(row)) {
     if (k.trim().toLowerCase() === lower) return v ?? ''
+  }
+  // Encoding fallback: HL CSVs are Windows-1252; £ becomes a replacement character
+  // when read as UTF-8. Strip non-ASCII before comparing so Value(£) still resolves.
+  const asciiOnly = (s: string) => s.replace(/[^\x00-\x7F]/g, '')
+  const lowerAscii = asciiOnly(lower)
+  for (const [k, v] of Object.entries(row)) {
+    if (asciiOnly(k.trim().toLowerCase()) === lowerAscii) return v ?? ''
   }
   return ''
 }
