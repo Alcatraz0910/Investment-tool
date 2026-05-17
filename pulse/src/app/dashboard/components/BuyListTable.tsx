@@ -29,9 +29,10 @@ const itemVariants = {
 
 interface Props {
   result: PlanResult
+  prices?: Record<string, number | null>
 }
 
-export function BuyListTable({ result }: Props) {
+export function BuyListTable({ result, prices }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   function toggleRow(key: string) {
@@ -107,9 +108,10 @@ export function BuyListTable({ result }: Props) {
         <>
           {/* Column headers */}
           {items.length > 0 && (
-            <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-4 py-2">
+            <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 px-4 py-2">
               <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Ticker</span>
               <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Category</span>
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">Price</span>
               <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">Amount</span>
               <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">Gap</span>
             </div>
@@ -139,12 +141,19 @@ export function BuyListTable({ result }: Props) {
                     <button
                       type="button"
                       aria-label={`${item.ticker} ${item.category} buy row`}
-                      className="w-full grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-4 py-3 min-h-[44px] text-left hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded-xl"
+                      className="w-full grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 px-4 py-3 min-h-[44px] text-left hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded-xl"
                       onClick={() => toggleRow(rowKey)}
                       aria-expanded={isExpanded}
                     >
                       <span className="font-medium text-white text-sm">{item.ticker}</span>
                       <span className="text-zinc-300 text-sm">{item.category}</span>
+                      <div className="text-sm text-right">
+                        {prices?.[item.ticker] != null ? (
+                          <span className="text-white">£{prices[item.ticker]!.toFixed(2)}</span>
+                        ) : (
+                          <span className="text-zinc-500">—</span>
+                        )}
+                      </div>
                       <span className="font-medium text-white text-sm text-right">
                         £{amountDisplay}
                       </span>

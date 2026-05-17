@@ -12,10 +12,11 @@
  * - useMemo(generatePlan) — pure client-side recompute, no network call (D-12)
  * - Range: £200–£1000, step: 1, integer values
  */
-import { useMemo } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { generatePlan } from '@/lib/plan/generator'
 import type { HoldingWithFillTicker } from '@/lib/plan/generator'
 import type { BlendedStrategy } from '@/lib/strategy/blender'
+import { fetchTickerPrices } from '@/app/dashboard/actions'
 import { BuyListTable } from './BuyListTable'
 
 interface Props {
@@ -35,6 +36,25 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
     () => generatePlan(portfolio, budget, strategy, isaRemaining),
     [portfolio, budget, strategy, isaRemaining],
   )
+
+  // Phase 8: Buy List prices — React state only (D-02, D-06)
+  const [buyListPrices, setBuyListPrices] = useState<Record<string, number | null>>({})
+  const [pricesPending, startPricesTransition] = useTransition()
+  const [buyListPriceError, setBuyListPriceError] = useState<string | null>(null)
+
+  function handleRefreshBuyListPrices() {
+    if (!plan || plan.type !== 'buy-list' || !plan.items?.length) return
+    setBuyListPriceError(null)
+    const tickers = plan.items.map((i: { ticker: string }) => i.ticker)
+    startPricesTransition(async () => {
+      const result = await fetchTickerPrices(tickers)
+      if (result.error) {
+        setBuyListPriceError(result.error)
+      } else if (result.prices) {
+        setBuyListPrices(result.prices)
+      }
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -74,8 +94,33 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
         </div>
       </div>
 
-      {/* Buy List */}
-      <BuyListTable result={plan} />
+      {/* Buy List — Phase 8: Refresh Prices button and price column */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={handleRefreshBuyListPrices}
+          disabled={pricesPending}
+          className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-3 min-h-[44px] disabled:opacity-75"
+          aria-label={pricesPending ? 'Refreshing prices...' : undefined}
+        >
+          {pricesPending ? (
+            <svg
+              className="animate-spin h-4 w-4"
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+          ) : 'Refresh Prices'}
+        </button>
+      </div>
+      {buyListPriceError && (
+        <p role="alert" aria-live="assertive" className="text-sm text-red-400 mb-2">
+          {buyListPriceError}
+        </p>
+      )}
+      <BuyListTable result={plan} prices={buyListPrices} />
     </div>
   )
 }
