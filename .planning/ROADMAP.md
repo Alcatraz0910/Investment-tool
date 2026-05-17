@@ -56,7 +56,17 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
   2. Buy List shows current price per ticker alongside the £ target amount produced by generatePlan
   3. A Refresh Prices button triggers a server-side batch fetch; the UI updates without a full page reload
   4. An optional TradingView chart widget is visible per holding as a decorative overlay (display-only; does not alter plan logic)
-**Plans**: TBD
+**Plans**: 3 plans
+- [x] 08-01-PLAN.md — Foundation (install yahoo-finance2, SQL migration, Holding types, refreshHoldingPrices + fetchTickerPrices server actions, page.tsx extension, price-actions tests)
+
+Wave 2 *(blocked on Wave 1 completion)*
+- [x] 08-02-PLAN.md — Portfolio Tab UI (TradingViewWidget, PortfolioTab price columns + chart toggle, tests)
+- [x] 08-03-PLAN.md — Buy List Tab UI (BuyListTable prices prop + Price column, ContributionCalculator Refresh button, tests)
+
+**Cross-cutting constraints:**
+- .L suffix applied only at yahooFinance.quote() call boundary — never stored in DB
+- GBp currency tickers divided by 100 via Decimal in both server actions
+- Buy List prices are React state only — fetchTickerPrices never writes to DB
 **UI hint**: yes
 
 ### Phase 9: Creator Search
@@ -93,6 +103,6 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
 | 5. Plan Generator | v1.0 | 4/4 | Complete | 2026-05-07 |
 | 6. Dashboard UI | v1.0 | 6/6 | Complete | 2026-05-07 |
 | 7. CSV Portfolio Import | v1.1 | 4/4 | Human verification pending | — |
-| 8. Live Price Data | v1.1 | 0/? | Not started | — |
+| 8. Live Price Data | v1.1 | 3/3 | Human verification pending | — |
 | 9. Creator Search | v1.1 | 0/? | Not started | — |
 | 10. Mobile Layout | v1.1 | 0/? | Not started | — |

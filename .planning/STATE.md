@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: Portfolio Intelligence
 status: in_progress
 last_updated: "2026-05-17T00:00:00.000Z"
-last_activity: 2026-05-17 — Phase 7 UAT complete (3/3 passed); HL preset fixed; phase closed
+last_activity: 2026-05-17 — Phase 8 executed (3/3 plans complete); pending human verification
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 25
+  total_plans: 7
+  completed_plans: 7
+  percent: 50
 ---
 
 # Pulse — Project State
@@ -24,9 +24,9 @@ See: `.planning/PROJECT.md` (updated 2026-05-13 — v1.1 milestone started)
 ## Current Position
 
 Phase: Phase 8 — Live Price Data
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-05-17 — Phase 7 closed after UAT. Next: Phase 8.
+Plan: 3/3 plans complete
+Status: Pending human verification
+Last activity: 2026-05-17 — Phase 8 executed (2 waves; yahoo-finance2 installed, server actions + UI complete).
 
 ## Milestone Status
 
@@ -40,7 +40,7 @@ Last activity: 2026-05-17 — Phase 7 closed after UAT. Next: Phase 8.
 | Phase | Name | Status |
 |-------|------|--------|
 | 7 | CSV Portfolio Import | ✅ Complete (2026-05-17) |
-| 8 | Live Price Data | Not started |
+| 8 | Live Price Data | 🔄 In progress (human verification pending) |
 | 9 | Creator Search | Not started |
 | 10 | Mobile Layout | Not started |
 
