@@ -3,7 +3,8 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1–6 (shipped 2026-05-07) — [archive](.planning/milestones/v1.0-ROADMAP.md)
-- 🔲 **v1.1 Portfolio Intelligence** — Phases 7–10 (in progress)
+- 🔄 **v1.1 Portfolio Intelligence** — Phases 7–10 (Phases 7–8 complete; 9–10 deferred into v1.2)
+- 🔲 **v1.2 Creator Intelligence** — Phases 11–15 (next)
 
 ## Phases
 
@@ -25,8 +26,8 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
 
 - [x] **Phase 7: CSV Portfolio Import** — User can bulk-import holdings from a broker CSV file (HL/AJ Bell presets + generic mapper) — completed 2026-05-17
 - [x] **Phase 8: Live Price Data** — Portfolio shows current market prices and total value per holding; Buy List enriched with current price per ticker — completed 2026-05-18
-- [ ] **Phase 9: Creator Search** — User can discover and track creators by name without knowing the channel URL
-- [ ] **Phase 10: Mobile Layout** — All dashboard tabs are fully usable on a 375px phone screen with touch-friendly targets
+- [ ] **Phase 9: Creator Search** — deferred; absorbed into v1.2 Phase 11 (creator discovery is part of Creator Intelligence)
+- [ ] **Phase 10: Mobile Layout** — deferred; absorbed into v1.2 Phase 15 (Visual Redesign covers responsive polish)
 
 ## Phase Details
 
@@ -91,6 +92,14 @@ Wave 2 *(blocked on Wave 1 completion)*
   3. Holdings and Buy List tables collapse to a card layout on small screens so all data is readable without horizontal scrolling
 **Plans**: TBD
 **UI hint**: yes
+
+### v1.2 Creator Intelligence
+
+- [ ] **Phase 11: Creator Intelligence Extraction** — AI produces a two-layer summary per creator (4-month stable summary + 30-day latest signals); extracts favoured stocks, methodology, industry/sector focus, and preferred index funds; scrape window limited to last 4 months
+- [ ] **Phase 12: Watch List + Per-Creator Budget** — Buy list replaced with a live watch list (real-time prices, news flags per item); user sets £X/month per creator; app translates into actual share quantities to buy based on current creator picks
+- [ ] **Phase 13: Market News Integration** — Finnhub/Alpha Vantage ticker news + BBC Business/Reuters UK/BoE RSS feeds; AI cross-references against watch list tickers and creator-backed sectors; generates a "this month's context" summary (3-4 sentences) combining creator signals and macro news
+- [ ] **Phase 14: Creator Signals + Housekeeping** — Consensus signal (2+ creators backing same ticker), sentiment trend (bullish/cautious shift over 4 months), contradiction detection (recent vs older stance), cadence weighting (less-active creators carry less weight); ISA tab removed
+- [ ] **Phase 15: Visual Redesign** — Futuristic, clean UI overhaul across all dashboard tabs; cohesive design system (typography, colour palette, spacing, motion); glassmorphism, dark-first aesthetic; polished component library replacing placeholder styling
 
 ## Progress
 

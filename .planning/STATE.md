@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Portfolio Intelligence
+milestone: v1.2
+milestone_name: Creator Intelligence
 status: in_progress
-stopped_at: Phase 8 closed (2026-05-18)
+stopped_at: Phase 10 deferred (2026-05-18)
 last_updated: "2026-05-18T00:00:00.000Z"
-last_activity: 2026-05-18 — Phase 8 UAT complete and closed. Creator strategy redesign captured as pending initiative.
+last_activity: 2026-05-18 — v1.1 Phases 9–10 deferred into v1.2. Starting v1.2 Creator Intelligence at Phase 11.
 progress:
   total_phases: 4
   completed_phases: 2
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-13 — v1.1 milestone started)
 
 ## Current Position
 
-Phase: Phase 9 — Creator Search (next)
+Phase: Phase 11 — Creator Intelligence Extraction (next)
 Plan: 0/? plans complete
-Status: Ready to plan
-Last activity: 2026-05-18 — Phase 8 closed. Creator strategy redesign to be discussed as new milestone before Phase 9.
+Status: Ready to discuss
+Last activity: 2026-05-18 — v1.1 Phases 9–10 deferred. Starting v1.2 at Phase 11.
 
 ## Milestone Status
 

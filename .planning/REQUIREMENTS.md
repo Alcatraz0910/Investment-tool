@@ -35,7 +35,49 @@ Requirements for the Portfolio Intelligence milestone. Each maps to roadmap phas
 - [ ] **MOB-02**: Trust weight sliders have touch-friendly targets on mobile
 - [ ] **MOB-03**: Holdings and Buy List tables collapse to card view on small screens
 
-## v1.2 Requirements (Deferred)
+## v1.2 Requirements — Creator Intelligence
+
+### Creator Intelligence Extraction (Phase 11)
+
+- **CI-01**: Transcript scraping is limited to the last 4 months per creator; older transcripts are not fetched or indexed
+- **CI-02**: AI produces two extraction layers per creator: a stable summary (full 4-month window) and latest signals (last 30 days)
+- **CI-03**: Extraction captures: favoured stocks (tickers), investment methodology, industry/sector focus, preferred index funds
+- **CI-04**: Creator profile displays both layers distinctly — "established view" vs "this month"
+
+### Watch List + Per-Creator Budget (Phase 12)
+
+- **WL-01**: Buy list is replaced with a watch list populated from creator picks (both extraction layers)
+- **WL-02**: Watch list items display live prices (via existing yahoo-finance2 integration)
+- **WL-03**: User sets a monthly £ amount per creator (not a category % split)
+- **WL-04**: App calculates actual share quantities to buy per creator based on their current picks and today's prices
+- **WL-05**: ISA tab is removed from the dashboard entirely
+
+### Market News Integration (Phase 13)
+
+- **NEWS-01**: Finnhub or Alpha Vantage news API provides ticker-specific news for watch list items
+- **NEWS-02**: RSS feeds (BBC Business, Reuters UK, Bank of England, ONS) provide UK macro context
+- **NEWS-03**: AI cross-references news against watch list tickers and creator-backed sectors
+- **NEWS-04**: Each watch list item shows a news flag with count of relevant stories
+- **NEWS-05**: Creator card shows macro conditions for sectors that creator is backing
+- **NEWS-06**: A "this month's context" summary (3-4 sentences, AI-generated) combines creator signals + latest signals + macro news; refreshes daily; regenerates on demand
+- **NEWS-07**: News refresh runs daily; macro summary regenerates weekly or on-demand
+
+### Creator Signals (Phase 14)
+
+- **SIG-01**: Consensus signal surfaces when 2+ tracked creators back the same ticker
+- **SIG-02**: Sentiment trend tracks whether a creator is becoming more bullish or cautious over the 4-month window
+- **SIG-03**: Contradiction detection flags when a creator's recent videos contradict their established stance
+- **SIG-04**: Creator cadence is tracked; creators who have not posted recently carry reduced weight in buy recommendations
+
+### Visual Redesign (Phase 15)
+
+- **VIS-01**: All dashboard tabs receive a cohesive visual overhaul — futuristic, clean, dark-first aesthetic
+- **VIS-02**: A consistent design system is defined and applied: typography scale, colour palette, spacing tokens, motion principles
+- **VIS-03**: Glassmorphism and subtle depth effects applied consistently across cards, modals, and panels
+- **VIS-04**: All placeholder/utility styling replaced with polished components
+- **VIS-05**: Animations and transitions are smooth and purposeful (Framer Motion); no jarring state changes
+
+## v1.2 Requirements (Deferred — Pre-existing)
 
 ### Portfolio Sync
 
