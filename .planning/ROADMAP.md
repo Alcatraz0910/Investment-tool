@@ -23,8 +23,8 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](.planning/milestones/v1.0-R
 
 ### v1.1 Portfolio Intelligence
 
-- [ ] **Phase 7: CSV Portfolio Import** — User can bulk-import holdings from a broker CSV file (HL/AJ Bell presets + generic mapper)
-- [ ] **Phase 8: Live Price Data** — Portfolio shows current market prices and total value per holding; Buy List enriched with current price per ticker
+- [x] **Phase 7: CSV Portfolio Import** — User can bulk-import holdings from a broker CSV file (HL/AJ Bell presets + generic mapper) — completed 2026-05-17
+- [x] **Phase 8: Live Price Data** — Portfolio shows current market prices and total value per holding; Buy List enriched with current price per ticker — completed 2026-05-18
 - [ ] **Phase 9: Creator Search** — User can discover and track creators by name without knowing the channel URL
 - [ ] **Phase 10: Mobile Layout** — All dashboard tabs are fully usable on a 375px phone screen with touch-friendly targets
 

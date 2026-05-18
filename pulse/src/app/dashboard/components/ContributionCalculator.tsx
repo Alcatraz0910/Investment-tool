@@ -94,28 +94,30 @@ export function ContributionCalculator({ portfolio, strategy, isaRemaining, budg
         </div>
       </div>
 
-      {/* Buy List — Phase 8: Refresh Prices button and price column */}
-      <div className="flex justify-end mb-2">
-        <button
-          type="button"
-          onClick={handleRefreshBuyListPrices}
-          disabled={pricesPending}
-          className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-3 min-h-[44px] disabled:opacity-75"
-          aria-label={pricesPending ? 'Refreshing prices...' : undefined}
-        >
-          {pricesPending ? (
-            <svg
-              className="animate-spin h-4 w-4"
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
-          ) : 'Refresh Prices'}
-        </button>
-      </div>
+      {/* Buy List — Phase 8: Refresh Prices button — only shown when there are buy list items */}
+      {plan.type === 'buy-list' && plan.items?.length > 0 && (
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={handleRefreshBuyListPrices}
+            disabled={pricesPending}
+            className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-3 min-h-[44px] disabled:opacity-75"
+            aria-label={pricesPending ? 'Refreshing prices...' : undefined}
+          >
+            {pricesPending ? (
+              <svg
+                className="animate-spin h-4 w-4"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : 'Refresh Prices'}
+          </button>
+        </div>
+      )}
       {buyListPriceError && (
         <p role="alert" aria-live="assertive" className="text-sm text-red-400 mb-2">
           {buyListPriceError}
