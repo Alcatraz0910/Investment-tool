@@ -230,78 +230,80 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
           <p className="text-zinc-400 text-sm mt-1">Add your first holding to start tracking your portfolio.</p>
         </div>
       ) : (
-        <ul>
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-zinc-700/50">
+              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wide py-2 px-2">Holding</th>
+              <th className="text-right text-xs font-semibold text-zinc-500 uppercase tracking-wide py-2 px-2">Units</th>
+              <th className="text-right text-xs font-semibold text-zinc-500 uppercase tracking-wide py-2 px-2">Value</th>
+              <th className="text-right text-xs font-semibold text-zinc-500 uppercase tracking-wide py-2 px-2">Type</th>
+              <th className="text-right text-xs font-semibold text-zinc-500 uppercase tracking-wide py-2 px-2">Price</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
           {holdings.map((holding) => (
-            <li
+            <tr
               key={holding.id}
-              className="border-b border-zinc-700/50"
+              className="border-b border-zinc-700/50 hover:bg-zinc-700/30"
             >
               {deleteConfirmId === holding.id ? (
-                // Inline delete confirmation
-                <div className="flex items-center gap-3 flex-1 flex-wrap py-3 px-2 hover:bg-zinc-700/30 rounded-lg">
-                  <span className="text-sm text-white">
-                    Delete {holding.ticker}?
-                  </span>
-                  <span className="text-sm text-zinc-400">
-                    This will remove {holding.ticker} from your portfolio.
-                  </span>
-                  {deleteState?.error && (
-                    <span role="alert" aria-live="polite" className="text-sm text-red-400">
-                      {deleteState.error}
-                    </span>
-                  )}
-                  <div className="flex gap-2 ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(holding.id)}
-                      disabled={isPending}
-                      className="text-sm font-semibold text-red-400 hover:text-red-300 disabled:opacity-60 min-h-[44px] px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
-                    >
-                      {isPending ? 'Deleting...' : 'Confirm'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setDeleteConfirmId(null); setDeleteState({}) }}
-                      className="text-sm font-semibold text-zinc-400 hover:text-white min-h-[44px] px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
-                    >
-                      Cancel
-                    </button>
+                <td colSpan={6} className="py-3 px-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-sm text-white">Delete {holding.ticker}?</span>
+                    <span className="text-sm text-zinc-400">This will remove {holding.ticker} from your portfolio.</span>
+                    {deleteState?.error && (
+                      <span role="alert" aria-live="polite" className="text-sm text-red-400">{deleteState.error}</span>
+                    )}
+                    <div className="flex gap-2 ml-auto">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(holding.id)}
+                        disabled={isPending}
+                        className="text-sm font-semibold text-red-400 hover:text-red-300 disabled:opacity-60 min-h-[44px] px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+                      >
+                        {isPending ? 'Deleting...' : 'Confirm'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setDeleteConfirmId(null); setDeleteState({}) }}
+                        className="text-sm font-semibold text-zinc-400 hover:text-white min-h-[44px] px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </td>
               ) : (
                 <>
-                  <div className="flex items-center justify-between py-3 hover:bg-zinc-700/30 rounded-lg px-2">
-                    <span className="flex-1 min-w-0">
-                      <span className="text-base font-semibold text-white">{holding.ticker}</span>
-                      {holding.name && <span className="block text-xs text-zinc-400">{holding.name}</span>}
-                    </span>
-                    <span className="text-sm text-zinc-400 w-20 text-right">{holding.quantity.toFixed(2)}</span>
-                    <span className="text-sm text-white w-24 text-right">£{holding.currentValue.toFixed(2)}</span>
-                    <span className="text-sm text-zinc-400 w-24 text-right">{holding.category}</span>
-
-                    {/* Price cell — as-of timestamp shown as tooltip to save column space */}
-                    <span className="text-sm w-24 text-right">
-                      {holding.currentPrice !== null ? (
-                        <span
-                          className={
-                            holding.priceFetchedAt &&
-                            Date.now() - new Date(holding.priceFetchedAt).getTime() > 24 * 60 * 60 * 1000
-                              ? 'text-amber-400'
-                              : 'text-white'
-                          }
-                          title={holding.priceFetchedAt
-                            ? `As of ${new Date(holding.priceFetchedAt).toLocaleString('en-GB')}`
-                            : undefined}
-                        >
-                          £{holding.currentPrice.toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-zinc-500" aria-label="Price not available">—</span>
-                      )}
-                    </span>
-
-                    <div className="flex gap-2 ml-4 items-center">
-                      {/* Chart link — opens TradingView in new tab */}
+                  <td className="py-3 px-2">
+                    <span className="text-base font-semibold text-white">{holding.ticker}</span>
+                    {holding.name && <span className="block text-xs text-zinc-400">{holding.name}</span>}
+                  </td>
+                  <td className="py-3 px-2 text-sm text-zinc-400 text-right whitespace-nowrap">{holding.quantity.toFixed(2)}</td>
+                  <td className="py-3 px-2 text-sm text-white text-right whitespace-nowrap">£{holding.currentValue.toFixed(2)}</td>
+                  <td className="py-3 px-2 text-sm text-zinc-400 text-right whitespace-nowrap">{holding.category}</td>
+                  <td className="py-3 px-2 text-sm text-right whitespace-nowrap">
+                    {holding.currentPrice !== null ? (
+                      <span
+                        className={
+                          holding.priceFetchedAt &&
+                          Date.now() - new Date(holding.priceFetchedAt).getTime() > 24 * 60 * 60 * 1000
+                            ? 'text-amber-400'
+                            : 'text-white'
+                        }
+                        title={holding.priceFetchedAt
+                          ? `As of ${new Date(holding.priceFetchedAt).toLocaleString('en-GB')}`
+                          : undefined}
+                      >
+                        £{holding.currentPrice.toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500" aria-label="Price not available">—</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-2">
+                    <div className="flex gap-2 items-center justify-end">
                       <a
                         href={`https://www.tradingview.com/chart/?symbol=${holding.ticker}`}
                         target="_blank"
@@ -310,13 +312,7 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                         aria-label={`View ${holding.ticker} chart on TradingView`}
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                          <polyline
-                            points="1,12 5,7 9,9 15,3"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                          <polyline points="1,12 5,7 9,9 15,3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </a>
                       <button
@@ -344,13 +340,13 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                         Delete
                       </button>
                     </div>
-                  </div>
-
+                  </td>
                 </>
               )}
-            </li>
+            </tr>
           ))}
-        </ul>
+          </tbody>
+        </table>
       )}
 
       {/* Fill-ticker error */}

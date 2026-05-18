@@ -1,39 +1,43 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-17T19:00:00.000Z",
-  "phase": "8",
+  "timestamp": "2026-05-18T00:00:00.000Z",
+  "phase": "08",
   "phase_name": "Live Price Data",
   "phase_dir": ".planning/phases/08-live-price-data",
   "plan": 3,
   "task": null,
   "total_tasks": null,
-  "status": "human_verification_pending",
+  "status": "paused",
   "completed_tasks": [
     {"id": "08-01", "name": "Foundation — yahoo-finance2, SQL migration, server actions, types, tests", "status": "done"},
-    {"id": "08-02", "name": "Portfolio Tab UI — TradingViewWidget, price columns, chart toggle", "status": "done"},
+    {"id": "08-02", "name": "Portfolio Tab UI — price columns, chart toggle", "status": "done"},
     {"id": "08-03", "name": "Buy List Tab UI — BuyListTable Price column, ContributionCalculator Refresh", "status": "done"},
-    {"id": "code-review-fixes", "name": "CR-02/CR-03/WR-03/WR-05 fixes from code review", "status": "done"}
+    {"id": "code-review-fixes", "name": "CR-02/CR-03/WR-03/WR-05 fixes; priceFetchedAt ISO serialization confirmed", "status": "done"},
+    {"id": "sql-migration", "name": "SQL migration run by user — confirmed working", "status": "done"},
+    {"id": "uat-1", "name": "UAT-1: Portfolio Refresh Prices — tested and iterated", "status": "done"},
+    {"id": "uat-3", "name": "UAT-3: TradingView chart link — tested and iterated (bare ticker URL)", "status": "done"},
+    {"id": "uat-fixes", "name": "Tab rename Plan→Buy List, price fallback .L→bare, name fetch, manual price modal", "status": "done", "commit": "d4f3634"},
+    {"id": "table-refactor", "name": "Holdings list → HTML table with column headers (alignment fix)", "status": "done", "commit": "wip"}
   ],
-  "remaining_tasks": [],
+  "remaining_tasks": [
+    {"id": "uat-2", "name": "UAT-2: Buy List tab → Refresh Prices → prices fill, ephemeral on reload", "status": "not_started"},
+    {"id": "uat-4", "name": "UAT-4: network offline → Refresh Prices → red error, no crash, recovers", "status": "not_started"},
+    {"id": "uat-update", "name": "Update 08-HUMAN-UAT.md with final UAT results", "status": "not_started"},
+    {"id": "phase-close", "name": "Mark Phase 8 complete — STATE.md + ROADMAP.md", "status": "not_started"}
+  ],
   "blockers": [],
   "human_actions_pending": [
-    {
-      "action": "Run SQL migration in Supabase SQL Editor",
-      "context": "ALTER TABLE public.holdings ADD COLUMN IF NOT EXISTS current_price NUMERIC, ADD COLUMN IF NOT EXISTS price_fetched_at TIMESTAMPTZ; — file at supabase/migrations/20260517_phase8_price_columns.sql",
-      "blocking": true
-    },
-    {
-      "action": "Live test the 4 items in 08-HUMAN-UAT.md",
-      "context": "Refresh Prices on Portfolio tab, Refresh Prices on Buy List tab, TradingView chart toggle, error handling. Requires running dev server with migration applied.",
-      "blocking": false
-    }
+    {"action": "Run UAT-2: Buy List tab → generate plan → Refresh Prices → prices appear; reload → prices gone", "context": "Requires live session + network", "blocking": true},
+    {"action": "Run UAT-4: DevTools offline → Refresh Prices → red error; reconnect → prices load", "context": "Requires DevTools network throttle", "blocking": true}
   ],
   "decisions": [
-    {"decision": "yahoo-finance2 v3 uses class-based API — instance-based not static", "rationale": "Executor discovered at install time; auto-corrected", "phase": "8"},
-    {"decision": "priceFetchedAt serialized as ISO string across RSC boundary", "rationale": "Date instances cannot cross Next.js 15 RSC→client boundary; CR-02 fix", "phase": "8"},
-    {"decision": "Executor wrote Phase 8 files to main tree and worktree simultaneously", "rationale": "Known executor behaviour; resolved by discarding main-tree copies and using worktree-committed versions at merge time", "phase": "8"}
+    {"decision": "TradingView URL: bare ticker, no LSE prefix", "rationale": "User tested LSE- and LSE%3A variants — both failed; bare ticker works", "phase": "08"},
+    {"decision": "Holdings table: HTML <table> not flex/grid", "rationale": "Separate flex/grid containers cannot share column widths; <table> synchronizes natively", "phase": "08"},
+    {"decision": "As-of timestamp: tooltip on price cell, not separate column", "rationale": "Frees space for holding name; amber staleness colour moved to price value", "phase": "08"},
+    {"decision": "Manual price: optional field in Edit/Add holding modal", "rationale": "HL own funds (OEICs) not on Yahoo Finance; user pastes from HL website", "phase": "08"},
+    {"decision": "Price fetch fallback: {ticker}.L then bare ticker", "rationale": "Some LSE instruments fail with .L on Yahoo Finance", "phase": "08"}
   ],
-  "uncommitted_files": [],
-  "next_action": "User says 'approved' after live testing → run update_roadmap (mark phase 8 complete) then /gsd-discuss-phase 9 or /gsd-plan-phase 9",
-  "context_notes": "All 3 plans executed, code review done (5 blockers found, 4 fixed inline — CR-01 saveCreatorWeight RLS is pre-existing Phase 6 issue, CR-04 BUDGET_MAX is pre-existing). 140 tests pass. VERIFICATION.md status: human_needed. HUMAN-UAT.md created with 4 live-test items."
+  "uncommitted_files": ["pulse/src/components/PortfolioTab.tsx"],
+  "next_action": "Ask user to run UAT-2 and UAT-4, update 08-HUMAN-UAT.md, then close Phase 8 and move to Phase 9",
+  "context_notes": "Phase 8 functionally complete. UAT-1 and UAT-3 tested and iterated during this session. Only UAT-2 (Buy List prices) and UAT-4 (error handling) remain. Several UI fixes applied from user feedback: column headers, name display, TradingView URL, manual price entry."
 }
