@@ -307,7 +307,7 @@ export default async function DashboardPage({
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
     { id: 'isa', label: 'ISA' },
-    { id: 'plan', label: 'Plan' },
+    { id: 'plan', label: 'Buy List' },
   ]
 
   return (

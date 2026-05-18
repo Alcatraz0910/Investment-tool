@@ -17,6 +17,7 @@ interface HoldingModalProps {
     name?: string
     quantity: number
     currentValue: number
+    currentPrice: number | null
     category: AssetCategory
     isFillTicker: boolean
   }
@@ -154,6 +155,23 @@ export function HoldingModal({ isOpen, onClose, holding }: HoldingModalProps) {
                 defaultValue={holding?.currentValue.toString() ?? ''}
                 placeholder="e.g. 1240.00"
                 required
+                className="w-full px-4 py-3 min-h-[44px] bg-zinc-900 border border-zinc-700 rounded-md text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Price per unit — optional manual override for funds not on Yahoo Finance */}
+            <div className="flex flex-col gap-1">
+              <label htmlFor="currentPrice" className="text-sm font-semibold text-white">
+                Price per unit (£) <span className="text-zinc-500 font-normal">(optional)</span>
+              </label>
+              <input
+                id="currentPrice"
+                name="currentPrice"
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                defaultValue={holding?.currentPrice?.toString() ?? ''}
+                placeholder="e.g. 1.234 — leave blank to use Refresh Prices"
                 className="w-full px-4 py-3 min-h-[44px] bg-zinc-900 border border-zinc-700 rounded-md text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>

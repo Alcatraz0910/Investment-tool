@@ -1,8 +1,9 @@
 ---
 phase: 08-live-price-data
 verified: 2026-05-17T00:00:00Z
+updated: 2026-05-18T00:00:00Z
 status: human_needed
-score: 7/8 must-haves verified
+score: 8/8 must-haves verified
 overrides_applied: 0
 human_verification:
   - test: "Open dashboard with holdings that have prices fetched (price_fetched_at non-null). Confirm the page renders without a runtime serialization crash."
@@ -41,9 +42,9 @@ human_verification:
 | 5 | .L suffix applied only at yahooFinance.quote() call boundary — never stored in DB | ✓ VERIFIED | actions.ts lines 375 and 426: `yahooFinance.quote(\`${ticker}.L\`, ...)` — suffix applied only here. DB update uses `ticker` (no .L). |
 | 6 | GBp tickers divided by 100 via Decimal in both server actions | ✓ VERIFIED | actions.ts lines 377-379 and 428-430: `if (price !== null && q.currency === 'GBp') { price = new Decimal(price).div(100).toNumber() }` — identical pattern in both refreshHoldingPrices and fetchTickerPrices. |
 | 7 | Buy List prices are React state only — fetchTickerPrices does NOT write to DB and does NOT call revalidatePath | ✓ VERIFIED | fetchTickerPrices (actions.ts line 411-438): no supabase `.update()` call, no `revalidatePath` call. ContributionCalculator stores result in `setBuyListPrices` state. |
-| 8 | priceFetchedAt Date objects serialized at RSC→client boundary | ✗ FAILED | page.tsx line 281: `priceFetchedAt: h.priceFetchedAt ?? null` passes raw Date instance (or null). Next.js 15 cannot serialize Date class instances across RSC→client boundary. CR-02 from 08-REVIEW.md confirms this. The field is NOT converted to ISO string before crossing the boundary. |
+| 8 | priceFetchedAt Date objects serialized at RSC→client boundary | ✓ VERIFIED | Fixed in commit f2cfcfc: page.tsx:281 uses `h.priceFetchedAt?.toISOString() ?? null`. ClientHolding.priceFetchedAt typed as `string \| null`. PortfolioTab staleness check uses `new Date(holding.priceFetchedAt)`. |
 
-**Score:** 7/8 truths verified
+**Score:** 8/8 truths verified
 
 ---
 
@@ -113,7 +114,7 @@ All four phase-8 requirements mapped. No orphaned requirements.
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| page.tsx | 281 | `priceFetchedAt: h.priceFetchedAt ?? null` — raw Date passed to client | ✗ BLOCKER (CR-02) | Next.js 15 RSC→client boundary cannot serialize Date instances. Dashboard will crash when any holding has a non-null price_fetched_at. |
+| page.tsx | 281 | `priceFetchedAt: h.priceFetchedAt ?? null` — raw Date passed to client | ✅ FIXED (CR-02, commit f2cfcfc) | Changed to `.toISOString()`. ClientHolding typed as `string \| null`. No longer a blocker. |
 | ContributionCalculator.tsx | 99 | `<button` without `type="button"` | ⚠️ WARNING (WR-05) | Defaults to type="submit" — if ever inside a form, will submit instead of refresh |
 | actions.ts | 387-403 | Sequential update loop short-circuits on first 42703 error | ⚠️ WARNING (WR-01) | Partial DB update state possible if migration is partially applied |
 | TradingViewWidget.tsx | 23 | `script.innerHTML` instead of `script.textContent` | ⚠️ WARNING (WR-03) | Not currently exploitable (tickers server-validated) but one refactor from XSS risk |

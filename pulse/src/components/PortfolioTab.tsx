@@ -1,10 +1,8 @@
 'use client'
 import { useState, useTransition, useActionState, startTransition } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import type { AssetCategory } from '@/types'
 import { HoldingModal } from '@/components/HoldingModal'
 import ImportCSVModal from '@/components/ImportCSVModal'
-import { TradingViewWidget } from '@/components/TradingViewWidget'
 import { deleteHolding, updateMonthlyBudget, refreshHoldingPrices } from '@/app/dashboard/actions'
 import { setFillTicker, clearFillTicker } from '@/app/dashboard/plan-actions'
 
@@ -46,7 +44,6 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
   const [isPending, startT] = useTransition()
 
   // Phase 8: price refresh state
-  const [expandedChartId, setExpandedChartId] = useState<string | null>(null)
   const [priceError, setPriceError] = useState<string | null>(null)
   const [isPriceRefreshing, startPriceTransition] = useTransition()
 
@@ -105,7 +102,14 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
     setPriceError(null)
     startPriceTransition(async () => {
       const result = await refreshHoldingPrices()
-      if (result.error) setPriceError(result.error)
+      if (result.error) {
+        setPriceError(result.error)
+      } else if (result.results) {
+        const failed = result.results.filter(r => r.price === null).map(r => r.ticker)
+        if (failed.length > 0) {
+          setPriceError(`Could not fetch prices for: ${failed.join(', ')}`)
+        }
+      }
     })
   }
 
@@ -269,50 +273,41 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                   <div className="flex items-center justify-between py-3 hover:bg-zinc-700/30 rounded-lg px-2">
                     <span className="flex-1 min-w-0">
                       <span className="text-base font-semibold text-white">{holding.ticker}</span>
-                      {holding.name && <span className="block text-xs text-zinc-400 truncate">{holding.name}</span>}
+                      {holding.name && <span className="block text-xs text-zinc-400">{holding.name}</span>}
                     </span>
                     <span className="text-sm text-zinc-400 w-20 text-right">{holding.quantity.toFixed(2)}</span>
                     <span className="text-sm text-white w-24 text-right">£{holding.currentValue.toFixed(2)}</span>
-                    <span className="text-sm text-zinc-400 w-32 text-right">{holding.category}</span>
+                    <span className="text-sm text-zinc-400 w-24 text-right">{holding.category}</span>
 
-                    {/* Price cell — always rendered (D-08: no layout shift) */}
+                    {/* Price cell — as-of timestamp shown as tooltip to save column space */}
                     <span className="text-sm w-24 text-right">
                       {holding.currentPrice !== null ? (
-                        <span className="text-white">£{holding.currentPrice.toFixed(2)}</span>
+                        <span
+                          className={
+                            holding.priceFetchedAt &&
+                            Date.now() - new Date(holding.priceFetchedAt).getTime() > 24 * 60 * 60 * 1000
+                              ? 'text-amber-400'
+                              : 'text-white'
+                          }
+                          title={holding.priceFetchedAt
+                            ? `As of ${new Date(holding.priceFetchedAt).toLocaleString('en-GB')}`
+                            : undefined}
+                        >
+                          £{holding.currentPrice.toFixed(2)}
+                        </span>
                       ) : (
                         <span className="text-zinc-500" aria-label="Price not available">—</span>
                       )}
                     </span>
 
-                    {/* As-of timestamp cell */}
-                    <span className="text-xs w-32 text-right">
-                      {holding.priceFetchedAt ? (
-                        <span
-                          className={
-                            Date.now() - new Date(holding.priceFetchedAt).getTime() > 24 * 60 * 60 * 1000
-                              ? 'text-amber-400'
-                              : 'text-zinc-400'
-                          }
-                        >
-                          {new Date(holding.priceFetchedAt).toLocaleString('en-GB')}
-                        </span>
-                      ) : null}
-                    </span>
-
                     <div className="flex gap-2 ml-4 items-center">
-                      {/* Chart toggle button */}
-                      <button
-                        type="button"
-                        onClick={() => setExpandedChartId(expandedChartId === holding.id ? null : holding.id)}
-                        className={`min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded ${
-                          expandedChartId === holding.id ? 'text-indigo-400' : 'text-zinc-500 hover:text-zinc-300'
-                        }`}
-                        aria-label={
-                          expandedChartId === holding.id
-                            ? `Hide chart for ${holding.ticker}`
-                            : `Show chart for ${holding.ticker}`
-                        }
-                        aria-expanded={expandedChartId === holding.id}
+                      {/* Chart link — opens TradingView in new tab */}
+                      <a
+                        href={`https://www.tradingview.com/chart/?symbol=${holding.ticker}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-500 hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+                        aria-label={`View ${holding.ticker} chart on TradingView`}
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                           <polyline
@@ -323,7 +318,7 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                             strokeLinejoin="round"
                           />
                         </svg>
-                      </button>
+                      </a>
                       <button
                         type="button"
                         onClick={() => handleSetFillTicker(holding.id, holding.category, holding.isFillTicker)}
@@ -351,22 +346,6 @@ export function PortfolioTab({ profile, holdings }: PortfolioTabProps) {
                     </div>
                   </div>
 
-                  {/* Animated chart panel */}
-                  <AnimatePresence>
-                    {expandedChartId === holding.id && (
-                      <motion.div
-                        key={`chart-${holding.id}`}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
-                        style={{ overflow: 'hidden' }}
-                        className="pt-2 pb-4 px-4"
-                      >
-                        <TradingViewWidget symbol={`LSE:${holding.ticker}`} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </>
               )}
             </li>

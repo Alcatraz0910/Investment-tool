@@ -15,7 +15,7 @@ type ActionResult = { error?: string }
 // Phase 8: Live Price Data — types and helpers
 // ---------------------------------------------------------------------------
 
-export type PriceResult = { ticker: string; price: number | null; error?: string }
+export type PriceResult = { ticker: string; price: number | null; name?: string | null; error?: string }
 export type RefreshPricesResult = { results?: PriceResult[]; error?: string }
 export type FetchPricesResult = { prices?: Record<string, number | null>; error?: string }
 
@@ -41,6 +41,9 @@ export async function addHolding(formData: FormData): Promise<ActionResult> {
   if (!currentValue || parseFloat(currentValue) <= 0) return { error: 'Enter a valid amount greater than £0.' }
   if (!category) return { error: 'Category is required.' }
 
+  const manualPrice = formData.get('currentPrice') as string | null
+  const priceValue = manualPrice ? parseFloat(manualPrice) : null
+
   const { error } = await supabase.from('holdings').insert({
     user_id: user.id,
     ticker,
@@ -48,6 +51,10 @@ export async function addHolding(formData: FormData): Promise<ActionResult> {
     category,
     quantity: quantity,
     current_value: currentValue,
+    ...(priceValue !== null && priceValue > 0 ? {
+      current_price: priceValue.toString(),
+      price_fetched_at: new Date().toISOString(),
+    } : {}),
   })
 
   if (error) return { error: 'Something went wrong. Please try again.' }
@@ -71,8 +78,18 @@ export async function updateHolding(holdingId: string, formData: FormData): Prom
   if (!currentValue || parseFloat(currentValue) <= 0) return { error: 'Enter a valid amount greater than £0.' }
   if (!category) return { error: 'Category is required.' }
 
+  const manualPrice = formData.get('currentPrice') as string | null
+  const priceValue = manualPrice ? parseFloat(manualPrice) : null
+
   const { error } = await supabase.from('holdings')
-    .update({ ticker, name: name || null, category, quantity, current_value: currentValue, updated_at: new Date().toISOString() })
+    .update({
+      ticker, name: name || null, category, quantity, current_value: currentValue,
+      updated_at: new Date().toISOString(),
+      ...(priceValue !== null && priceValue > 0 ? {
+        current_price: priceValue.toString(),
+        price_fetched_at: new Date().toISOString(),
+      } : {}),
+    })
     .eq('id', holdingId)
     .eq('user_id', user.id)   // RLS + app-level scope: only update own holdings
 
@@ -371,27 +388,37 @@ export async function refreshHoldingPrices(): Promise<RefreshPricesResult> {
   const results: PriceResult[] = await Promise.all(
     holdingRows.map(async ({ ticker }) => {
       if (!isValidTicker(ticker)) return { ticker, price: null, error: 'invalid ticker' }
-      try {
-        const q = await yahooFinance.quote(`${ticker}.L`, {}, { validateResult: false })
-        let price = q.regularMarketPrice ?? null
-        if (price !== null && q.currency === 'GBp') {
-          price = new Decimal(price).div(100).toNumber()
+
+      // Try {ticker}.L first, then bare ticker as fallback for non-standard LSE symbols
+      const attempts = [`${ticker}.L`, ticker]
+      for (const symbol of attempts) {
+        try {
+          const q = await yahooFinance.quote(symbol, {}, { validateResult: false })
+          let price = q.regularMarketPrice ?? null
+          if (price !== null && q.currency === 'GBp') {
+            price = new Decimal(price).div(100).toNumber()
+          }
+          if (price !== null) {
+            const name = q.shortName ?? q.longName ?? null
+            return { ticker, price, name }
+          }
+        } catch {
+          // try next symbol format
         }
-        return { ticker, price }
-      } catch {
-        return { ticker, price: null, error: 'fetch failed' }
       }
+      return { ticker, price: null, error: 'not found' }
     })
   )
 
   const now = new Date().toISOString()
-  for (const { ticker, price } of results) {
+  for (const { ticker, price, name } of results) {
     if (price === null) continue
     const { error: updateErr } = await supabase
       .from('holdings')
       .update({
         current_price: price.toString(),
         price_fetched_at: now,
+        ...(name ? { name } : {}),
       })
       .eq('user_id', user.id)
       .eq('ticker', ticker)
