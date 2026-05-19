@@ -177,8 +177,13 @@ export async function searchChannels(query: string): Promise<SearchResult[]> {
     ]) ?? []
   )
 
+  // Build a Map upfront to avoid O(n) .find() per result
+  const searchItemMap = new Map(
+    searchRes.data.items?.map(i => [i.snippet?.channelId, i]) ?? []
+  )
+
   return channelIds.map(id => {
-    const searchItem = searchRes.data.items?.find(i => i.snippet?.channelId === id)
+    const searchItem = searchItemMap.get(id)
     const rawCount = statsMap.get(id)
     return {
       channelId: id,
