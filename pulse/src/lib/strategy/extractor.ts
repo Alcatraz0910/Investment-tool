@@ -350,7 +350,7 @@ export async function extractCreatorStrategy(
     const latestContextString = buildContextString(latestChunks)
     const latestResponse = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: latestContextString }],
       tools: [PROFILE_TOOL_DEF],
@@ -382,13 +382,17 @@ export async function extractCreatorStrategy(
 
   // --- INSERT new strategy row (always INSERT, never UPDATE — full history) ---
   // D-14: allocation = null for Phase 11 rows; new data in profile_stable / profile_latest
+  // Runtime guard: Claude can return null for required fields despite the schema (tool_use quirk).
+  const confidence = typeof stableProfile.confidence === 'number' ? stableProfile.confidence : 0
+  const sourceVideoIds = Array.isArray(stableProfile.source_video_ids) ? stableProfile.source_video_ids : []
+
   const { error: insertErr } = await svc.from('creator_strategies').insert({
     creator_id: creatorId,
     profile_stable: stableProfile,
     profile_latest: latestProfile,
     allocation: null,
-    confidence: stableProfile.confidence,
-    source_video_ids: stableProfile.source_video_ids,
+    confidence,
+    source_video_ids: sourceVideoIds,
     has_contradiction: contradiction.hasContradiction,
     contradiction_note: contradiction.note,
     extracted_at: new Date().toISOString(),
