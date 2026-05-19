@@ -101,6 +101,25 @@ Wave 2 *(blocked on Wave 1 completion)*
 - [ ] **Phase 14: Creator Signals + Housekeeping** — Consensus signal (2+ creators backing same ticker), sentiment trend (bullish/cautious shift over 4 months), contradiction detection (recent vs older stance), cadence weighting (less-active creators carry less weight); ISA tab removed
 - [ ] **Phase 15: Visual Redesign** — Futuristic, clean UI overhaul across all dashboard tabs; cohesive design system (typography, colour palette, spacing, motion); glassmorphism, dark-first aesthetic; polished component library replacing placeholder styling
 
+### Phase 11: Creator Intelligence Extraction
+**Goal**: Creator refreshes produce a two-layer intelligence profile (stable 4-month summary + latest 30-day signals); users can discover creators by searching YouTube by name instead of pasting a URL
+**Depends on**: Nothing new (Anthropic SDK, Pinecone, YouTube API already provisioned)
+**Requirements**: CI-01, CI-02, CI-03, CI-04, SRCH-01, SRCH-02, SRCH-03
+**Note on CI-04**: Data layer (profile_stable, profile_latest JSONB columns) delivered in Phase 11 Wave 0 SQL migration. UI rendering of both layers is Phase 12 scope.
+**Success Criteria** (what must be TRUE):
+  1. Creator refresh stores profile_stable and profile_latest JSONB rows in creator_strategies (profile_latest = null if creator has no 30-day posts)
+  2. Transcript scraping fetches videos from the last 4 months only (not 12)
+  3. extract_creator_profile tool captures: favoured stocks (nullable tickers), methodology, sector focus, preferred index funds
+  4. User can search YouTube by channel name and see up to 5 results with thumbnail, name, subscriber count
+  5. Clicking Track on a search result adds the creator and shows Tracking state
+  6. Manual URL entry still works as a collapsible fallback ("Add by URL instead")
+**Plans**: 4 plans
+- [ ] 11-01-PLAN.md — Wave 0: SQL migration (user runs in Supabase SQL Editor) + vitest install + test stubs
+- [ ] 11-02-PLAN.md — Wave 1: YouTube client (listVideosLast4Months, searchChannels, formatSubscriberCount); transcript-pipeline.ts import update
+- [ ] 11-03-PLAN.md — Wave 1: extractor.ts rewrite (PROFILE_TOOL_DEF, SYSTEM_PROMPT, two-call pattern, Pinecone date filters)
+- [ ] 11-04-PLAN.md — Wave 2: searchCreators + trackSearchedCreator server actions; creators-tab.tsx search UI
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -115,3 +134,4 @@ Wave 2 *(blocked on Wave 1 completion)*
 | 8. Live Price Data | v1.1 | 3/3 | Human verification pending | — |
 | 9. Creator Search | v1.1 | 0/? | Not started | — |
 | 10. Mobile Layout | v1.1 | 0/? | Not started | — |
+| 11. Creator Intelligence Extraction | v1.2 | 0/4 | Planned | — |
