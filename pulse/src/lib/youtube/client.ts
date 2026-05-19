@@ -1,5 +1,6 @@
 import 'server-only'
 import { google, youtube_v3 } from 'googleapis'
+import type { SearchResult } from './format'
 
 let cached: youtube_v3.Youtube | null = null
 
@@ -117,29 +118,8 @@ export async function listVideosLast4Months(channelId: string): Promise<VideoIte
   return videos
 }
 
-export interface SearchResult {
-  channelId: string
-  channelTitle: string
-  channelUrl: string
-  subscriberCount: number | null
-  thumbnailUrl: string | null
-}
-
-/**
- * Format a raw subscriber count number into a human-readable string.
- * Examples: 1_200_000 → "1.2M subscribers", 500_000 → "500K subscribers",
- *           12_345 → "12K subscribers", 999 → "999 subscribers", null → "".
- * SRCH-02. Used in the UI layer — not included in SearchResult interface (keep raw).
- */
-export function formatSubscriberCount(count: number | null): string {
-  if (count === null) return ''
-  if (count >= 1_000_000) {
-    const val = (count / 1_000_000).toFixed(1)
-    return `${val.endsWith('.0') ? val.slice(0, -2) : val}M subscribers`
-  }
-  if (count >= 1_000) return `${(count / 1_000).toFixed(0)}K subscribers`
-  return `${count} subscribers`
-}
+export type { SearchResult } from './format'
+export { formatSubscriberCount } from './format'
 
 /**
  * Search YouTube channels by query string.
