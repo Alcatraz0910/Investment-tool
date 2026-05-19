@@ -1,6 +1,7 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { searchChannels, type SearchResult } from '@/lib/youtube/client'
 
 type ActionResult = { error?: string }
 
@@ -108,6 +109,113 @@ export async function addCustomCreator(formData: FormData): Promise<ActionResult
   })
 
   if (trackError && !trackError.message.includes('duplicate key')) {
+    return { error: 'Something went wrong. Please try again.' }
+  }
+
+  revalidatePath('/dashboard')
+  return {}
+}
+
+type SearchActionResult = { data?: SearchResult[]; error?: string }
+type TrackSearchedResult = { error?: string }
+
+/**
+ * Search YouTube channels by query string.
+ * Validates query is non-empty before calling YouTube API (quota protection — D-19).
+ * search.list costs 100 quota units per call; only fires on explicit submit.
+ */
+export async function searchCreators(query: string): Promise<SearchActionResult> {
+  // Auth check
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Something went wrong. Please try again.' }
+
+  // Quota protection: never call YouTube API with empty query (D-19)
+  const trimmed = query.trim()
+  if (!trimmed) return { error: 'Please enter a channel name to search.' }
+
+  try {
+    const results = await searchChannels(trimmed)
+    return { data: results }
+  } catch (err) {
+    console.error('searchCreators error:', err)
+    return { error: 'Search failed. Check your connection and try again.' }
+  }
+}
+
+/**
+ * Track a creator found via YouTube search.
+ * Inserts directly into creators with channel_id pre-set (D-18).
+ * Bypasses URL validation and channel_id resolution step.
+ * channelUrl is constructed server-side from channelId — not user-supplied (security).
+ *
+ * Security: channelId validated against YouTube UC-format regex before any DB insert.
+ */
+export async function trackSearchedCreator(
+  channelId: string,
+  channelTitle: string,
+  thumbnailUrl: string | null,
+): Promise<TrackSearchedResult> {
+  // Auth check
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Something went wrong. Please try again.' }
+
+  // Security: validate channelId is a legitimate YouTube UC-format ID (T-11-04-02)
+  if (!channelId.match(/^UC[A-Za-z0-9_-]{22}$/)) {
+    return { error: 'Invalid channel ID.' }
+  }
+
+  // channelUrl constructed server-side — never use user-supplied URL (D-18)
+  const channelUrl = `https://www.youtube.com/channel/${channelId}`
+
+  // thumbnailUrl accepted but not stored — creators table has no thumbnail_url column yet
+  // TODO: Add thumbnail_url column to creators table, then store thumbnailUrl here
+  void thumbnailUrl
+
+  // Check if creator already exists
+  const { data: existing } = await supabase
+    .from('creators')
+    .select('id')
+    .eq('channel_id', channelId)
+    .single()
+
+  let creatorId: string
+
+  if (existing) {
+    creatorId = existing.id
+  } else {
+    // Insert new creator with channel_id pre-set (D-18 — bypasses URL resolution)
+    const { createServiceClient } = await import('@/lib/supabase/service')
+    const serviceClient = createServiceClient()
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newCreator, error: insertError } = await (serviceClient as any)
+      .from('creators')
+      .insert({
+        channel_id: channelId,
+        channel_url: channelUrl,
+        display_name: channelTitle,
+        is_active: true,
+        // TODO: Add thumbnail_url column to creators table (not in Phase 11 schema)
+      })
+      .select('id')
+      .single()
+
+    if (insertError || !newCreator) {
+      return { error: 'Something went wrong. Please try again.' }
+    }
+    creatorId = (newCreator as { id: string }).id
+  }
+
+  // Insert user_creators row
+  const { error: trackSearchError } = await supabase.from('user_creators').insert({
+    user_id: user.id,
+    creator_id: creatorId,
+    trust_weight: 100,
+  })
+
+  if (trackSearchError && !trackSearchError.message.includes('duplicate key')) {
     return { error: 'Something went wrong. Please try again.' }
   }
 
