@@ -166,6 +166,12 @@ export async function trackSearchedCreator(
     return { error: 'Invalid channel ID.' }
   }
 
+  // Sanitise channelTitle — server action is a public endpoint; validate before DB write
+  if (!channelTitle || channelTitle.trim().length === 0) {
+    return { error: 'Invalid channel title.' }
+  }
+  const safeTitle = channelTitle.trim().slice(0, 255)
+
   // channelUrl constructed server-side — never use user-supplied URL (D-18)
   const channelUrl = `https://www.youtube.com/channel/${channelId}`
 
@@ -195,7 +201,7 @@ export async function trackSearchedCreator(
       .insert({
         channel_id: channelId,
         channel_url: channelUrl,
-        display_name: channelTitle,
+        display_name: safeTitle,
         is_active: true,
         // TODO: Add thumbnail_url column to creators table (not in Phase 11 schema)
       })
