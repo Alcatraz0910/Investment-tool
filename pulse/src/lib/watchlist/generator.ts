@@ -92,6 +92,52 @@ export function buildWatchLists(
   })
 }
 
+export interface MergedWatchListItem {
+  ticker: string
+  name: string
+  conviction: 'high' | 'medium' | 'low'
+  layer: 'stable' | 'latest'
+  creators: string[]
+}
+
+/**
+ * Merge all creator watch lists into a single deduplicated ticker list.
+ * When the same ticker appears across multiple creators:
+ *   - conviction: highest across all mentions
+ *   - layer: 'latest' if any creator has it as latest, otherwise 'stable'
+ *   - creators: all creator names that cited it
+ */
+export function buildMergedWatchList(watchLists: CreatorWatchList[]): MergedWatchListItem[] {
+  const map = new Map<string, MergedWatchListItem>()
+
+  for (const wl of watchLists) {
+    for (const item of wl.items) {
+      const existing = map.get(item.ticker)
+      if (!existing) {
+        map.set(item.ticker, {
+          ticker: item.ticker,
+          name: item.name,
+          conviction: item.conviction,
+          layer: item.layer,
+          creators: [wl.creatorName],
+        })
+      } else {
+        existing.creators.push(wl.creatorName)
+        if (CONVICTION_ORDER[item.conviction] < CONVICTION_ORDER[existing.conviction]) {
+          existing.conviction = item.conviction
+        }
+        if (item.layer === 'latest') {
+          existing.layer = 'latest'
+        }
+      }
+    }
+  }
+
+  return [...map.values()].sort(
+    (a, b) => CONVICTION_ORDER[a.conviction] - CONVICTION_ORDER[b.conviction]
+  )
+}
+
 export function calcShareQuantity(
   budgetGbp: Decimal,
   priceGbp: Decimal

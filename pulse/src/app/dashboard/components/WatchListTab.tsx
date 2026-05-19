@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Decimal } from 'decimal.js'
 import { fetchTickerPrices } from '@/app/dashboard/actions'
 import { saveCreatorMonthlyBudget } from '@/app/dashboard/watchlist-actions'
-import { calcShareQuantity } from '@/lib/watchlist/generator'
-import type { CreatorWatchList, WatchListItem } from '@/lib/watchlist/generator'
+import { calcShareQuantity, buildMergedWatchList } from '@/lib/watchlist/generator'
+import type { CreatorWatchList, WatchListItem, MergedWatchListItem } from '@/lib/watchlist/generator'
 
 interface WatchListTabProps {
   initialWatchLists: CreatorWatchList[]
@@ -130,7 +130,67 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
         </div>
       )}
 
-      {/* Creator sections */}
+      {/* Merged ticker list */}
+      {watchLists.length > 0 && (() => {
+        const merged = buildMergedWatchList(watchLists.filter(wl => wl.hasProfile))
+        if (merged.length === 0) return null
+        return (
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+            <p className="text-xl font-semibold text-white">All Picks</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
+                    <th className="py-2 pr-2">Holding</th>
+                    <th className="py-2 pr-2 w-20">Conviction</th>
+                    <th className="py-2 pr-2 w-22">Signal</th>
+                    <th className="py-2 pr-2 w-18 text-right">Price</th>
+                    <th className="py-2">Creators</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {merged.map((item) => {
+                    const price = prices[item.ticker]
+                    return (
+                      <tr key={item.ticker} className="border-b border-white/5 last:border-0">
+                        <td className="py-2 pr-2">
+                          <p className="text-base font-semibold text-white">{item.ticker}</p>
+                          <p className="text-xs text-zinc-400">{item.name}</p>
+                        </td>
+                        <td className="py-2 pr-2">
+                          <span className={CONVICTION_CLASS[item.conviction]}>
+                            {CONVICTION_LABEL[item.conviction]}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-2">
+                          {item.layer === 'stable'
+                            ? <span className="text-xs text-zinc-500">Established</span>
+                            : <span className="text-xs text-amber-400">This Month</span>
+                          }
+                        </td>
+                        <td className="py-2 pr-2 text-right">
+                          {price !== undefined ? (
+                            <span className={stale ? 'text-sm text-amber-400' : 'text-sm text-white'}>
+                              £{price.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-zinc-500" aria-label="Price not available">—</span>
+                          )}
+                        </td>
+                        <td className="py-2">
+                          <p className="text-xs text-zinc-400">{item.creators.join(', ')}</p>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Per-creator sections */}
       {watchLists.length > 0 && (
         <motion.div variants={sectionVariants} initial="hidden" animate="visible" className="space-y-4">
           <AnimatePresence>
