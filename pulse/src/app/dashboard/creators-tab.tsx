@@ -46,6 +46,7 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
 
   const [isUrlFormOpen, setIsUrlFormOpen] = useState(false)
   const [trackingIds, setTrackingIds] = useState<Set<string>>(new Set())
+  const [trackError, setTrackError] = useState<string | null>(null)
 
   type SearchState = { results?: SearchResult[]; error?: string }
   const [searchState, searchAction, searchPending] = useActionState<SearchState, FormData>(
@@ -59,6 +60,7 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
   )
 
   async function handleTrack(result: SearchResult) {
+    setTrackError(null)
     setTrackingIds(prev => new Set(prev).add(result.channelId))
     const res = await trackSearchedCreator(result.channelId, result.channelTitle, result.thumbnailUrl)
     if (res.error) {
@@ -67,6 +69,7 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
         next.delete(result.channelId)
         return next
       })
+      setTrackError(res.error)
     }
   }
 
@@ -238,6 +241,13 @@ export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transc
         {searchState.error && !searchPending && (
           <p role="alert" aria-live="polite" className="text-sm text-red-400 mt-2">
             {searchState.error}
+          </p>
+        )}
+
+        {/* Track error */}
+        {trackError && (
+          <p role="alert" aria-live="polite" className="text-sm text-red-400 mt-2">
+            {trackError}
           </p>
         )}
 
