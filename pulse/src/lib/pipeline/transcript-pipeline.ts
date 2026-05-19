@@ -5,7 +5,7 @@
  *   1. Mark refresh_jobs row status='running' (upsert by user_id+creator_id)
  *   2. Load creator row (channel_url + channel_id)
  *   3. Resolve channel_id if NULL (D-13) — write back via service role
- *   4. List videos from last 12 months
+ *   4. List videos from last 4 months
  *   5. For each video: apply idempotency rules (D-07/08/09/10);
  *      attempt fetchTranscript and upsert transcript row (raw_text or NULL per D-04)
  *   6. For each transcript with raw_text NOT NULL and is_embedded=FALSE:
@@ -31,7 +31,7 @@
 
 import { YoutubeTranscript } from 'youtube-transcript'
 import { createServiceClient } from '@/lib/supabase/service'
-import { resolveChannelId, listVideosLast12Months, type VideoItem } from '@/lib/youtube/client'
+import { resolveChannelId, listVideosLast4Months, type VideoItem } from '@/lib/youtube/client'
 import { embedChunks } from '@/lib/openai/client'
 import { getPineconeNamespace } from '@/lib/pinecone/client'
 import { chunkText } from '@/lib/pipeline/chunker'
@@ -134,13 +134,13 @@ export async function runRefreshPipeline(
         .eq('id', creatorId)
     }
 
-    // Step 4: list videos from last 12 months
+    // Step 4: list videos from last 4 months
     await setStep(svc, userId, creatorId, 'Fetching videos...')
-    const videos: VideoItem[] = await listVideosLast12Months(channelId)
+    const videos: VideoItem[] = await listVideosLast4Months(channelId)
     const total = videos.length
 
     if (total === 0) {
-      const noVideosSummary = 'No videos found in the last 12 months'
+      const noVideosSummary = 'No videos found in the last 4 months'
       await setStep(svc, userId, creatorId, 'Done', 'done', {
         summary: noVideosSummary,
       })
