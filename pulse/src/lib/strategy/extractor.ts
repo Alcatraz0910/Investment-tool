@@ -334,7 +334,7 @@ export async function extractCreatorStrategy(
     .eq('creator_id', creatorId)
 
   const latestFilter = {
-    published_at_ts: { $gte: Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000) },
+    published_at_ts: { $gte: Math.floor((Date.now() - 28 * 24 * 60 * 60 * 1000) / 1000) },
   }
   const latestChunks = await retrieveChunks(creatorId, latestFilter)
 

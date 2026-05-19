@@ -134,6 +134,14 @@ export async function runRefreshPipeline(
         .eq('id', creatorId)
     }
 
+    // Step 3b: reset is_embedded so all transcripts are re-embedded with current metadata.
+    // This ensures published_at_ts is present in Pinecone vectors for date-range filtering.
+    await svc
+      .from('transcripts')
+      .update({ is_embedded: false, updated_at: new Date().toISOString() })
+      .eq('creator_id', creatorId)
+      .not('raw_text', 'is', null)
+
     // Step 4: list videos from last 4 months
     await setStep(svc, userId, creatorId, 'Fetching videos...')
     const videos: VideoItem[] = await listVideosLast4Months(channelId)
