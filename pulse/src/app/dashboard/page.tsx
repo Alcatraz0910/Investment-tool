@@ -2,10 +2,9 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/login/actions'
-import type { UserProfile, Holding, Creator, Transcript, CreatorStrategy, UserCreator, UserCreatorCategoryWeight } from '@/types'
+import type { UserProfile, Holding } from '@/types'
 import { Decimal } from '@/types'
 import { PortfolioTab } from '@/components/PortfolioTab'
-import { CreatorsTab } from '@/app/dashboard/creators-tab'
 import { buildWatchLists } from '@/lib/watchlist/generator'
 import type { CreatorWatchList } from '@/lib/watchlist/generator'
 import { WatchListTab } from '@/app/dashboard/components/WatchListTab'
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
 }
 
-type Tab = 'portfolio' | 'creators' | 'watchlist'
+type Tab = 'portfolio' | 'watchlist'
 
 export default async function DashboardPage({
   searchParams,
@@ -30,7 +29,7 @@ export default async function DashboardPage({
 
   const params = await searchParams
   const rawTab = params.tab ?? 'portfolio'
-  const activeTab: Tab = ['portfolio', 'creators', 'watchlist'].includes(rawTab)
+  const activeTab: Tab = ['portfolio', 'watchlist'].includes(rawTab)
     ? (rawTab as Tab)
     : 'portfolio'
 
@@ -80,139 +79,6 @@ export default async function DashboardPage({
     .select('creator_id, last_refreshed_at', { count: 'exact' })
     .eq('user_id', user.id)
   const hasAnyStrategy = (ucGuideRows ?? []).some(r => r.last_refreshed_at !== null)
-
-  // ---------------------------------------------------------------------------
-  // Creators tab data
-  // ---------------------------------------------------------------------------
-  let creators: Creator[] = []
-  let lastRefreshedMap = new Map<string, Date | null>()
-  let transcriptsByCreator = new Map<string, Transcript[]>()
-  let strategiesByCreator = new Map<string, CreatorStrategy | null>()
-  let userCreatorMap = new Map<string, UserCreator>()
-
-  if (activeTab === 'creators') {
-    const [{ data: creatorRows }, { data: trackRows }] = await Promise.all([
-      supabase.from('creators').select('*').eq('is_active', true).order('display_name'),
-      supabase.from('user_creators').select('creator_id, last_refreshed_at').eq('user_id', user.id),
-    ])
-
-    creators = (creatorRows ?? []).map((row) => ({
-      id: row.id,
-      channelUrl: row.channel_url,
-      displayName: row.display_name,
-      channelId: row.channel_id ?? null,
-      isActive: row.is_active,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    }))
-
-    lastRefreshedMap = new Map<string, Date | null>(
-      (trackRows ?? []).map((r) => [
-        r.creator_id as string,
-        r.last_refreshed_at ? new Date(r.last_refreshed_at as string) : null,
-      ]),
-    )
-
-    const trackedIds = Array.from(lastRefreshedMap.keys())
-    if (trackedIds.length > 0) {
-      const { data: transcriptRows } = await supabase
-        .from('transcripts')
-        .select('id, creator_id, video_id, title, published_at, raw_text, word_count, is_embedded, last_fetched, created_at, updated_at')
-        .in('creator_id', trackedIds)
-        .order('published_at', { ascending: false })
-
-      const all: Transcript[] = (transcriptRows ?? []).map((row) => ({
-        id: row.id as string,
-        creatorId: row.creator_id as string,
-        videoId: row.video_id as string,
-        title: row.title as string,
-        publishedAt: new Date(row.published_at as string),
-        rawText: (row.raw_text as string | null) ?? null,
-        wordCount: (row.word_count as number | null) ?? null,
-        isEmbedded: row.is_embedded as boolean,
-        lastFetched: row.last_fetched ? new Date(row.last_fetched as string) : null,
-        createdAt: new Date(row.created_at as string),
-        updatedAt: new Date(row.updated_at as string),
-      }))
-
-      transcriptsByCreator = all.reduce((acc, t) => {
-        const list = acc.get(t.creatorId) ?? []
-        list.push(t)
-        acc.set(t.creatorId, list)
-        return acc
-      }, new Map<string, Transcript[]>())
-
-      const { data: stratRows } = await supabase
-        .from('creator_strategies')
-        .select('id, creator_id, allocation, confidence, source_video_ids, has_contradiction, contradiction_note, extracted_at, created_at')
-        .in('creator_id', trackedIds)
-        .order('created_at', { ascending: false })
-
-      const seenCreators = new Set<string>()
-      for (const row of stratRows ?? []) {
-        const cid = row.creator_id as string
-        if (!seenCreators.has(cid)) {
-          seenCreators.add(cid)
-          strategiesByCreator.set(cid, {
-            id: row.id as string,
-            creatorId: cid,
-            allocation: row.allocation ?? {},
-            confidence: row.confidence as number,
-            sourceVideoIds: (row.source_video_ids as string[]) ?? [],
-            hasContradiction: row.has_contradiction as boolean,
-            contradictionNote: (row.contradiction_note as string | null) ?? null,
-            extractedAt: new Date(row.extracted_at as string),
-            createdAt: new Date(row.created_at as string),
-          })
-        }
-      }
-      for (const cid of trackedIds) {
-        if (!strategiesByCreator.has(cid)) strategiesByCreator.set(cid, null)
-      }
-
-      const { data: ucRows } = await supabase
-        .from('user_creators')
-        .select('id, creator_id, trust_weight')
-        .eq('user_id', user.id)
-        .in('creator_id', trackedIds)
-
-      const ucIds = (ucRows ?? []).map((r) => r.id as string)
-      let catWeightRows: Array<{ user_creator_id: string; category: string; weight: number; created_at: string; updated_at: string }> = []
-
-      if (ucIds.length > 0) {
-        const { data: cwRows } = await supabase
-          .from('user_creator_category_weights')
-          .select('user_creator_id, category, weight, created_at, updated_at')
-          .in('user_creator_id', ucIds)
-        catWeightRows = (cwRows ?? []) as typeof catWeightRows
-      }
-
-      for (const uc of ucRows ?? []) {
-        const cid = uc.creator_id as string
-        const ucId = uc.id as string
-        const catWeights = catWeightRows
-          .filter((cw) => cw.user_creator_id === ucId)
-          .map((cw): UserCreatorCategoryWeight => ({
-            id: `${ucId}-${cw.category}`,
-            userCreatorId: ucId,
-            category: cw.category as import('@/types').AssetCategory,
-            weight: Number(cw.weight),
-            createdAt: new Date(cw.created_at),
-            updatedAt: new Date(cw.updated_at),
-          }))
-
-        userCreatorMap.set(cid, {
-          id: ucId,
-          userId: user.id,
-          creatorId: cid,
-          trustWeight: Number(uc.trust_weight ?? 50),
-          lastRefreshedAt: lastRefreshedMap.get(cid) ?? null,
-          createdAt: new Date(),
-          categoryWeights: catWeights,
-        })
-      }
-    }
-  }
 
   // ---------------------------------------------------------------------------
   // Watch List tab data
@@ -288,7 +154,6 @@ export default async function DashboardPage({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
-    { id: 'creators', label: 'Creators' },
     { id: 'watchlist', label: 'Watch List' },
   ]
 
@@ -324,7 +189,30 @@ export default async function DashboardPage({
           {/* Tab bar */}
           <div className="border-b border-border mb-0">
             <nav className="flex px-8 pt-6" aria-label="Dashboard tabs">
-              {tabs.map((tab) => {
+              {tabs.slice(0, 1).map((tab) => {
+                const isActive = activeTab === tab.id
+                return (
+                  <a
+                    key={tab.id}
+                    href={`?tab=${tab.id}`}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={
+                      isActive
+                        ? 'px-4 py-2 text-sm font-semibold text-accent border-b-2 border-accent -mb-px focus:outline-none focus:ring-2 focus:ring-accent rounded-t-sm'
+                        : 'px-4 py-2 text-sm font-semibold text-zinc-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent rounded-t-sm'
+                    }
+                  >
+                    {tab.label}
+                  </a>
+                )
+              })}
+              <a
+                href="/dashboard/creators"
+                className="px-4 py-2 text-sm font-semibold text-zinc-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent rounded-t-sm"
+              >
+                Creators
+              </a>
+              {tabs.slice(1).map((tab) => {
                 const isActive = activeTab === tab.id
                 return (
                   <a
@@ -351,16 +239,6 @@ export default async function DashboardPage({
                 <PortfolioTab
                   profile={profilePlain}
                   holdings={holdingsPlain}
-                />
-              )}
-              {activeTab === 'creators' && (
-                <CreatorsTab
-                  creators={creators}
-                  initialTracked={Array.from(lastRefreshedMap.keys())}
-                  lastRefreshedMap={lastRefreshedMap}
-                  transcriptsByCreator={transcriptsByCreator}
-                  strategiesByCreator={strategiesByCreator}
-                  userCreatorMap={userCreatorMap}
                 />
               )}
               {activeTab === 'watchlist' && (
