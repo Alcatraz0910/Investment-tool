@@ -157,6 +157,7 @@ export async function searchCreators(query: string): Promise<SearchActionResult>
 export async function trackSearchedCreator(
   channelId: string,
   channelTitle: string,
+  /** thumbnailUrl: reserved for future use — not yet stored (no thumbnail_url column). */
   thumbnailUrl: string | null,
 ): Promise<TrackSearchedResult> {
   // Auth check
