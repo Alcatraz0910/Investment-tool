@@ -5,7 +5,7 @@ let cached: youtube_v3.Youtube | null = null
 
 /**
  * YouTube Data API v3 singleton (read-only, API key auth).
- * Used for channel ID resolution and video listing.
+ * Used for channel ID resolution, video listing, and channel search.
  * RESEARCH Pattern 3 + Pattern 4.
  */
 export function getYouTubeClient(): youtube_v3.Youtube {
@@ -71,17 +71,18 @@ export interface VideoItem {
 }
 
 /**
- * List videos published in the last 12 months from a channel's uploads playlist.
+ * List videos published in the last 4 months from a channel's uploads playlist.
  * Uploads playlist ID derived from channel ID via UC→UU prefix swap (verified pattern).
- * Quota cost: 1 unit per page of 50 videos. Stops paging when a video older than 12 months is seen.
- * RESEARCH Pattern 4.
+ * Quota cost: 1 unit per page of 50 videos. Stops paging when a video older than 4 months is seen.
+ * CI-01: 4-month window replaces previous 12-month window.
+ * RESEARCH Pattern 6.
  */
-export async function listVideosLast12Months(channelId: string): Promise<VideoItem[]> {
+export async function listVideosLast4Months(channelId: string): Promise<VideoItem[]> {
   const yt = getYouTubeClient()
   const uploadsPlaylistId = channelId.replace(/^UC/, 'UU')
 
   const cutoff = new Date()
-  cutoff.setFullYear(cutoff.getFullYear() - 1)
+  cutoff.setMonth(cutoff.getMonth() - 4)  // 4 months, not 12; JS handles year rollover
 
   const videos: VideoItem[] = []
   let pageToken: string | undefined = undefined
@@ -114,4 +115,77 @@ export async function listVideosLast12Months(channelId: string): Promise<VideoIt
   } while (pageToken)
 
   return videos
+}
+
+export interface SearchResult {
+  channelId: string
+  channelTitle: string
+  channelUrl: string
+  subscriberCount: number | null
+  thumbnailUrl: string | null
+}
+
+/**
+ * Format a raw subscriber count number into a human-readable string.
+ * Examples: 1_200_000 → "1.2M subscribers", 500_000 → "500K subscribers",
+ *           12_345 → "12K subscribers", 999 → "999 subscribers", null → "".
+ * SRCH-02. Used in the UI layer — not included in SearchResult interface (keep raw).
+ */
+export function formatSubscriberCount(count: number | null): string {
+  if (count === null) return ''
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M subscribers`
+  if (count >= 1_000) return `${(count / 1_000).toFixed(0)}K subscribers`
+  return `${count} subscribers`
+}
+
+/**
+ * Search YouTube channels by query string.
+ * Step 1: search.list (100 quota units) — returns channel metadata without subscriber counts.
+ * Step 2: channels.list batch (1 quota unit) — fetches subscriber counts for all result IDs.
+ * Returns at most 5 results. Never auto-called; only fires on explicit user submit (D-19).
+ * RESEARCH Pattern 4.
+ */
+export async function searchChannels(query: string): Promise<SearchResult[]> {
+  const yt = getYouTubeClient()
+
+  // Step 1: search — 100 quota units
+  const searchRes = await yt.search.list({
+    part: ['snippet'],
+    q: query,
+    type: ['channel'],
+    maxResults: 5,
+  })
+
+  // Use item.snippet.channelId for channel-type search results (not item.id)
+  // See RESEARCH.md A2 — verify against real API response if IDs come back empty
+  const channelIds = searchRes.data.items
+    ?.map(item => item.snippet?.channelId)
+    .filter((id): id is string => Boolean(id)) ?? []
+
+  if (channelIds.length === 0) return []
+
+  // Step 2: subscriber counts — 1 quota unit (batch all IDs in one call)
+  const statsRes = await yt.channels.list({
+    part: ['snippet', 'statistics'],
+    id: channelIds,
+  })
+
+  const statsMap = new Map(
+    statsRes.data.items?.map(item => [
+      item.id!,
+      item.statistics?.subscriberCount ?? null,
+    ]) ?? []
+  )
+
+  return channelIds.map(id => {
+    const searchItem = searchRes.data.items?.find(i => i.snippet?.channelId === id)
+    const rawCount = statsMap.get(id)
+    return {
+      channelId: id,
+      channelTitle: searchItem?.snippet?.channelTitle ?? '',
+      channelUrl: `https://www.youtube.com/channel/${id}`,
+      subscriberCount: rawCount ? Number(rawCount) : null,
+      thumbnailUrl: searchItem?.snippet?.thumbnails?.default?.url ?? null,
+    }
+  })
 }
