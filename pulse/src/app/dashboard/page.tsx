@@ -2,26 +2,21 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/login/actions'
-import type { UserProfile, Holding, Creator, ISAContribution, Transcript, CreatorStrategy, UserCreator, UserCreatorCategoryWeight } from '@/types'
+import type { UserProfile, Holding, Creator, Transcript, CreatorStrategy, UserCreator, UserCreatorCategoryWeight } from '@/types'
 import { Decimal } from '@/types'
 import { PortfolioTab } from '@/components/PortfolioTab'
 import { CreatorsTab } from '@/app/dashboard/creators-tab'
-import { getCurrentTaxYear } from '@/lib/tax-year'
-import { blendStrategies } from '@/lib/strategy/blender'
-import type { BlendedStrategy, BlendInput } from '@/lib/strategy/blender'
-import { BlendSummary } from '@/app/dashboard/components/BlendSummary'
-import { generatePlan } from '@/lib/plan/generator'
-import { upsertBuyList } from '@/app/dashboard/plan-actions'
-import { PlanTab } from '@/app/dashboard/components/PlanTab'
+import { buildWatchLists } from '@/lib/watchlist/generator'
+import type { CreatorWatchList } from '@/lib/watchlist/generator'
+import { WatchListTab } from '@/app/dashboard/components/WatchListTab'
 import { AnimatedTabPanel } from '@/app/dashboard/components/AnimatedTabPanel'
 import { GettingStartedGuide } from '@/components/GettingStartedGuide'
-import { ISATab } from '@/app/dashboard/isa-tab'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
 }
 
-type Tab = 'portfolio' | 'isa' | 'plan'
+type Tab = 'portfolio' | 'creators' | 'watchlist'
 
 export default async function DashboardPage({
   searchParams,
@@ -35,7 +30,7 @@ export default async function DashboardPage({
 
   const params = await searchParams
   const rawTab = params.tab ?? 'portfolio'
-  const activeTab: Tab = ['portfolio', 'isa', 'plan'].includes(rawTab)
+  const activeTab: Tab = ['portfolio', 'creators', 'watchlist'].includes(rawTab)
     ? (rawTab as Tab)
     : 'portfolio'
 
@@ -56,7 +51,7 @@ export default async function DashboardPage({
       }
     : null
 
-  // Fetch holdings — always fetched (plan generation needs holdings regardless of active tab)
+  // Fetch holdings — always fetched for Portfolio tab
   let holdings: Holding[] = []
   const { data: rows } = await supabase
     .from('holdings')
@@ -79,45 +74,23 @@ export default async function DashboardPage({
     updatedAt: new Date(row.updated_at),
   }))
 
-  // Fetch ISA contributions for current tax year — always fetched (plan needs isaRemaining)
-  let contributions: ISAContribution[] = []
-  const currentTaxYear = getCurrentTaxYear()
-
-  const { data: contribRows } = await supabase
-    .from('isa_contributions')
-    .select('id, user_id, amount, contribution_date, tax_year, notes, created_at')
-    .eq('user_id', user.id)
-    .eq('tax_year', currentTaxYear)
-    .order('contribution_date', { ascending: false })
-
-  contributions = (contribRows ?? []).map((row) => ({
-    id: row.id,
-    userId: row.user_id,
-    amount: new Decimal(row.amount),
-    contributionDate: new Date(row.contribution_date),
-    taxYear: row.tax_year,
-    notes: row.notes ?? null,
-    createdAt: new Date(row.created_at),
-  }))
-
   // Always-on counts for the Getting Started guide
   const { count: trackedCreatorCount, data: ucGuideRows } = await supabase
     .from('user_creators')
     .select('creator_id, last_refreshed_at', { count: 'exact' })
     .eq('user_id', user.id)
-  // A creator has a strategy if it has ever been refreshed (last_refreshed_at is set during refresh)
   const hasAnyStrategy = (ucGuideRows ?? []).some(r => r.last_refreshed_at !== null)
 
-  // Fetch creators, tracked IDs, last_refreshed_at, and transcripts (only if Creators tab)
+  // ---------------------------------------------------------------------------
+  // Creators tab data
+  // ---------------------------------------------------------------------------
   let creators: Creator[] = []
   let lastRefreshedMap = new Map<string, Date | null>()
   let transcriptsByCreator = new Map<string, Transcript[]>()
   let strategiesByCreator = new Map<string, CreatorStrategy | null>()
   let userCreatorMap = new Map<string, UserCreator>()
-  let blend: BlendedStrategy | null = null
-  let creatorNameMap: Record<string, string> = {}
 
-  if (activeTab === 'plan') {
+  if (activeTab === 'creators') {
     const [{ data: creatorRows }, { data: trackRows }] = await Promise.all([
       supabase.from('creators').select('*').eq('is_active', true).order('display_name'),
       supabase.from('user_creators').select('creator_id, last_refreshed_at').eq('user_id', user.id),
@@ -168,17 +141,13 @@ export default async function DashboardPage({
         acc.set(t.creatorId, list)
         return acc
       }, new Map<string, Transcript[]>())
-    }
 
-    if (trackedIds.length > 0) {
-      // Fetch latest strategy per creator (ORDER BY created_at DESC; take first per creator)
       const { data: stratRows } = await supabase
         .from('creator_strategies')
         .select('id, creator_id, allocation, confidence, source_video_ids, has_contradiction, contradiction_note, extracted_at, created_at')
         .in('creator_id', trackedIds)
         .order('created_at', { ascending: false })
 
-      // Group by creator_id, keep only the latest (first row after desc ordering)
       const seenCreators = new Set<string>()
       for (const row of stratRows ?? []) {
         const cid = row.creator_id as string
@@ -197,12 +166,10 @@ export default async function DashboardPage({
           })
         }
       }
-      // Ensure all tracked creators have an entry (null = no strategy yet)
       for (const cid of trackedIds) {
         if (!strategiesByCreator.has(cid)) strategiesByCreator.set(cid, null)
       }
 
-      // Fetch UserCreator rows with category weights
       const { data: ucRows } = await supabase
         .from('user_creators')
         .select('id, creator_id, trust_weight')
@@ -244,35 +211,70 @@ export default async function DashboardPage({
           categoryWeights: catWeights,
         })
       }
-
-      // Build creator name map for BlendSummary
-      creatorNameMap = Object.fromEntries(
-        creators.map((c) => [c.id, c.displayName])
-      )
-
-      // Compute blend (BLEND-02/03)
-      const blendInput: BlendInput = {
-        creators: trackedIds.map((cid) => ({
-          userCreator: userCreatorMap.get(cid) ?? {
-            id: '',
-            userId: user.id,
-            creatorId: cid,
-            trustWeight: 50,
-            lastRefreshedAt: null,
-            createdAt: new Date(),
-            categoryWeights: [],
-          },
-          latestStrategy: strategiesByCreator.get(cid) ?? null,
-        })),
-      }
-      if (blendInput.creators.length > 0) {
-        blend = blendStrategies(blendInput)
-      }
     }
   }
 
-  // Serialize Decimal fields at the RSC→client boundary (Next.js 15 requirement:
-  // class instances like Decimal cannot cross the server/client boundary).
+  // ---------------------------------------------------------------------------
+  // Watch List tab data
+  // ---------------------------------------------------------------------------
+  let watchLists: CreatorWatchList[] = []
+  let userCreatorIdMap: Record<string, string> = {}
+
+  if (activeTab === 'watchlist') {
+    const { data: ucRows } = await supabase
+      .from('user_creators')
+      .select('id, creator_id, monthly_budget_gbp')
+      .eq('user_id', user.id)
+
+    const trackedIds = (ucRows ?? []).map((uc) => uc.creator_id as string)
+
+    const { data: creatorNameRows } = trackedIds.length > 0
+      ? await supabase.from('creators').select('id, display_name').in('id', trackedIds)
+      : { data: [] }
+    const creatorNameMap = Object.fromEntries(
+      (creatorNameRows ?? []).map((c) => [c.id as string, c.display_name as string])
+    )
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type StratRow = { creator_id: string; profile_stable: any; profile_latest: any }
+    const { data: stratRows } = trackedIds.length > 0
+      ? await supabase
+          .from('creator_strategies')
+          .select('creator_id, profile_stable, profile_latest')
+          .in('creator_id', trackedIds)
+          .order('created_at', { ascending: false })
+      : { data: null as StratRow[] | null }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type StratEntry = { creator_id: string; profile_stable: any; profile_latest: any }
+    const latestStratByCreator = new Map<string, StratEntry>()
+    for (const row of stratRows ?? []) {
+      if (!latestStratByCreator.has(row.creator_id as string)) {
+        latestStratByCreator.set(row.creator_id as string, row)
+      }
+    }
+
+    watchLists = buildWatchLists(
+      (ucRows ?? []).map((uc) => {
+        const strat = latestStratByCreator.get(uc.creator_id as string)
+        return {
+          creatorId: uc.creator_id as string,
+          creatorName: creatorNameMap[uc.creator_id as string] ?? 'Unknown',
+          monthlyBudgetGbp: (uc.monthly_budget_gbp as number) ?? 0,
+          profileStable: strat?.profile_stable ?? null,
+          profileLatest: strat?.profile_latest ?? null,
+        }
+      })
+    )
+
+    userCreatorIdMap = Object.fromEntries(
+      (ucRows ?? []).map((uc) => [uc.creator_id as string, uc.id as string])
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Serialize Decimal fields at RSC→client boundary
+  // ---------------------------------------------------------------------------
   const holdingsPlain = holdings.map(h => ({
     ...h,
     currentValue: h.currentValue.toNumber(),
@@ -281,33 +283,13 @@ export default async function DashboardPage({
     priceFetchedAt: h.priceFetchedAt?.toISOString() ?? null,
   }))
 
-  // Server-side plan generation (D-05: auto-generate on page load)
-  const monthlyBudgetNumber = profile?.monthlyBudget.toNumber() ?? 500   // D-11: fallback to 500
+  const monthlyBudgetNumber = profile?.monthlyBudget.toNumber() ?? 500
   const profilePlain = profile ? { ...profile, monthlyBudget: monthlyBudgetNumber } : null
-  const totalContributed = contributions.reduce(
-    (sum, c) => sum.plus(c.amount),
-    new Decimal(0),
-  )
-  const ISA_ANNUAL_LIMIT = new Decimal(20000)
-  const isaRemaining = Decimal.max(ISA_ANNUAL_LIMIT.minus(totalContributed), new Decimal(0))
-  const isaRemainingNumber = isaRemaining.toNumber()
-
-  const serverPlanResult = generatePlan(
-    holdingsPlain,
-    monthlyBudgetNumber,
-    blend,
-    isaRemainingNumber,
-  )
-
-  // Persist plan (D-07: always overwrite) — fire and forget (non-blocking)
-  upsertBuyList(serverPlanResult).catch((err) =>
-    console.error('[DashboardPage] upsertBuyList failed:', err)
-  )
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'portfolio', label: 'Portfolio' },
-    { id: 'isa', label: 'ISA' },
-    { id: 'plan', label: 'Buy List' },
+    { id: 'creators', label: 'Creators' },
+    { id: 'watchlist', label: 'Watch List' },
   ]
 
   return (
@@ -319,22 +301,14 @@ export default async function DashboardPage({
             <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
             <p className="text-base text-zinc-400 mt-1">Welcome, {user.email}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="/dashboard/creators"
-              className="px-4 py-2 min-h-[44px] border border-accent/40 rounded-md text-sm font-medium text-accent hover:bg-accent/10 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent flex items-center"
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="px-4 py-2 min-h-[44px] border border-border rounded-md text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
             >
-              Creators
-            </a>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="px-4 py-2 min-h-[44px] border border-border rounded-md text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+              Sign out
+            </button>
+          </form>
         </div>
 
         {/* Getting Started guide — visible until all 4 steps complete */}
@@ -379,18 +353,20 @@ export default async function DashboardPage({
                   holdings={holdingsPlain}
                 />
               )}
-              {activeTab === 'isa' && (
-                <ISATab
-                  contributions={contributions}
-                  currentTaxYear={currentTaxYear}
+              {activeTab === 'creators' && (
+                <CreatorsTab
+                  creators={creators}
+                  initialTracked={Array.from(lastRefreshedMap.keys())}
+                  lastRefreshedMap={lastRefreshedMap}
+                  transcriptsByCreator={transcriptsByCreator}
+                  strategiesByCreator={strategiesByCreator}
+                  userCreatorMap={userCreatorMap}
                 />
               )}
-              {activeTab === 'plan' && (
-                <PlanTab
-                  portfolio={holdingsPlain}
-                  strategy={blend}
-                  isaRemaining={isaRemainingNumber}
-                  initialBudget={monthlyBudgetNumber}
+              {activeTab === 'watchlist' && (
+                <WatchListTab
+                  initialWatchLists={watchLists}
+                  userCreatorIdMap={userCreatorIdMap}
                 />
               )}
             </AnimatedTabPanel>
