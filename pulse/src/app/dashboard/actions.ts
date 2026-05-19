@@ -17,7 +17,11 @@ type ActionResult = { error?: string }
 
 export type PriceResult = { ticker: string; price: number | null; name?: string | null; error?: string }
 export type RefreshPricesResult = { results?: PriceResult[]; error?: string }
-export type FetchPricesResult = { prices?: Record<string, number | null>; error?: string }
+export type FetchPricesResult = {
+  prices?: Record<string, number | null>
+  currencies?: Record<string, string>   // e.g. { NVDA: 'USD', VWRL: 'GBP' }
+  error?: string
+}
 
 const TICKER_RE = /^[A-Z0-9.]{1,20}$/
 function isValidTicker(t: string): boolean {
@@ -443,6 +447,7 @@ export async function fetchTickerPrices(tickers: string[]): Promise<FetchPricesR
   if (tickers.length > 50) return { error: 'Too many tickers requested.' }
 
   const prices: Record<string, number | null> = {}
+  const currencies: Record<string, string> = {}
   await Promise.all(
     tickers.map(async (ticker) => {
       if (!isValidTicker(ticker)) {
@@ -450,17 +455,25 @@ export async function fetchTickerPrices(tickers: string[]): Promise<FetchPricesR
         return
       }
       try {
-        const q = await yahooFinance.quote(`${ticker}.L`, {}, { validateResult: false })
+        // Try raw ticker first (US stocks: NVDA, GOOGL, etc.)
+        // Fall back to .L suffix for LSE-listed stocks (VWRL.L, etc.)
+        let q = await yahooFinance.quote(ticker, {}, { validateResult: false })
+        if (!q.regularMarketPrice) {
+          q = await yahooFinance.quote(`${ticker}.L`, {}, { validateResult: false })
+        }
         let price = q.regularMarketPrice ?? null
-        if (price !== null && q.currency === 'GBp') {
+        let currency = q.currency ?? 'USD'
+        if (price !== null && currency === 'GBp') {
           price = new Decimal(price).div(100).toNumber()
+          currency = 'GBP'
         }
         prices[ticker] = price
+        if (price !== null) currencies[ticker] = currency
       } catch {
         prices[ticker] = null
       }
     })
   )
 
-  return { prices }
+  return { prices, currencies }
 }

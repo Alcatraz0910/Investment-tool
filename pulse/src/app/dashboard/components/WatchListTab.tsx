@@ -48,6 +48,7 @@ function isStale(timestamp: Date | null): boolean {
 export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListTabProps) {
   const [watchLists, setWatchLists] = useState<CreatorWatchList[]>(initialWatchLists)
   const [prices, setPrices] = useState<Record<string, number>>({})
+  const [currencies, setCurrencies] = useState<Record<string, string>>({})
   const [priceTimestamp, setPriceTimestamp] = useState<Date | null>(null)
   const [priceError, setPriceError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -72,6 +73,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
       }
     }
     setPrices(validPrices)
+    setCurrencies(result.currencies ?? {})
     setPriceTimestamp(new Date())
     if (result.error) {
       setPriceError(result.error)
@@ -171,7 +173,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                         <td className="py-2 pr-2 text-right">
                           {price !== undefined ? (
                             <span className={stale ? 'text-sm text-amber-400' : 'text-sm text-white'}>
-                              £{price.toFixed(2)}
+                              {currencies[item.ticker] === 'USD' ? '$' : '£'}{price.toFixed(2)}
                             </span>
                           ) : (
                             <span className="text-zinc-500" aria-label="Price not available">—</span>
