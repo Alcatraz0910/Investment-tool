@@ -18,7 +18,8 @@ export async function trackCreator(creatorId: string): Promise<ActionResult> {
   })
 
   // UNIQUE constraint violation means already tracking — treat as success
-  if (error && !error.message.includes('duplicate key')) {
+  // '23505' is the stable SQLSTATE for unique_violation
+  if (error && error.code !== '23505') {
     return { error: 'Something went wrong. Please try again.' }
   }
 
@@ -108,7 +109,8 @@ export async function addCustomCreator(formData: FormData): Promise<ActionResult
     trust_weight: 100,
   })
 
-  if (trackError && !trackError.message.includes('duplicate key')) {
+  // '23505' is the stable SQLSTATE for unique_violation
+  if (trackError && trackError.code !== '23505') {
     return { error: 'Something went wrong. Please try again.' }
   }
 
@@ -221,7 +223,8 @@ export async function trackSearchedCreator(
     trust_weight: 100,
   })
 
-  if (trackSearchError && !trackSearchError.message.includes('duplicate key')) {
+  // '23505' is the stable SQLSTATE for unique_violation
+  if (trackSearchError && trackSearchError.code !== '23505') {
     return { error: 'Something went wrong. Please try again.' }
   }
 
