@@ -225,13 +225,22 @@ async function retrieveChunks(
 ): Promise<ChunkMatch[]> {
   const vectors = await embedChunks(QUERY_TEXTS)
 
-  let allMatches = await queryPinecone(creatorId, vectors, filter)
-
-  // Fallback: if date filter returned nothing, retry without it so extraction
-  // still works when Pinecone metadata filtering excludes all stored chunks.
-  if (filter && allMatches.size === 0) {
-    console.warn(`[extractor] date filter returned 0 chunks for ${creatorId}, retrying without filter`)
-    allMatches = await queryPinecone(creatorId, vectors, undefined)
+  let allMatches: Map<string, ChunkMatch>
+  try {
+    allMatches = await queryPinecone(creatorId, vectors, filter)
+    // Fallback: filter succeeded but returned nothing — older vectors may lack numeric ts
+    if (filter && allMatches.size === 0) {
+      console.warn(`[extractor] date filter returned 0 chunks for ${creatorId}, retrying without filter`)
+      allMatches = await queryPinecone(creatorId, vectors, undefined)
+    }
+  } catch (filterErr) {
+    // Fallback: filter itself was rejected by Pinecone (e.g. $gte on string field)
+    if (filter) {
+      console.warn(`[extractor] date filter rejected by Pinecone for ${creatorId}, retrying without filter:`, filterErr)
+      allMatches = await queryPinecone(creatorId, vectors, undefined)
+    } else {
+      throw filterErr
+    }
   }
 
   return [...allMatches.values()]
@@ -283,7 +292,7 @@ export async function extractCreatorStrategy(
     .eq('creator_id', creatorId)
 
   const stableFilter = {
-    published_at: { $gte: new Date(Date.now() - 4 * 30 * 24 * 60 * 60 * 1000).toISOString() },
+    published_at_ts: { $gte: Math.floor((Date.now() - 4 * 30 * 24 * 60 * 60 * 1000) / 1000) },
   }
   const stableChunks = await retrieveChunks(creatorId, stableFilter)
 
@@ -325,7 +334,7 @@ export async function extractCreatorStrategy(
     .eq('creator_id', creatorId)
 
   const latestFilter = {
-    published_at: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
+    published_at_ts: { $gte: Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000) },
   }
   const latestChunks = await retrieveChunks(creatorId, latestFilter)
 

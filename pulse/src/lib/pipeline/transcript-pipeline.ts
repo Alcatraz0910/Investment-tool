@@ -281,6 +281,7 @@ export async function runRefreshPipeline(
             title: row.title,
             chunk_index: idx,
             published_at: row.published_at,
+            published_at_ts: Math.floor(new Date(row.published_at).getTime() / 1000),
             text: chunks[idx] ?? '',   // Phase 4: required for RAG context string (Pitfall 1)
           },
         }))
