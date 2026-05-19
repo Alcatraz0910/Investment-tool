@@ -254,16 +254,11 @@ export async function extractCreatorStrategy(
   const anthropic = getAnthropic()
 
   // --- Stable layer (4-month window, D-07) ---
-  await svc.from('refresh_jobs').upsert(
-    {
-      user_id: userId,
-      creator_id: creatorId,
-      step: 'Extracting stable profile...',
-      status: 'running',
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,creator_id' },
-  )
+  // Use .update() not .upsert() so started_at from runRefreshPipeline is never overwritten
+  await svc.from('refresh_jobs')
+    .update({ step: 'Extracting stable profile...', status: 'running', updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('creator_id', creatorId)
 
   const stableFilter = {
     published_at: { $gte: new Date(Date.now() - 4 * 30 * 24 * 60 * 60 * 1000).toISOString() },
@@ -296,16 +291,11 @@ export async function extractCreatorStrategy(
   const stableProfile = stableBlock.input as CreatorProfile
 
   // --- Latest layer (30-day window, D-08, D-09) ---
-  await svc.from('refresh_jobs').upsert(
-    {
-      user_id: userId,
-      creator_id: creatorId,
-      step: 'Extracting latest signals...',
-      status: 'running',
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,creator_id' },
-  )
+  // Use .update() not .upsert() so started_at from runRefreshPipeline is never overwritten
+  await svc.from('refresh_jobs')
+    .update({ step: 'Extracting latest signals...', status: 'running', updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('creator_id', creatorId)
 
   const latestFilter = {
     published_at: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
