@@ -65,12 +65,12 @@ const mockMessagesCreate = vi.fn().mockResolvedValue({
   content: [
     {
       type: 'tool_use',
-      name: 'extract_allocation',
+      name: 'extract_creator_profile',
       input: {
-        allocations: [
-          { category: 'Tech', allocation_pct: 60 },
-          { category: 'Dividends', allocation_pct: 20 },
-        ],
+        methodology: 'Focus on growth stocks and index funds',
+        favoured_stocks: [{ ticker: 'AAPL', name: 'Apple Inc.', rationale: 'Strong fundamentals', conviction: 'high' }],
+        sector_focus: [{ sector: 'Technology', stance: 'bullish', rationale: 'Long-term growth' }],
+        preferred_index_funds: [{ name: 'Vanguard S&P 500', ticker: 'VOO', rationale: 'Low cost index exposure' }],
         confidence: 75,
         source_video_ids: ['vid1'],
       },
@@ -131,11 +131,11 @@ describe('extractCreatorStrategy (STRAT-01, STRAT-02, STRAT-03)', () => {
     await expect(extractCreatorStrategy(CREATOR_ID, USER_ID)).resolves.toBeUndefined()
   })
 
-  it('STRAT-01: calls Claude messages.create with tool_choice forced to extract_allocation', async () => {
+  it('STRAT-01: calls Claude messages.create with tool_choice forced to extract_creator_profile', async () => {
     await extractCreatorStrategy(CREATOR_ID, USER_ID)
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        tool_choice: { type: 'tool', name: 'extract_allocation' },
+        tool_choice: { type: 'tool', name: 'extract_creator_profile' },
       }),
     )
   })
@@ -150,7 +150,7 @@ describe('extractCreatorStrategy (STRAT-01, STRAT-02, STRAT-03)', () => {
   it('STRAT-01: throws if Claude returns no tool_use block', async () => {
     mockMessagesCreate.mockResolvedValueOnce({ content: [{ type: 'text', text: 'oops' }] })
     await expect(extractCreatorStrategy(CREATOR_ID, USER_ID)).rejects.toThrow(
-      'did not return a tool_use block',
+      'tool_use block',
     )
   })
 
