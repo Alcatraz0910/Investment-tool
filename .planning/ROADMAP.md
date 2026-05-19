@@ -117,7 +117,7 @@ Wave 2 *(blocked on Wave 1 completion)*
 - [x] 11-01-PLAN.md — Wave 0: SQL migration (user runs in Supabase SQL Editor) + vitest install + test stubs
 - [x] 11-02-PLAN.md — Wave 1: YouTube client (listVideosLast4Months, searchChannels, formatSubscriberCount); transcript-pipeline.ts import update
 - [x] 11-03-PLAN.md — Wave 1: extractor.ts rewrite (PROFILE_TOOL_DEF, SYSTEM_PROMPT, two-call pattern, Pinecone date filters)
-- [ ] 11-04-PLAN.md — Wave 2: searchCreators + trackSearchedCreator server actions; creators-tab.tsx search UI
+- [x] 11-04-PLAN.md — Wave 2: searchCreators + trackSearchedCreator server actions; creators-tab.tsx search UI
 **UI hint**: yes
 
 ## Progress
@@ -134,4 +134,4 @@ Wave 2 *(blocked on Wave 1 completion)*
 | 8. Live Price Data | v1.1 | 3/3 | Human verification pending | — |
 | 9. Creator Search | v1.1 | 0/? | Not started | — |
 | 10. Mobile Layout | v1.1 | 0/? | Not started | — |
-| 11. Creator Intelligence Extraction | v1.2 | 3/4 | In progress | — |
+| 11. Creator Intelligence Extraction | v1.2 | 4/4 | Verification pending | — |
