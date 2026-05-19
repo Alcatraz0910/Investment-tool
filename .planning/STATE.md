@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-05-13 — v1.1 milestone started)
 ## Current Position
 
 Phase: Phase 11 — Creator Intelligence Extraction
-Plan: 1/4 plans complete
-Status: Executing — Wave 1 (11-02 YouTube client, 11-03 extractor rewrite)
-Last activity: 2026-05-19 — Plan 11-01 (Wave 0 foundation) complete.
+Plan: 3/4 plans complete
+Status: Executing — Wave 2 (11-04 search actions + UI)
+Last activity: 2026-05-19 — Wave 1 complete (11-02 YouTube client, 11-03 extractor rewrite merged).
 
 ## Milestone Status
 
