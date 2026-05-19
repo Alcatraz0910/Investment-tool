@@ -78,12 +78,11 @@ export interface VideoItem {
  * CI-01: 4-month window replaces previous 12-month window.
  * RESEARCH Pattern 6.
  */
-export async function listVideosLast4Months(channelId: string): Promise<VideoItem[]> {
+export async function listVideosLast4Weeks(channelId: string): Promise<VideoItem[]> {
   const yt = getYouTubeClient()
   const uploadsPlaylistId = channelId.replace(/^UC/, 'UU')
 
-  const cutoff = new Date()
-  cutoff.setMonth(cutoff.getMonth() - 4)  // 4 months, not 12; JS handles year rollover
+  const cutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
 
   const videos: VideoItem[] = []
   let pageToken: string | undefined = undefined

@@ -31,7 +31,7 @@
 
 import { YoutubeTranscript } from 'youtube-transcript'
 import { createServiceClient } from '@/lib/supabase/service'
-import { resolveChannelId, listVideosLast4Months, type VideoItem } from '@/lib/youtube/client'
+import { resolveChannelId, listVideosLast4Weeks, type VideoItem } from '@/lib/youtube/client'
 import { embedChunks } from '@/lib/openai/client'
 import { getPineconeNamespace } from '@/lib/pinecone/client'
 import { chunkText } from '@/lib/pipeline/chunker'
@@ -142,9 +142,9 @@ export async function runRefreshPipeline(
       .eq('creator_id', creatorId)
       .not('raw_text', 'is', null)
 
-    // Step 4: list videos from last 4 months
+    // Step 4: list videos from last 4 weeks
     await setStep(svc, userId, creatorId, 'Fetching videos...')
-    const videos: VideoItem[] = await listVideosLast4Months(channelId)
+    const videos: VideoItem[] = await listVideosLast4Weeks(channelId)
     const total = videos.length
 
     if (total === 0) {
