@@ -62,6 +62,21 @@ describe('buildWatchLists', () => {
     expect(tickers).toContain('MSFT')
   })
 
+  it('deduplicates tickers across stable and latest — latest wins', () => {
+    const overlapLatest = {
+      ...latestProfile,
+      favoured_stocks: [
+        { ticker: 'AAPL', name: 'Apple', rationale: 'Latest mention', conviction: 'high' as const },
+      ],
+    }
+    const result = buildWatchLists([
+      makeCreator({ profileStable: stableProfile, profileLatest: overlapLatest }),
+    ])
+    const aaplItems = result[0].items.filter((i) => i.ticker === 'AAPL')
+    expect(aaplItems).toHaveLength(1)
+    expect(aaplItems[0].layer).toBe('latest')
+  })
+
   it('filters out favoured_stocks entries where ticker is null', () => {
     const result = buildWatchLists([makeCreator({ profileStable: stableProfile })])
     const tickers = result[0].items.map((i) => i.ticker)

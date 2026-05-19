@@ -77,7 +77,14 @@ export function buildWatchLists(
         ]
       : []
 
-    const items = [...stableItems, ...latestItems].sort(
+    // If a ticker appears in both layers, keep the latest entry only.
+    const latestTickers = new Set(latestItems.map((i) => i.ticker))
+    const deduped = [
+      ...stableItems.filter((i) => !latestTickers.has(i.ticker)),
+      ...latestItems,
+    ]
+
+    const items = deduped.sort(
       (a, b) => CONVICTION_ORDER[a.conviction] - CONVICTION_ORDER[b.conviction]
     )
 
