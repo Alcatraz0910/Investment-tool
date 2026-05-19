@@ -49,7 +49,7 @@ vi.mock('@/lib/supabase/service', () => ({
   }),
 }))
 
-vi.mock('./contradiction', () => ({
+vi.mock('@/lib/strategy/contradiction', () => ({
   runContradictionCheck: vi.fn().mockReturnValue({ hasContradiction: false, note: null }),
 }))
 
