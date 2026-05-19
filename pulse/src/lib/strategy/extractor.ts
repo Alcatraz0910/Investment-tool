@@ -345,9 +345,9 @@ export async function extractCreatorStrategy(
     .limit(1)
 
   const prevAllocation = prevRows?.[0]?.allocation ?? null
-  // Guard: pass null as prev (triggers early return in contradiction.ts: no contradiction).
-  // Pass empty object as next — safe because prev=null short-circuits before next is read.
-  const contradiction = runContradictionCheck(prevAllocation, prevAllocation ?? {})
+  // Phase 11: allocation is always null in new rows; contradiction check is deferred.
+  // Always pass null as prev so contradiction.ts short-circuits before reading next.
+  const contradiction = runContradictionCheck(null, {})
 
   // --- INSERT new strategy row (always INSERT, never UPDATE — full history) ---
   // D-14: allocation = null for Phase 11 rows; new data in profile_stable / profile_latest
