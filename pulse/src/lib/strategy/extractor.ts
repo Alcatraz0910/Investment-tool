@@ -272,6 +272,11 @@ export async function extractCreatorStrategy(
     )
   }
 
+  await svc.from('refresh_jobs')
+    .update({ step: 'Analysing stable profile with AI...', updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('creator_id', creatorId)
+
   const stableContextString = buildContextString(stableChunks)
   const stableResponse = await anthropic.messages.create({
     model: MODEL,
@@ -306,6 +311,11 @@ export async function extractCreatorStrategy(
 
   if (latestChunks.length > 0) {
     // D-09: skip latest call if no 30-day chunks — no empty Claude call
+    await svc.from('refresh_jobs')
+      .update({ step: 'Analysing latest signals with AI...', updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('creator_id', creatorId)
+
     const latestContextString = buildContextString(latestChunks)
     const latestResponse = await anthropic.messages.create({
       model: MODEL,

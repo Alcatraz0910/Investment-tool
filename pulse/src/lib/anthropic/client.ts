@@ -18,6 +18,6 @@ export function getAnthropic(): Anthropic {
       'Get one from https://console.anthropic.com/settings/keys'
     )
   }
-  cached = new Anthropic({ apiKey: key })
+  cached = new Anthropic({ apiKey: key, timeout: 90_000 })
   return cached
 }
