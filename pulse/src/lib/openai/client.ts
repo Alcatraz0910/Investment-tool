@@ -17,7 +17,7 @@ export function getOpenAI(): OpenAI {
       'Get one from OpenAI Dashboard → API keys.'
     )
   }
-  cached = new OpenAI({ apiKey: key })
+  cached = new OpenAI({ apiKey: key, timeout: 30_000 })
   return cached
 }
 

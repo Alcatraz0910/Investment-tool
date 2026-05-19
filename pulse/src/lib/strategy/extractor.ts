@@ -193,13 +193,18 @@ async function queryPinecone(
   const allMatches = new Map<string, ChunkMatch>()
 
   for (const vector of vectors) {
+    const PINECONE_TIMEOUT = 20_000
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await (ns as any).query({
+    const queryPromise = (ns as any).query({
       vector,
       topK: 20,
       includeMetadata: true,
       ...(filter ? { filter } : {}),
     })
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Pinecone query timed out after 20s')), PINECONE_TIMEOUT)
+    )
+    const result = await Promise.race([queryPromise, timeoutPromise])
     for (const match of result.matches ?? []) {
       const existing = allMatches.get(match.id)
       if (!existing || match.score > existing.score) {
