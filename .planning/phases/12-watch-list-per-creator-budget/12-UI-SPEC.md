@@ -71,10 +71,12 @@ Extracted from existing tab components (PlanTab.tsx, PortfolioTab.tsx, creators-
 | Role | Size | Weight | Line Height | Tailwind |
 |------|------|--------|-------------|---------|
 | Heading | 20px (text-xl) | 600 (font-semibold) | 1.2 | `text-xl font-semibold text-white` |
-| Sub-heading / section label | 18px (text-lg) | 600 (font-semibold) | 1.2 | `text-lg font-semibold text-white` |
+| Sub-heading / section label | 20px (text-xl) | 600 (font-semibold) | 1.2 | `text-xl font-semibold text-white` |
 | Body / table cell | 16px (text-base) | 400 (font-normal) or 600 for emphasis | 1.5 | `text-base text-white` |
 | Label / meta / caption | 14px (text-sm) | 400 or 600 for emphasis | 1.5 | `text-sm text-zinc-400` |
 | Tag / badge / table header | 12px (text-xs) | 600 (font-semibold) | 1.4 | `text-xs font-semibold text-zinc-500 uppercase tracking-wide` |
+
+Font sizes in use: 12, 14, 16, 20px (4 sizes maximum).
 
 Weights used: regular (400) and semibold (600) only. No other weights.
 
@@ -109,6 +111,12 @@ Semantic colors:
 
 ---
 
+## Focal Point
+
+Primary visual anchor: the first creator section card. Within each card, the creator name (`text-xl font-semibold text-white`) and monthly budget display (`£{N} / month`) are the focal point — positioned in the card header row and given the highest visual weight in that card. All other elements (ticker table, badges, layer pills) are subordinate to this anchor.
+
+---
+
 ## Component Inventory
 
 New components required for Phase 12:
@@ -123,7 +131,7 @@ WatchListTab
 ├── Refresh Prices button       (accent primary, top-right of heading row)
 ├── Per-creator sections (one per tracked creator with profile)
 │   ├── Creator header row
-│   │   ├── Creator name        (text-lg font-semibold text-white)
+│   │   ├── Creator name        (text-xl font-semibold text-white)
 │   │   ├── Budget display      (text-sm text-zinc-400 — "£X / month")
 │   │   └── Set Budget input    (inline number input + Save button)
 │   ├── Layer badges            ("Established View" | "This Month" — text-xs)
@@ -213,12 +221,12 @@ States:
 ### Budget Save Flow
 
 1. User clicks "Edit" next to "£X / month" display in a creator header.
-2. Display text is replaced by `£` prefix + number input + "Save Budget" + "Cancel".
+2. Display text is replaced by `£` prefix + number input + "Save Budget" + "Discard Changes".
 3. User changes value; clicks "Save Budget".
 4. Button shows "Saving…" + disabled.
 5. On success: input row collapses back to display text with new value.
 6. On error: `text-sm text-red-400` error appears below the input row. Input remains open.
-7. "Cancel" always restores display text without saving.
+7. "Discard Changes" always restores display text without saving.
 
 ### Refresh Prices Flow
 
@@ -267,7 +275,7 @@ All output is framed as creator-derived information. Never use "advice", "recomm
 | Budget edit button | `Edit` |
 | Budget save button (idle) | `Save Budget` |
 | Budget save button (saving) | `Saving…` |
-| Budget cancel | `Cancel` |
+| Budget cancel | `Discard Changes` |
 | Budget input placeholder | `0` |
 | Budget input label (sr-only) | `Monthly budget for {creatorName} in pounds` |
 | Conviction badge — high | `High` |
@@ -389,3 +397,6 @@ Minimum requirements extracted from existing component patterns:
 | Tab label "Watch List" | `REQUIREMENTS.md` WL-01 |
 | ISA tab removed | `REQUIREMENTS.md` WL-05 |
 | No shadcn | Confirmed absence of `components.json` |
+| Budget cancel label | Checker revision — BLOCK 1 fix |
+| Typography scale reduced to 4 sizes | Checker revision — BLOCK 2 fix |
+| Focal point declared | Checker revision — FLAG fix |
