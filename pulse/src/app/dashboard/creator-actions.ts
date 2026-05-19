@@ -135,6 +135,7 @@ export async function searchCreators(query: string): Promise<SearchActionResult>
   // Quota protection: never call YouTube API with empty query (D-19)
   const trimmed = query.trim()
   if (!trimmed) return { error: 'Please enter a channel name to search.' }
+  if (trimmed.length > 200) return { error: 'Search query is too long.' }
 
   try {
     const results = await searchChannels(trimmed)
