@@ -1,21 +1,19 @@
 /**
- * Strategy extractor — Phase 4 (STRAT-01, STRAT-02, STRAT-03).
+ * Strategy extractor — Phase 11 rewrite (CI-02, CI-03, CI-04).
  *
  * extractCreatorStrategy(creatorId, userId):
- *   1. Update refresh_jobs step to "Extracting strategy..." (D-03)
- *   2. Embed 3 query strings via OpenAI
- *   3. Query Pinecone top-20 unique chunks across all 3 queries (D-06)
- *   4. Build context string from chunk text metadata (Pitfall 1 fix)
- *   5. Call Claude claude-sonnet-4-6 with tool_use: extract_allocation (D-04, D-05)
- *   6. Load prior strategy row for contradiction check
- *   7. INSERT new creator_strategies row (STRAT-02: always INSERT, never UPDATE)
+ *   1. Stable extraction: Pinecone filter published_at >= (now - 4 months) → Claude call
+ *   2. Latest extraction: Pinecone filter published_at >= (now - 30 days) → Claude call
+ *      (skipped if no 30-day chunks — D-09)
+ *   3. Contradiction check against prior row's allocation (null-guarded for Phase 11 rows)
+ *   4. INSERT new creator_strategies row with profile_stable, profile_latest, allocation=null
  *
- * Design: server-only; called from refresh route after runRefreshPipeline returns (D-01/D-02).
- * Failure propagates to caller (route wraps in try/catch for D-02 non-blocking behaviour).
+ * Design: server-only; called from refresh route after runRefreshPipeline returns.
+ * Failure propagates to caller (route wraps in try/catch for non-blocking behaviour).
+ * contradiction.ts is NOT modified (D-15) — Phase 14 will redesign it.
  */
 import 'server-only'
 import Anthropic from '@anthropic-ai/sdk'
-import type { AllocationMap, AssetCategory } from '@/types'
 import { getAnthropic } from '@/lib/anthropic/client'
 import { embedChunks } from '@/lib/openai/client'
 import { getPineconeNamespace } from '@/lib/pinecone/client'
@@ -32,68 +30,145 @@ type AnySupabase = any
 const MODEL = 'claude-sonnet-4-6'
 
 /**
- * Three sub-queries for better Pinecone recall across different ways creators
- * describe their allocation philosophy (RESEARCH Pattern 3 / D-06).
+ * D-10: Updated query texts for new profile schema — stocks, sectors, methodology, funds.
  */
-const QUERY_TEXTS = [
-  'asset allocation portfolio percentage breakdown',
-  'investment strategy how I invest my money sectors',
-  'portfolio approach growth dividends bonds cash weighting',
+export const QUERY_TEXTS = [
+  'stocks shares companies favourite investments holdings',
+  'sector industry technology growth value dividend focus',
+  'index funds ETF passive portfolio methodology how I invest',
 ]
 
 /**
- * System prompt — must not contain "advice", "recommend", or "suggest" (CLAUDE.md).
- * Framed as analysis/observation, not guidance.
+ * D-05: System prompt — must not contain "advice", "recommend", or "suggest" (CLAUDE.md).
+ * Framed as observation of what the creator expresses/discusses/covers.
  */
-const SYSTEM_PROMPT = `You are analysing transcripts from a finance content creator to identify \
-their asset allocation philosophy. Extract the percentage of a portfolio they imply or state \
-should be in each asset class. Only include categories the creator explicitly covers. \
-Omit categories not discussed. Do not use the words "advice" or "recommend" — describe only \
-what the creator expresses in the transcripts provided.`
+export const SYSTEM_PROMPT = `You are analysing transcript excerpts from a finance content creator \
+to identify what they express about their investment approach. \
+Extract what the creator discusses: the companies and funds they cover, the sectors they focus on, \
+and how they describe evaluating investments. \
+Only include information the creator explicitly covers in the provided transcripts. \
+Set ticker to null if the creator named a company but did not cite its stock symbol. \
+Set conviction based only on the creator's language: words like "biggest holding", \
+"very bullish", or "core position" indicate high conviction; passing mentions indicate low. \
+Use only observational language — describe what the creator expresses, covers, or discusses. \
+Do not frame output as guidance or instructions to the reader.`
 
 /**
- * Tool schema for forced structured output (D-05 / RESEARCH Pattern 2).
- * tool_choice: { type: 'tool', name: 'extract_allocation' } guarantees a ToolUseBlock.
+ * D-01: New tool schema — extract_creator_profile replaces the old tool.
+ * D-02: favoured_stocks.ticker nullable (anyOf) — do not infer from company name.
+ * D-03: preferred_index_funds.ticker nullable (anyOf).
+ * D-04: tool_choice forces structured output; name must match exactly.
  */
-const TOOL_DEF: Anthropic.Tool = {
-  name: 'extract_allocation',
+export const PROFILE_TOOL_DEF: Anthropic.Tool = {
+  name: 'extract_creator_profile',
   description:
-    "Record the asset allocation strategy inferred from the creator's transcripts. " +
-    'Only include categories the creator explicitly covers. Omit categories not discussed.',
+    'Record what this creator expresses about their investment approach based on the transcript excerpts provided.',
   input_schema: {
     type: 'object' as const,
     properties: {
-      allocations: {
+      methodology: {
+        type: 'string',
+        description:
+          'How the creator evaluates and selects investments (1-3 sentences, based only on what they express in transcripts).',
+      },
+      favoured_stocks: {
         type: 'array',
         items: {
           type: 'object',
           properties: {
-            category: {
-              type: 'string',
-              enum: ['Index Funds', 'Stocks', 'Cash'],
+            ticker: {
+              anyOf: [{ type: 'string' }, { type: 'null' }],
+              description:
+                'Stock symbol as cited by the creator (e.g. "AAPL"). Set to null if creator named the company but did not cite the ticker symbol.',
             },
-            allocation_pct: {
-              type: 'number',
-              description: 'Percentage of portfolio (0–100). Values need not sum to exactly 100.',
-            },
+            name: { type: 'string' },
+            rationale: { type: 'string' },
+            conviction: { type: 'string', enum: ['high', 'medium', 'low'] },
           },
-          required: ['category', 'allocation_pct'],
+          required: ['ticker', 'name', 'rationale', 'conviction'],
+        },
+      },
+      sector_focus: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            sector: { type: 'string' },
+            stance: { type: 'string', enum: ['bullish', 'neutral', 'cautious'] },
+            rationale: { type: 'string' },
+          },
+          required: ['sector', 'stance', 'rationale'],
+        },
+      },
+      preferred_index_funds: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            ticker: {
+              anyOf: [{ type: 'string' }, { type: 'null' }],
+              description: 'Fund ticker as cited by the creator. Null if not cited.',
+            },
+            rationale: { type: 'string' },
+          },
+          required: ['name', 'ticker', 'rationale'],
         },
       },
       confidence: {
         type: 'integer',
-        description: 'How explicitly the creator stated these allocations (0 = purely inferred, 100 = stated exact percentages).',
         minimum: 0,
         maximum: 100,
+        description:
+          'How explicitly the creator discussed these positions (0 = vague inferences, 100 = stated explicit positions).',
       },
       source_video_ids: {
         type: 'array',
         items: { type: 'string' },
-        description: 'YouTube video IDs (from chunk metadata video_id field) that most influenced this extraction.',
+        description: 'Video IDs from chunk metadata that most influenced this extraction.',
       },
     },
-    required: ['allocations', 'confidence', 'source_video_ids'],
+    required: [
+      'methodology',
+      'favoured_stocks',
+      'sector_focus',
+      'preferred_index_funds',
+      'confidence',
+      'source_video_ids',
+    ],
   },
+}
+
+// ---------------------------------------------------------------------------
+// TypeScript interfaces (AI-SPEC Section 4b)
+// ---------------------------------------------------------------------------
+
+interface FavouredStock {
+  ticker: string | null
+  name: string
+  rationale: string
+  conviction: 'high' | 'medium' | 'low'
+}
+
+interface SectorFocus {
+  sector: string
+  stance: 'bullish' | 'neutral' | 'cautious'
+  rationale: string
+}
+
+interface PreferredIndexFund {
+  name: string
+  ticker: string | null
+  rationale: string
+}
+
+export interface CreatorProfile {
+  methodology: string
+  favoured_stocks: FavouredStock[]
+  sector_focus: SectorFocus[]
+  preferred_index_funds: PreferredIndexFund[]
+  confidence: number
+  source_video_ids: string[]
 }
 
 // ---------------------------------------------------------------------------
@@ -106,11 +181,13 @@ interface ChunkMatch {
 }
 
 /**
- * Embed 3 query strings, query Pinecone per query, deduplicate by vector ID,
- * return top 20 unique chunks sorted by score descending.
- * Reads 'text' from Pinecone metadata (added in Phase 4 Wave 0 pipeline fix).
+ * Embed QUERY_TEXTS, query Pinecone per query with optional date filter,
+ * deduplicate by vector ID, return top 20 unique chunks sorted by score descending.
  */
-async function retrieveChunks(creatorId: string): Promise<ChunkMatch[]> {
+async function retrieveChunks(
+  creatorId: string,
+  filter?: Record<string, unknown>,
+): Promise<ChunkMatch[]> {
   const ns = getPineconeNamespace(creatorId)
   const vectors = await embedChunks(QUERY_TEXTS)
 
@@ -122,6 +199,7 @@ async function retrieveChunks(creatorId: string): Promise<ChunkMatch[]> {
       vector,
       topK: 20,
       includeMetadata: true,
+      ...(filter ? { filter } : {}),
     })
     for (const match of result.matches ?? []) {
       const existing = allMatches.get(match.id)
@@ -163,69 +241,102 @@ function buildContextString(chunks: ChunkMatch[]): string {
 
 /**
  * Extract a new strategy snapshot for the given creator using RAG + Claude.
- * Always INSERTs a new row in creator_strategies (STRAT-02: full version history).
- * Updates refresh_jobs step status to "Extracting strategy..." (D-03).
- * Throws on any failure — caller (refresh route) wraps in try/catch for D-02.
+ * Two-call pattern (D-06): stable (4 months) then latest (30 days, conditional).
+ * Always INSERTs a new row in creator_strategies (full version history).
+ * Sets profile_stable = result, profile_latest = result | null, allocation = null (D-14).
+ * Throws on any failure — caller (refresh route) wraps in try/catch.
  */
 export async function extractCreatorStrategy(
   creatorId: string,
   userId: string,
 ): Promise<void> {
   const svc: AnySupabase = createServiceClient()
+  const anthropic = getAnthropic()
 
-  // D-03: update step status to "Extracting strategy..."
+  // --- Stable layer (4-month window, D-07) ---
   await svc.from('refresh_jobs').upsert(
     {
       user_id: userId,
       creator_id: creatorId,
-      step: 'Extracting strategy...',
+      step: 'Extracting stable profile...',
       status: 'running',
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,creator_id' },
   )
 
-  // Step 1: retrieve relevant chunks via RAG (D-06: 3 sub-queries, top 20 unique)
-  const chunks = await retrieveChunks(creatorId)
-  if (chunks.length === 0) {
-    throw new Error(`No Pinecone chunks found for creator ${creatorId}. Run Refresh to embed transcripts first.`)
+  const stableFilter = {
+    published_at: { $gte: new Date(Date.now() - 4 * 30 * 24 * 60 * 60 * 1000).toISOString() },
+  }
+  const stableChunks = await retrieveChunks(creatorId, stableFilter)
+
+  // AI-SPEC guardrail: never call Claude with empty context (will hallucinate)
+  if (stableChunks.length === 0) {
+    throw new Error(
+      `No Pinecone chunks found for creator ${creatorId} in the last 4 months. Run Refresh to embed transcripts first.`,
+    )
   }
 
-  const contextString = buildContextString(chunks)
-
-  // Step 2: call Claude with forced tool_use (D-04, D-05)
-  const anthropic = getAnthropic()
-  const response = await anthropic.messages.create({
+  const stableContextString = buildContextString(stableChunks)
+  const stableResponse = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 1024,
+    max_tokens: 2048,
     system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: contextString }],
-    tools: [TOOL_DEF],
-    tool_choice: { type: 'tool', name: 'extract_allocation' },
+    messages: [{ role: 'user', content: stableContextString }],
+    tools: [PROFILE_TOOL_DEF],
+    tool_choice: { type: 'tool', name: 'extract_creator_profile' },
   })
 
-  // Forced tool_choice guarantees a ToolUseBlock — error if absent
-  const toolUse = response.content.find(
-    (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
+  const stableBlock = stableResponse.content.find(
+    (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
   )
-  if (!toolUse) {
-    throw new Error('Claude did not return a tool_use block — unexpected response format')
+  if (!stableBlock) {
+    throw new Error('Claude did not return tool_use block for stable extraction')
+  }
+  const stableProfile = stableBlock.input as CreatorProfile
+
+  // --- Latest layer (30-day window, D-08, D-09) ---
+  await svc.from('refresh_jobs').upsert(
+    {
+      user_id: userId,
+      creator_id: creatorId,
+      step: 'Extracting latest signals...',
+      status: 'running',
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id,creator_id' },
+  )
+
+  const latestFilter = {
+    published_at: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
+  }
+  const latestChunks = await retrieveChunks(creatorId, latestFilter)
+
+  let latestProfile: CreatorProfile | null = null
+
+  if (latestChunks.length > 0) {
+    // D-09: skip latest call if no 30-day chunks — no empty Claude call
+    const latestContextString = buildContextString(latestChunks)
+    const latestResponse = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: latestContextString }],
+      tools: [PROFILE_TOOL_DEF],
+      tool_choice: { type: 'tool', name: 'extract_creator_profile' },
+    })
+
+    const latestBlock = latestResponse.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+    )
+    if (latestBlock) {
+      latestProfile = latestBlock.input as CreatorProfile
+    }
   }
 
-  const input = toolUse.input as {
-    allocations: Array<{ category: string; allocation_pct: number }>
-    confidence: number
-    source_video_ids: string[]
-  }
-
-  // Step 3: map allocations array to AllocationMap (omit categories Claude didn't include)
-  const allocation: AllocationMap = {}
-  for (const a of input.allocations) {
-    const cat = a.category as AssetCategory
-    allocation[cat] = a.allocation_pct
-  }
-
-  // Step 4: load prior strategy for contradiction check (STRAT-04 uses this in contradiction.ts)
+  // --- Contradiction check (D-15: no changes to contradiction.ts) ---
+  // Prior allocation may be null for Phase 11 rows — runContradictionCheck handles null gracefully.
+  // If prevAllocation is null, contradiction check returns no contradiction (safe fallback).
   const { data: prevRows } = await svc
     .from('creator_strategies')
     .select('allocation')
@@ -233,16 +344,20 @@ export async function extractCreatorStrategy(
     .order('created_at', { ascending: false })
     .limit(1)
 
-  const prevAllocation: AllocationMap | null = prevRows?.[0]?.allocation ?? null
+  const prevAllocation = prevRows?.[0]?.allocation ?? null
+  // Guard: pass null as prev (triggers early return in contradiction.ts: no contradiction).
+  // Pass empty object as next — safe because prev=null short-circuits before next is read.
+  const contradiction = runContradictionCheck(prevAllocation, prevAllocation ?? {})
 
-  const contradiction = runContradictionCheck(prevAllocation, allocation)
-
-  // Step 5: INSERT new strategy row (STRAT-02: always INSERT, never UPDATE)
+  // --- INSERT new strategy row (always INSERT, never UPDATE — full history) ---
+  // D-14: allocation = null for Phase 11 rows; new data in profile_stable / profile_latest
   const { error: insertErr } = await svc.from('creator_strategies').insert({
     creator_id: creatorId,
-    allocation,
-    confidence: input.confidence,
-    source_video_ids: input.source_video_ids,
+    profile_stable: stableProfile,
+    profile_latest: latestProfile,
+    allocation: null,
+    confidence: stableProfile.confidence,
+    source_video_ids: stableProfile.source_video_ids,
     has_contradiction: contradiction.hasContradiction,
     contradiction_note: contradiction.note,
     extracted_at: new Date().toISOString(),
