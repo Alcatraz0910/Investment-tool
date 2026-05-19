@@ -214,6 +214,7 @@ export async function runRefreshPipeline(
             title: v.title,
             published_at: v.publishedAt.toISOString(),
             raw_text: rawText,
+            is_embedded: false,   // Reset so embedding step is re-attempted on re-fetch
             word_count: wordCount,
             last_fetched: nowIso,
             updated_at: nowIso,
