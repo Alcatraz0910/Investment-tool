@@ -134,21 +134,13 @@ export async function runRefreshPipeline(
         .eq('id', creatorId)
     }
 
-    // Step 3b: reset is_embedded so all transcripts are re-embedded with current metadata.
-    // This ensures published_at_ts is present in Pinecone vectors for date-range filtering.
-    await svc
-      .from('transcripts')
-      .update({ is_embedded: false, updated_at: new Date().toISOString() })
-      .eq('creator_id', creatorId)
-      .not('raw_text', 'is', null)
-
     // Step 4: list videos from last 4 weeks
     await setStep(svc, userId, creatorId, 'Fetching videos...')
     const videos: VideoItem[] = await listVideosLast4Weeks(channelId)
     const total = videos.length
 
     if (total === 0) {
-      const noVideosSummary = 'No videos found in the last 4 months'
+      const noVideosSummary = 'No videos found in the last 4 weeks'
       await setStep(svc, userId, creatorId, 'Done', 'done', {
         summary: noVideosSummary,
       })
@@ -171,6 +163,16 @@ export async function runRefreshPipeline(
       .in('video_id', videoIds)
     const existingRows: TranscriptRow[] = (existingRowsRaw ?? []) as TranscriptRow[]
     const byVideoId = new Map(existingRows.map((r) => [r.video_id, r]))
+
+    // Reset is_embedded only for the 4-week videos so they are re-embedded with
+    // published_at_ts metadata. Scoped to videoIds — never touches old transcripts.
+    if (videoIds.length > 0) {
+      await svc
+        .from('transcripts')
+        .update({ is_embedded: false, updated_at: new Date().toISOString() })
+        .in('video_id', videoIds)
+        .not('raw_text', 'is', null)
+    }
 
     let fetchedOk = 0
     let pending = 0
@@ -238,14 +240,13 @@ export async function runRefreshPipeline(
       else pending += 1
     }
 
-    // Step 6: embed all transcripts where raw_text NOT NULL AND is_embedded=FALSE
-    // Covers D-08 retries (previous partial failures) AND newly fetched rows from this run
+    // Step 6: embed only the 4-week videos where raw_text NOT NULL AND is_embedded=FALSE
     const { data: toEmbedRaw } = await svc
       .from('transcripts')
       .select(
         'id, creator_id, video_id, title, published_at, raw_text, word_count, is_embedded, last_fetched',
       )
-      .eq('creator_id', creatorId)
+      .in('video_id', videoIds)
       .not('raw_text', 'is', null)
       .eq('is_embedded', false)
     const toEmbed: TranscriptRow[] = (toEmbedRaw ?? []) as TranscriptRow[]
