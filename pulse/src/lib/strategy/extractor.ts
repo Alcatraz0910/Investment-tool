@@ -184,13 +184,12 @@ interface ChunkMatch {
  * Embed QUERY_TEXTS, query Pinecone per query with optional date filter,
  * deduplicate by vector ID, return top 20 unique chunks sorted by score descending.
  */
-async function retrieveChunks(
+async function queryPinecone(
   creatorId: string,
+  vectors: number[][],
   filter?: Record<string, unknown>,
-): Promise<ChunkMatch[]> {
+): Promise<Map<string, ChunkMatch>> {
   const ns = getPineconeNamespace(creatorId)
-  const vectors = await embedChunks(QUERY_TEXTS)
-
   const allMatches = new Map<string, ChunkMatch>()
 
   for (const vector of vectors) {
@@ -210,6 +209,24 @@ async function retrieveChunks(
         })
       }
     }
+  }
+
+  return allMatches
+}
+
+async function retrieveChunks(
+  creatorId: string,
+  filter?: Record<string, unknown>,
+): Promise<ChunkMatch[]> {
+  const vectors = await embedChunks(QUERY_TEXTS)
+
+  let allMatches = await queryPinecone(creatorId, vectors, filter)
+
+  // Fallback: if date filter returned nothing, retry without it so extraction
+  // still works when Pinecone metadata filtering excludes all stored chunks.
+  if (filter && allMatches.size === 0) {
+    console.warn(`[extractor] date filter returned 0 chunks for ${creatorId}, retrying without filter`)
+    allMatches = await queryPinecone(creatorId, vectors, undefined)
   }
 
   return [...allMatches.values()]

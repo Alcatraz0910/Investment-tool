@@ -61,9 +61,10 @@ export async function POST(
     try {
       await extractCreatorStrategy(creatorId, user.id)
     } catch (extractionErr) {
-      console.warn('[refresh] extraction failed (non-blocking):', extractionErr)
+      const errMsg = extractionErr instanceof Error ? extractionErr.message : String(extractionErr)
+      console.warn('[refresh] extraction failed (non-blocking):', errMsg)
       extractionStatus = 'warning'
-      extractionWarning = 'Transcripts refreshed. Strategy extraction failed — try again later.'
+      extractionWarning = `Transcripts refreshed. Strategy extraction failed: ${errMsg}`
     }
 
     return NextResponse.json(
