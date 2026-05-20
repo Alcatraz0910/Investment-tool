@@ -29,6 +29,7 @@ interface CreatorsTabProps {
 }
 
 export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transcriptsByCreator, strategiesByCreator, userCreatorMap }: CreatorsTabProps) {
+  // MOB-01 audit: no overflow risk at 375px — flex rows use flex-1 min-w-0, no fixed px widths, no tables
   // Optimistic tracking state: mirror server state, update immediately on toggle
   const [tracked, setTracked] = useState<Set<string>>(new Set<string>(initialTracked))
   const [isPending, startT] = useTransition()

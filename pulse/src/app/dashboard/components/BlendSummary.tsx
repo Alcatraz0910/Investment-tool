@@ -20,6 +20,7 @@ interface BlendSummaryProps {
 }
 
 export function BlendSummary({ blend, creatorNameMap }: BlendSummaryProps) {
+  // MOB-01 audit: no overflow risk at 375px — flex flex-wrap for chips, flex-col for influence list, no tables
   if (!blend || Object.keys(blend.unified).length === 0) {
     return (
       <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4">
