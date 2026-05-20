@@ -1,75 +1,65 @@
 /**
- * Contradiction detection for creator strategy snapshots — Phase 4 (STRAT-04).
+ * Contradiction detection for creator strategy profiles — Phase 14 redesign (D-06).
  *
- * runContradictionCheck(prev, next):
- *   - Compare two AllocationMap objects.
- *   - Flag categories where absolute delta exceeds THRESHOLD (15 percentage points).
- *   - If prev is null (first ever extraction): no contradiction.
- *   - Category in next but not prev: treat prev as 0.
- *   - Category in prev but not next: treat next as 0.
- *   - Category absent from both: skip.
+ * runContradictionCheck(stable, latest):
+ *   - Accepts two CreatorProfile objects (the 4-month stable snapshot and the 30-day latest).
+ *   - If latest is null: no data to compare — returns no contradiction (D-07).
+ *   - Check (a): a ticker that was 'high' conviction in stable is absent from latest favoured_stocks.
+ *   - Check (b): a sector's stance flipped bullish ↔ cautious between stable and latest.
+ *   - Mixed/unchanged → no contradiction.
  *
  * Pure function — no I/O, no side effects.
- * D-12: "auto-clear" is achieved by the newest INSERT row having has_contradiction=false
- * when all diffs are ≤15%. No old-row updates needed.
  */
-import type { AllocationMap } from '@/types'
-
-const THRESHOLD = 15  // percentage points — matches D-11 / STRAT-04
+import type { CreatorProfile } from '@/lib/strategy/extractor'
 
 export interface ContradictionResult {
   hasContradiction: boolean
-  note: string | null
-  shifts: Array<{
-    category: string
-    from: number
-    to: number
-    delta: number   // signed: positive = increased, negative = decreased
-  }>
+  reason: string | null
 }
 
 /**
- * Compare prev and next AllocationMaps. Returns contradiction details.
- * Pass prev=null for the first extraction — always returns no contradiction.
+ * Compare stable and latest CreatorProfile snapshots for contradictions.
+ * Returns { hasContradiction: false, reason: null } when latest is null (D-07).
  */
 export function runContradictionCheck(
-  prev: AllocationMap | null,
-  next: AllocationMap,
+  stable: CreatorProfile,
+  latest: CreatorProfile | null,
 ): ContradictionResult {
-  if (!prev) {
-    return { hasContradiction: false, note: null, shifts: [] }
-  }
+  if (!latest) return { hasContradiction: false, reason: null }
 
-  const allCategories = new Set([
-    ...Object.keys(prev),
-    ...Object.keys(next),
-  ])
+  const reasons: string[] = []
 
-  const shifts: ContradictionResult['shifts'] = []
-
-  for (const cat of allCategories) {
-    const from = (prev as Record<string, number>)[cat] ?? 0
-    const to = (next as Record<string, number>)[cat] ?? 0
-    const delta = to - from
-
-    if (Math.abs(delta) > THRESHOLD) {
-      shifts.push({ category: cat, from, to, delta })
+  // Check (a): high-conviction stable ticker absent from latest favoured_stocks
+  const latestTickers = new Set(
+    latest.favoured_stocks
+      .map((s) => s.ticker?.toUpperCase())
+      .filter((t): t is string => t !== null && t !== undefined),
+  )
+  for (const stock of stable.favoured_stocks) {
+    if (
+      stock.conviction === 'high' &&
+      stock.ticker !== null &&
+      !latestTickers.has(stock.ticker.toUpperCase())
+    ) {
+      reasons.push(`${stock.ticker} was high conviction but absent from recent picks`)
     }
   }
 
-  if (shifts.length === 0) {
-    return { hasContradiction: false, note: null, shifts: [] }
-  }
-
-  // Note format matches D-11 diff table: "Category: from% → to% (±delta%)"
-  const noteLines = shifts.map(
-    (s) =>
-      `${s.category}: ${s.from}% → ${s.to}% (${s.delta > 0 ? '+' : ''}${s.delta}%)`,
+  // Check (b): sector stance flipped bullish ↔ cautious (D-11: case-insensitive name match)
+  const latestSectorMap = new Map(
+    latest.sector_focus.map((s) => [s.sector.toLowerCase(), s.stance]),
   )
-
-  return {
-    hasContradiction: true,
-    note: noteLines.join('; '),
-    shifts,
+  for (const sf of stable.sector_focus) {
+    const latestStance = latestSectorMap.get(sf.sector.toLowerCase())
+    if (!latestStance) continue  // unmatched sector — ignored per D-11
+    if (
+      (sf.stance === 'bullish' && latestStance === 'cautious') ||
+      (sf.stance === 'cautious' && latestStance === 'bullish')
+    ) {
+      reasons.push(`${sf.sector}: ${sf.stance} → ${latestStance}`)
+    }
   }
+
+  if (reasons.length === 0) return { hasContradiction: false, reason: null }
+  return { hasContradiction: true, reason: reasons.join('; ') }
 }
