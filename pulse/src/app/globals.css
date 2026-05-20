@@ -6,6 +6,9 @@
   --color-border: #3A3A3C;
   --color-accent: #6366F1;
   --color-accent-hover: #818CF8;
+  /* Phase 15 — typography */
+  --font-geist: 'Geist', sans-serif;
+  --font-geist-mono: 'Geist Mono', monospace;
 }
 
 body {
