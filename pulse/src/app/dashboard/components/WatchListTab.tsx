@@ -108,6 +108,8 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
   const [newsRefreshing, setNewsRefreshing] = useState(false)
   const [newsError, setNewsError] = useState<string | null>(null)
   const [isContextExpanded, setIsContextExpanded] = useState(true) // D-05: expanded by default
+  // Mobile expand toggle per-creator (15-05: MOB-01)
+  const [tickersExpanded, setTickersExpanded] = useState<Record<string, boolean>>({})
 
   // Stagger variants — useReducedMotion guard (15-UI-SPEC.md §3)
   const sectionVariants = {
@@ -303,32 +305,47 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
         </div>
       )}
 
-      {/* Merged ticker list — All Picks (wrapped in hover lift + Card) */}
+      {/* Merged ticker list — All Picks */}
       {watchLists.length > 0 && (() => {
         const merged = buildMergedWatchList(watchLists.filter(wl => wl.hasProfile))
         if (merged.length === 0) return null
         return (
-          <motion.div
-            whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.01 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            style={{ willChange: 'transform' }}
-          >
-            <Card padding="md" className="space-y-3">
-              <p className="text-xl font-semibold text-white">All Picks</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
-                      <th className="py-2 pr-2">Holding</th>
-                      <th className="py-2 pr-2 w-20">Conviction</th>
-                      <th className="py-2 pr-2 w-22">Signal</th>
-                      <th className="py-2 pr-2 w-[72px]">News</th>
-                      <th className="py-2 pr-2 w-18 text-right">Price</th>
-                      <th className="py-2">Creators</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {merged.map((item) => {
+          <>
+            {/* All Picks mobile chip list — visible only below sm (15-05: MOB-01) */}
+            <div className="flex flex-wrap gap-2 sm:hidden">
+              {merged.map(item => (
+                <span
+                  key={item.ticker}
+                  className="text-xs font-semibold font-mono text-zinc-300 bg-zinc-800/60 border border-white/10 rounded px-1.5 py-0.5"
+                >
+                  {item.ticker}
+                </span>
+              ))}
+            </div>
+
+            {/* All Picks card — desktop only */}
+            <div className="hidden sm:block">
+              <motion.div
+                whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.01 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                style={{ willChange: 'transform' }}
+              >
+                <Card padding="md" className="space-y-3">
+                  <p className="text-xl font-semibold text-white">All Picks</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
+                          <th className="py-2 pr-2">Holding</th>
+                          <th className="py-2 pr-2 w-20">Conviction</th>
+                          <th className="py-2 pr-2 w-22">Signal</th>
+                          <th className="py-2 pr-2 w-[72px]">News</th>
+                          <th className="py-2 pr-2 w-18 text-right">Price</th>
+                          <th className="py-2">Creators</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {merged.map((item) => {
                       const price = prices[item.ticker]
                       const currency = currencies[item.ticker]
                       const changePct = getPriceChangePct(item.ticker)
@@ -401,9 +418,11 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                     })}
                   </tbody>
                 </table>
-              </div>
-            </Card>
-          </motion.div>
+                  </div>
+                </Card>
+              </motion.div>
+            </div>
+          </>
         )
       })()}
 
@@ -514,7 +533,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
 
                     {/* Macro themes strip (NEWS-05) — below creator header, above ticker table */}
                     {newsContext.macroThemes.length > 0 && (
-                      <div className="flex flex-wrap gap-2 py-1">
+                      <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto pb-1">
                         {newsContext.macroThemes.slice(0, 3).map((theme, i) => (
                           <Badge
                             key={i}
@@ -549,7 +568,23 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
 
                     {/* Ticker table */}
                     {wl.hasProfile && wl.items.length > 0 && (
-                      <div className="overflow-x-auto">
+                      <>
+                        {/* Mobile summary line — visible only below sm (15-05: MOB-01) */}
+                        <p className="text-sm text-zinc-400 sm:hidden">
+                          Top picks: {wl.items[0]?.ticker}{wl.items[1] ? `, ${wl.items[1].ticker}` : ''}
+                          {wl.items.length > 2 ? ` +${wl.items.length - 2} more` : ''}
+                        </p>
+
+                        {/* Mobile expand toggle — visible only below sm */}
+                        <button
+                          onClick={() => setTickersExpanded(prev => ({ ...prev, [wl.creatorId]: !prev[wl.creatorId] }))}
+                          className="sm:hidden text-sm text-zinc-400 hover:text-white min-h-[44px] focus:outline-none focus:ring-2 focus:ring-accent rounded"
+                          aria-expanded={tickersExpanded[wl.creatorId] ?? false}
+                        >
+                          {tickersExpanded[wl.creatorId] ? 'Hide picks' : 'Show all picks'}
+                        </button>
+
+                        <div className={`overflow-x-auto ${tickersExpanded[wl.creatorId] ? '' : 'hidden'} sm:block`}>
                         <table className="w-full text-left">
                           <thead>
                             <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
@@ -661,6 +696,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                           </tbody>
                         </table>
                       </div>
+                      </>
                     )}
                   </Card>
                 </motion.div>
