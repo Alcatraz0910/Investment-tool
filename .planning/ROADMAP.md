@@ -99,7 +99,7 @@ Wave 2 *(blocked on Wave 1 completion)*
 - [x] **Phase 12: Watch List + Per-Creator Budget** — Buy list replaced with a live watch list (real-time prices, news flags per item); user sets £X/month per creator; app translates into actual share quantities to buy based on current creator picks — completed 2026-05-20
 - [ ] **Phase 13: Market News Integration** — Finnhub/Alpha Vantage ticker news + BBC Business/Reuters UK/BoE RSS feeds; AI cross-references against watch list tickers and creator-backed sectors; generates a "this month's context" summary (3-4 sentences) combining creator signals and macro news
 - [ ] **Phase 14: Creator Signals + Housekeeping** — Consensus signal (2+ creators backing same ticker), sentiment trend (bullish/cautious shift over 4 months), contradiction detection (recent vs older stance), cadence weighting (less-active creators carry less weight); ISA tab removed
-- [ ] **Phase 15: Visual Redesign** — Futuristic, clean UI overhaul across all dashboard tabs; cohesive design system (typography, colour palette, spacing, motion); glassmorphism, dark-first aesthetic; polished component library replacing placeholder styling
+- [x] **Phase 15: Visual Redesign** — Futuristic, clean UI overhaul across all dashboard tabs; cohesive design system (typography, colour palette, spacing, motion); glassmorphism, dark-first aesthetic; polished component library replacing placeholder styling — completed 2026-05-20
 
 ### Phase 11: Creator Intelligence Extraction
 **Goal**: Creator refreshes produce a two-layer intelligence profile (stable 4-month summary + latest 30-day signals); users can discover creators by searching YouTube by name instead of pasting a URL
@@ -195,17 +195,17 @@ Wave 2 *(blocked on Wave 1 completion)*
 **Plans**: 5 plans
 
 Wave 1
-- [ ] 15-01-PLAN.md — Wave 1: Design tokens (globals.css font vars) + Geist font loading (layout.tsx)
+- [x] 15-01-PLAN.md — Wave 1: Design tokens (globals.css font vars) + Geist font loading (layout.tsx)
 
 Wave 2 *(blocked on Wave 1 completion)*
-- [ ] 15-02-PLAN.md — Wave 2: UI primitives — Card, Badge, Button, StatTile in pulse/src/components/ui/
+- [x] 15-02-PLAN.md — Wave 2: UI primitives — Card, Badge, Button, StatTile in pulse/src/components/ui/
 
 Wave 2 (parallel with 15-02) *(blocked on Wave 1 completion)*
-- [ ] 15-03-PLAN.md — Wave 2: Tab bar (TabBar.tsx Client Component + page.tsx rewire) + AnimatedTabPanel upgrade + WatchListTab primitives + motion
-- [ ] 15-04-PLAN.md — Wave 2: PortfolioTab primitives + StatTile total + mobile mini cards
+- [x] 15-03-PLAN.md — Wave 2: Tab bar (TabBar.tsx Client Component + page.tsx rewire) + AnimatedTabPanel upgrade + WatchListTab primitives + motion
+- [x] 15-04-PLAN.md — Wave 2: PortfolioTab primitives + StatTile total + mobile mini cards
 
 Wave 3 *(blocked on Wave 2 completion)*
-- [ ] 15-05-PLAN.md — Wave 3: Watch List mobile layout (ticker summary toggle, All Picks chips, macro scroll) + TypeScript clean pass
+- [x] 15-05-PLAN.md — Wave 3: Watch List mobile layout (ticker summary toggle, All Picks chips, macro scroll) + TypeScript clean pass
 
 **UI hint**: yes
 
@@ -227,4 +227,4 @@ Wave 3 *(blocked on Wave 2 completion)*
 | 12. Watch List + Per-Creator Budget | v1.2 | 3/3 | Complete | 2026-05-20 |
 | 13. Market News Integration | v1.2 | 3/3 | Complete | 2026-05-20 |
 | 14. Creator Signals + Housekeeping | v1.2 | 0/3 | Ready to execute | — |
-| 15. Visual Redesign | v1.2 | 0/5 | Ready to execute | — |
+| 15. Visual Redesign | v1.2 | 5/5 | Complete | 2026-05-20 |
