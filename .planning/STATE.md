@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Creator Intelligence
-status: in_progress
-stopped_at: ~
-last_updated: "2026-05-19T00:00:00.000Z"
-last_activity: 2026-05-19 — Phase 11 Creator Intelligence Extraction execution started.
+status: planning
+stopped_at: Phase 14 context gathered
+last_updated: "2026-05-20T00:00:00.000Z"
+last_activity: "2026-05-20 — Phase 14 context gathered. Ready to plan."
 progress:
-  total_phases: 4
-  completed_phases: 2
-  total_plans: 11
-  completed_plans: 7
-  percent: 64
+  total_phases: 7
+  completed_phases: 5
+  total_plans: 20
+  completed_plans: 17
+  percent: 85
 ---
 
 # Pulse — Project State
@@ -24,17 +24,18 @@ See: `.planning/PROJECT.md` (updated 2026-05-13 — v1.1 milestone started)
 
 ## Current Position
 
-Phase: Phase 11 — Creator Intelligence Extraction
-Plan: 4/4 plans complete
-Status: Verification pending
-Last activity: 2026-05-19 — Wave 2 complete (11-04 search actions + UI merged). All plans done.
+Phase: Phase 14 — Creator Signals + Housekeeping (next)
+Plan: 0/? plans complete
+Status: Ready to plan
+Last activity: 2026-05-20 — Phase 13 fully executed (3/3 plans + verification + rss-parser fix). Phase 14 is next.
 
 ## Milestone Status
 
 | Milestone | Phases | Status | Shipped |
 |-----------|--------|--------|---------|
 | v1.0 MVP | 1–6 | ✅ Complete | 2026-05-07 |
-| v1.1 Portfolio Intelligence | 7–10 | 🔄 In progress | — |
+| v1.1 Portfolio Intelligence | 7–10 | ✅ Complete | 2026-05-18 |
+| v1.2 Creator Intelligence | 11–15 | 🔄 In progress | — |
 
 ## Phase Status
 
@@ -42,8 +43,13 @@ Last activity: 2026-05-19 — Wave 2 complete (11-04 search actions + UI merged)
 |-------|------|--------|
 | 7 | CSV Portfolio Import | ✅ Complete (2026-05-17) |
 | 8 | Live Price Data | ✅ Complete (2026-05-18) |
-| 9 | Creator Search | Not started |
-| 10 | Mobile Layout | Not started |
+| 9 | Creator Search | ✅ Absorbed into Phase 11 |
+| 10 | Mobile Layout | Deferred to Phase 15 |
+| 11 | Creator Intelligence Extraction | ✅ Complete (2026-05-19) |
+| 12 | Watch List + Per-Creator Budget | ✅ Complete (2026-05-20) |
+| 13 | Market News Integration | ✅ Complete (2026-05-20) |
+| 14 | Creator Signals + Housekeeping | 🔄 Context gathered |
+| 15 | Visual Redesign | Not started |
 
 ## Accumulated Context
 
@@ -73,11 +79,18 @@ Last activity: 2026-05-19 — Wave 2 complete (11-04 search actions + UI merged)
 - `unified_allocation: {}` stub in upsertBuyList (intentional)
 - Pre-existing TS errors in creator-actions.ts (TS2353/TS2339)
 
+## Key Decisions (v1.2)
+
+- Creators tab moved to standalone `/dashboard/creators` page (Phase 11); tab bar is Portfolio | Watch List only
+- Watch List "All Picks" merged section deduplicates tickers across all tracked creators
+- TradingView links: LSE-prefixed for GBP stocks, bare symbol for US stocks
+- Price-change % indicators on second refresh (compares against previous fetch)
+
 ## Session Continuity
 
-Last session: 2026-05-19T09:15:00.000Z
-Stopped at: Plan 11-01 complete. Next: execute 11-02 (YouTube client) and 11-03 (extractor rewrite) in Wave 1.
-Resume file: None
+Last session: 2026-05-20
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-creator-signals-housekeeping/14-CONTEXT.md
 
 ## Notes
 
