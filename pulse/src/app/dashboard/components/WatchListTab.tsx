@@ -45,9 +45,25 @@ function isStale(timestamp: Date | null): boolean {
   return Date.now() - timestamp.getTime() > 24 * 60 * 60 * 1000
 }
 
+function tradingViewUrl(ticker: string, currency: string): string {
+  if (currency === 'GBp' || currency === 'GBP') {
+    return `https://www.tradingview.com/chart/?symbol=LSE:${ticker}`
+  }
+  return `https://www.tradingview.com/chart/?symbol=${ticker}`
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg className="inline-block ml-1 w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7M7 1h4m0 0v4m0-4L5 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListTabProps) {
   const [watchLists, setWatchLists] = useState<CreatorWatchList[]>(initialWatchLists)
   const [prices, setPrices] = useState<Record<string, number>>({})
+  const [prevPrices, setPrevPrices] = useState<Record<string, number>>({})
   const [currencies, setCurrencies] = useState<Record<string, string>>({})
   const [priceTimestamp, setPriceTimestamp] = useState<Date | null>(null)
   const [priceError, setPriceError] = useState<string | null>(null)
@@ -55,6 +71,22 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
   const [editingBudget, setEditingBudget] = useState<Record<string, number | null>>({})
   const [savingBudget, setSavingBudget] = useState<Record<string, boolean>>({})
   const [budgetError, setBudgetError] = useState<Record<string, string | null>>({})
+
+  const getPriceChangePct = (ticker: string): number | null => {
+    const curr = prices[ticker]
+    const prev = prevPrices[ticker]
+    if (curr === undefined || prev === undefined || prev === 0) return null
+    return ((curr - prev) / prev) * 100
+  }
+
+  const getPriceColorClass = (ticker: string): string => {
+    if (stale) return 'text-amber-400'
+    const pct = getPriceChangePct(ticker)
+    if (pct === null) return 'text-white'
+    if (pct > 0) return 'text-green-400'
+    if (pct < 0) return 'text-red-400'
+    return 'text-white'
+  }
 
   const handleRefreshPrices = async () => {
     setRefreshing(true)
@@ -72,6 +104,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
         failedTickers.push(ticker)
       }
     }
+    setPrevPrices(prices)
     setPrices(validPrices)
     setCurrencies(result.currencies ?? {})
     setPriceTimestamp(new Date())
@@ -153,10 +186,19 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                 <tbody>
                   {merged.map((item) => {
                     const price = prices[item.ticker]
+                    const currency = currencies[item.ticker]
+                    const changePct = getPriceChangePct(item.ticker)
                     return (
                       <tr key={item.ticker} className="border-b border-white/5 last:border-0">
                         <td className="py-2 pr-2">
-                          <p className="text-base font-semibold text-white">{item.ticker}</p>
+                          <a
+                            href={tradingViewUrl(item.ticker, currency ?? '')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-base font-semibold text-white hover:text-indigo-300 transition-colors"
+                          >
+                            {item.ticker}<ExternalLinkIcon />
+                          </a>
                           <p className="text-xs text-zinc-400">{item.name}</p>
                         </td>
                         <td className="py-2 pr-2">
@@ -172,9 +214,16 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                         </td>
                         <td className="py-2 pr-2 text-right">
                           {price !== undefined ? (
-                            <span className={stale ? 'text-sm text-amber-400' : 'text-sm text-white'}>
-                              {currencies[item.ticker] === 'USD' ? '$' : '£'}{price.toFixed(2)}
-                            </span>
+                            <div className="flex flex-col items-end">
+                              <span className={`text-sm font-semibold ${getPriceColorClass(item.ticker)}`}>
+                                {currency === 'USD' ? '$' : '£'}{price.toFixed(2)}
+                              </span>
+                              {changePct !== null && (
+                                <span className={`text-xs ${changePct > 0 ? 'text-green-400' : changePct < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
+                                  {changePct > 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+                                </span>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-zinc-500" aria-label="Price not available">—</span>
                           )}
@@ -299,6 +348,8 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                         <tbody>
                           {wl.items.map((item, idx) => {
                             const price = prices[item.ticker]
+                            const currency = currencies[item.ticker]
+                            const changePct = getPriceChangePct(item.ticker)
                             const budget = new Decimal(wl.monthlyBudgetGbp)
                             const qtyResult =
                               price !== undefined && budget.greaterThan(0)
@@ -308,7 +359,14 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                             return (
                               <tr key={`${item.ticker}-${idx}`} className="border-b border-white/5 last:border-0">
                                 <td className="py-2 pr-2">
-                                  <p className="text-base font-semibold text-white">{item.ticker}</p>
+                                  <a
+                                    href={tradingViewUrl(item.ticker, currency ?? '')}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-base font-semibold text-white hover:text-indigo-300 transition-colors"
+                                  >
+                                    {item.ticker}<ExternalLinkIcon />
+                                  </a>
                                   <p className="text-xs text-zinc-400">{item.name}</p>
                                 </td>
                                 <td className="py-2 pr-2">
@@ -325,16 +383,23 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                                 </td>
                                 <td className="py-2 pr-2 text-right">
                                   {price !== undefined ? (
-                                    <span
-                                      className={stale ? 'text-sm text-amber-400' : 'text-sm text-white'}
-                                      title={
-                                        stale && priceTimestamp
-                                          ? `As of ${priceTimestamp.toLocaleString()} — refresh to update`
-                                          : undefined
-                                      }
-                                    >
-                                      £{price.toFixed(2)}
-                                    </span>
+                                    <div className="flex flex-col items-end">
+                                      <span
+                                        className={`text-sm font-semibold ${getPriceColorClass(item.ticker)}`}
+                                        title={
+                                          stale && priceTimestamp
+                                            ? `As of ${priceTimestamp.toLocaleString()} — refresh to update`
+                                            : undefined
+                                        }
+                                      >
+                                        {currency === 'USD' ? '$' : '£'}{price.toFixed(2)}
+                                      </span>
+                                      {changePct !== null && (
+                                        <span className={`text-xs ${changePct > 0 ? 'text-green-400' : changePct < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
+                                          {changePct > 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+                                        </span>
+                                      )}
+                                    </div>
                                   ) : (
                                     <span className="text-zinc-500" aria-label="Price not available">—</span>
                                   )}
