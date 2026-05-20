@@ -286,10 +286,15 @@ export async function extractCreatorStrategy(
 
   // --- Stable layer (4-month window, D-07) ---
   // Use .update() not .upsert() so started_at from runRefreshPipeline is never overwritten
-  await svc.from('refresh_jobs')
-    .update({ step: 'Extracting stable profile...', status: 'running', updated_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .eq('creator_id', creatorId)
+  {
+    const { error: stepErr } = await svc.from('refresh_jobs')
+      .update({ step: 'Extracting stable profile...', status: 'running', updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('creator_id', creatorId)
+    if (stepErr) {
+      console.warn('[extractor] Failed to update refresh_jobs step:', stepErr.message)
+    }
+  }
 
   const stableFilter = {
     published_at_ts: { $gte: Math.floor((Date.now() - 120 * 24 * 60 * 60 * 1000) / 1000) },
@@ -303,10 +308,15 @@ export async function extractCreatorStrategy(
     )
   }
 
-  await svc.from('refresh_jobs')
-    .update({ step: 'Analysing stable profile with AI...', updated_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .eq('creator_id', creatorId)
+  {
+    const { error: stepErr } = await svc.from('refresh_jobs')
+      .update({ step: 'Analysing stable profile with AI...', updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('creator_id', creatorId)
+    if (stepErr) {
+      console.warn('[extractor] Failed to update refresh_jobs step:', stepErr.message)
+    }
+  }
 
   const stableContextString = buildContextString(stableChunks)
   const stableResponse = await anthropic.messages.create({
@@ -328,10 +338,15 @@ export async function extractCreatorStrategy(
 
   // --- Latest layer (30-day window, D-08, D-09) ---
   // Use .update() not .upsert() so started_at from runRefreshPipeline is never overwritten
-  await svc.from('refresh_jobs')
-    .update({ step: 'Extracting latest signals...', status: 'running', updated_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .eq('creator_id', creatorId)
+  {
+    const { error: stepErr } = await svc.from('refresh_jobs')
+      .update({ step: 'Extracting latest signals...', status: 'running', updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('creator_id', creatorId)
+    if (stepErr) {
+      console.warn('[extractor] Failed to update refresh_jobs step:', stepErr.message)
+    }
+  }
 
   const latestFilter = {
     published_at_ts: { $gte: Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000) },
@@ -342,10 +357,15 @@ export async function extractCreatorStrategy(
 
   if (latestChunks.length > 0) {
     // D-09: skip latest call if no 30-day chunks — no empty Claude call
-    await svc.from('refresh_jobs')
-      .update({ step: 'Analysing latest signals with AI...', updated_at: new Date().toISOString() })
-      .eq('user_id', userId)
-      .eq('creator_id', creatorId)
+    {
+      const { error: stepErr } = await svc.from('refresh_jobs')
+        .update({ step: 'Analysing latest signals with AI...', updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('creator_id', creatorId)
+      if (stepErr) {
+        console.warn('[extractor] Failed to update refresh_jobs step:', stepErr.message)
+      }
+    }
 
     const latestContextString = buildContextString(latestChunks)
     const latestResponse = await anthropic.messages.create({
