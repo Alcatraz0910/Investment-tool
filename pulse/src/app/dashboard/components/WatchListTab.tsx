@@ -10,6 +10,8 @@ import { refreshNewsAndSummary } from '@/app/dashboard/news-actions'
 import { calcShareQuantity, buildMergedWatchList } from '@/lib/watchlist/generator'
 import type { CreatorWatchList, WatchListItem, MergedWatchListItem } from '@/lib/watchlist/generator'
 import type { NewsCacheContext, NewsContextResult } from '@/lib/news/news-types'
+import { runContradictionCheck } from '@/lib/strategy/contradiction'
+import type { CreatorProfile } from '@/lib/strategy/extractor'
 
 interface WatchListTabProps {
   initialWatchLists: CreatorWatchList[]
@@ -69,6 +71,29 @@ function formatRelativeTime(date: Date): string {
 function isNewsStale(date: Date | null): boolean {
   if (!date) return false
   return Date.now() - date.getTime() > 24 * 60 * 60 * 1000
+}
+
+type SentimentTrend = 'bullish' | 'cautious' | null
+
+function computeSentimentTrend(
+  stable: CreatorProfile,
+  latest: CreatorProfile | null,
+): SentimentTrend {
+  if (!latest) return null
+  let towardBullish = 0
+  let towardCautious = 0
+  const latestMap = new Map(
+    latest.sector_focus.map((s) => [s.sector.toLowerCase(), s.stance]),
+  )
+  for (const sf of stable.sector_focus) {
+    const latestStance = latestMap.get(sf.sector.toLowerCase())
+    if (!latestStance) continue  // D-11: unmatched sectors ignored
+    if (sf.stance !== 'bullish' && latestStance === 'bullish') towardBullish++
+    if (sf.stance !== 'cautious' && latestStance === 'cautious') towardCautious++
+  }
+  if (towardBullish > towardCautious) return 'bullish'
+  if (towardCautious > towardBullish) return 'cautious'
+  return null  // mixed, tied, or unchanged — no badge
 }
 
 function ExternalLinkIcon() {
