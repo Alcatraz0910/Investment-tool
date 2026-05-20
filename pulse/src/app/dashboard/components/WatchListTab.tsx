@@ -486,12 +486,11 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                             max="20000"
                             step="10"
                             value={editVal ?? 0}
-                            onChange={(e) =>
-                              setEditingBudget((prev) => ({
-                                ...prev,
-                                [wl.creatorId]: Number(e.target.value),
-                              }))
-                            }
+                            onChange={(e) => {
+                              const raw = parseFloat(e.target.value)
+                              const val = isNaN(raw) ? 0 : Math.max(0, raw)
+                              setEditingBudget((prev) => ({ ...prev, [wl.creatorId]: val }))
+                            }}
                             className="w-28 bg-zinc-900 border border-zinc-700 rounded-md text-base text-white px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             aria-label={`Monthly budget for ${wl.creatorName} in pounds`}
                           />
