@@ -1,16 +1,20 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Decimal } from 'decimal.js'
 import { fetchTickerPrices } from '@/app/dashboard/actions'
 import { saveCreatorMonthlyBudget } from '@/app/dashboard/watchlist-actions'
+import { refreshNewsAndSummary } from '@/app/dashboard/news-actions'
 import { calcShareQuantity, buildMergedWatchList } from '@/lib/watchlist/generator'
 import type { CreatorWatchList, WatchListItem, MergedWatchListItem } from '@/lib/watchlist/generator'
+import type { NewsCacheContext, NewsContextResult } from '@/lib/news/news-types'
 
 interface WatchListTabProps {
   initialWatchLists: CreatorWatchList[]
   userCreatorIdMap: Record<string, string>
+  initialNewsContext: NewsCacheContext
 }
 
 const sectionVariants = {
@@ -52,6 +56,21 @@ function tradingViewUrl(ticker: string, currency: string): string {
   return `https://www.tradingview.com/chart/?symbol=${ticker}`
 }
 
+function formatRelativeTime(date: Date): string {
+  const diffMs = Date.now() - date.getTime()
+  const diffMins = Math.floor(diffMs / (60 * 1000))
+  const diffHours = Math.floor(diffMs / (60 * 60 * 1000))
+  const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000))
+  if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
+  return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
+}
+
+function isNewsStale(date: Date | null): boolean {
+  if (!date) return false
+  return Date.now() - date.getTime() > 24 * 60 * 60 * 1000
+}
+
 function ExternalLinkIcon() {
   return (
     <svg className="inline-block ml-1 w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -60,7 +79,8 @@ function ExternalLinkIcon() {
   )
 }
 
-export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListTabProps) {
+export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsContext }: WatchListTabProps) {
+  const router = useRouter()
   const [watchLists, setWatchLists] = useState<CreatorWatchList[]>(initialWatchLists)
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [prevPrices, setPrevPrices] = useState<Record<string, number>>({})
@@ -71,6 +91,12 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
   const [editingBudget, setEditingBudget] = useState<Record<string, number | null>>({})
   const [savingBudget, setSavingBudget] = useState<Record<string, boolean>>({})
   const [budgetError, setBudgetError] = useState<Record<string, string | null>>({})
+
+  // News context state (D-01, D-05)
+  const [newsContext, setNewsContext] = useState<NewsCacheContext>(initialNewsContext)
+  const [newsRefreshing, setNewsRefreshing] = useState(false)
+  const [newsError, setNewsError] = useState<string | null>(null)
+  const [isContextExpanded, setIsContextExpanded] = useState(true) // D-05: expanded by default
 
   const getPriceChangePct = (ticker: string): number | null => {
     const curr = prices[ticker]
@@ -134,7 +160,32 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
     setSavingBudget((s) => ({ ...s, [creatorId]: false }))
   }
 
+  const handleRefreshNews = async () => {
+    setNewsRefreshing(true)
+    setNewsError(null)
+    const allTickers = watchLists.flatMap((wl) => wl.items.map((i) => i.ticker))
+    const uniqueTickers = [...new Set(allTickers)]
+    const sectors = initialNewsContext.creatorSectors ?? []
+
+    const result = await refreshNewsAndSummary(uniqueTickers, sectors)
+
+    if (result.success) {
+      setNewsContext((prev) => ({
+        ...prev,
+        contextSummary: result.data.context_summary,
+        tickerCounts: result.data.ticker_counts,
+        macroThemes: result.data.macro_themes,
+        newsLastFetchedAt: new Date(),
+      }))
+      router.refresh()
+    } else {
+      setNewsError(result.error)
+    }
+    setNewsRefreshing(false)
+  }
+
   const stale = isStale(priceTimestamp)
+  const newsStale = isNewsStale(newsContext.newsLastFetchedAt)
 
   return (
     <div className="space-y-6">
@@ -143,12 +194,79 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
         <h2 className="text-xl font-semibold text-white">Watch List</h2>
         <button
           onClick={handleRefreshPrices}
-          disabled={refreshing}
+          disabled={refreshing || newsRefreshing}
           className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-4 min-h-[44px] disabled:opacity-75 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2"
         >
           {refreshing ? <SpinnerSVG /> : 'Refresh Prices'}
         </button>
       </div>
+
+      {/* "This Month's Context" panel (NEWS-06, D-01, D-05) */}
+      <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+        {/* Panel header row */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-semibold text-white">This Month's Context</span>
+            {newsContext.newsLastFetchedAt && (
+              <span
+                className={`text-xs ${newsStale ? 'text-amber-400' : 'text-zinc-500'}`}
+                aria-label={newsStale ? 'News data is more than 24 hours old' : undefined}
+              >
+                Last updated: {formatRelativeTime(newsContext.newsLastFetchedAt)}
+                {newsStale ? ' — stale' : ''}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefreshNews}
+              disabled={newsRefreshing || refreshing}
+              className="text-sm font-semibold text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2"
+            >
+              {newsRefreshing ? <SpinnerSVG /> : 'Refresh News'}
+            </button>
+            <button
+              onClick={() => setIsContextExpanded((v) => !v)}
+              aria-expanded={isContextExpanded}
+              aria-controls="news-context-body"
+              className="p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+            >
+              <svg
+                className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isContextExpanded ? 'rotate-180' : ''}`}
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"
+              >
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Panel body — collapsible */}
+        <div
+          id="news-context-body"
+          role="region"
+          aria-label="This month's market context summary"
+          className={`overflow-hidden transition-all duration-200 ease-out ${isContextExpanded ? 'max-h-96' : 'max-h-0'}`}
+        >
+          {newsContext.contextSummary ? (
+            <div className="space-y-2 pt-1">
+              <p className="text-sm text-zinc-300 leading-relaxed">{newsContext.contextSummary}</p>
+              <p className="text-xs text-zinc-500">
+                News is sourced from public feeds and AI cross-referencing. Not financial advice.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500 italic pt-1">
+              No news context yet — click Refresh News to generate your first summary.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* News refresh error banner */}
+      {newsError && (
+        <p role="alert" aria-live="assertive" className="text-sm text-red-400">{newsError}</p>
+      )}
 
       {/* Price error banner */}
       {priceError && (
@@ -179,6 +297,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                     <th className="py-2 pr-2">Holding</th>
                     <th className="py-2 pr-2 w-20">Conviction</th>
                     <th className="py-2 pr-2 w-22">Signal</th>
+                    <th className="py-2 pr-2 w-[72px]">News</th>
                     <th className="py-2 pr-2 w-18 text-right">Price</th>
                     <th className="py-2">Creators</th>
                   </tr>
@@ -211,6 +330,18 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                             ? <span className="text-xs text-zinc-500">Established</span>
                             : <span className="text-xs text-amber-400">This Month</span>
                           }
+                        </td>
+                        <td className="py-2 pr-2">
+                          {(() => {
+                            const count = newsContext.tickerCounts[item.ticker] ?? 0
+                            return count > 0 ? (
+                              <span className="text-xs font-semibold text-zinc-400 bg-zinc-700/50 border border-zinc-600/30 rounded px-1.5 py-0.5">
+                                {count} news
+                              </span>
+                            ) : (
+                              <span className="text-xs text-zinc-600" aria-label="No relevant news">—</span>
+                            )
+                          })()}
                         </td>
                         <td className="py-2 pr-2 text-right">
                           {price !== undefined ? (
@@ -317,6 +448,29 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                     </div>
                   </div>
 
+                  {/* Macro themes strip (NEWS-05) — below creator header, above ticker table */}
+                  {newsContext.macroThemes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 py-1">
+                      {newsContext.macroThemes.slice(0, 3).map((theme, i) => (
+                        <span
+                          key={i}
+                          className="flex items-center gap-1.5 text-xs rounded-full px-2.5 py-1 bg-zinc-800/60 border border-white/10"
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                              theme.sentiment === 'positive'
+                                ? 'bg-green-400'
+                                : theme.sentiment === 'negative'
+                                ? 'bg-red-400'
+                                : 'bg-zinc-400'
+                            }`}
+                          />
+                          <span className="text-zinc-300">{theme.sector}: {theme.theme}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {/* No profile state */}
                   {!wl.hasProfile && (
                     <p className="text-sm text-zinc-500 text-center py-4">
@@ -340,6 +494,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                             <th className="py-2 pr-2">Holding</th>
                             <th className="py-2 pr-2 w-20">Conviction</th>
                             <th className="py-2 pr-2 w-22">Signal</th>
+                            <th className="py-2 pr-2 w-[72px]">News</th>
                             <th className="py-2 pr-2 w-18 text-right">Price</th>
                             <th className="py-2 pr-2 w-12 text-right">Qty</th>
                             <th className="py-2 w-16 text-right">Spend</th>
@@ -380,6 +535,18 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap }: WatchListT
                                   ) : (
                                     <span className="text-xs text-amber-400">This Month</span>
                                   )}
+                                </td>
+                                <td className="py-2 pr-2">
+                                  {(() => {
+                                    const count = newsContext.tickerCounts[item.ticker] ?? 0
+                                    return count > 0 ? (
+                                      <span className="text-xs font-semibold text-zinc-400 bg-zinc-700/50 border border-zinc-600/30 rounded px-1.5 py-0.5">
+                                        {count} news
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-zinc-600" aria-label="No relevant news">—</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="py-2 pr-2 text-right">
                                   {price !== undefined ? (
