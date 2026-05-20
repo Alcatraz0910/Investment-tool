@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Decimal } from 'decimal.js'
 import { fetchTickerPrices } from '@/app/dashboard/actions'
 import { saveCreatorMonthlyBudget } from '@/app/dashboard/watchlist-actions'
@@ -12,29 +12,13 @@ import type { CreatorWatchList, WatchListItem, MergedWatchListItem } from '@/lib
 import type { NewsCacheContext, NewsContextResult } from '@/lib/news/news-types'
 import { runContradictionCheck } from '@/lib/strategy/contradiction'
 import type { CreatorProfile } from '@/lib/strategy/extractor'
+import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 
 interface WatchListTabProps {
   initialWatchLists: CreatorWatchList[]
   userCreatorIdMap: Record<string, string>
   initialNewsContext: NewsCacheContext
-}
-
-const sectionVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
-}
-const itemVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } },
-}
-
-const CONVICTION_CLASS: Record<WatchListItem['conviction'], string> = {
-  high: 'text-xs font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 rounded px-1.5 py-0.5',
-  medium: 'text-xs font-semibold text-zinc-400 bg-zinc-700/50 border border-zinc-600/30 rounded px-1.5 py-0.5',
-  low: 'text-xs font-semibold text-zinc-500 bg-zinc-800/50 border border-zinc-700/30 rounded px-1.5 py-0.5',
-}
-const CONVICTION_LABEL: Record<WatchListItem['conviction'], string> = {
-  high: 'High', medium: 'Medium', low: 'Low',
 }
 
 function SpinnerSVG() {
@@ -106,6 +90,8 @@ function ExternalLinkIcon() {
 
 export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsContext }: WatchListTabProps) {
   const router = useRouter()
+  const shouldReduceMotion = useReducedMotion()
+
   const [watchLists, setWatchLists] = useState<CreatorWatchList[]>(initialWatchLists)
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [prevPrices, setPrevPrices] = useState<Record<string, number>>({})
@@ -122,6 +108,16 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
   const [newsRefreshing, setNewsRefreshing] = useState(false)
   const [newsError, setNewsError] = useState<string | null>(null)
   const [isContextExpanded, setIsContextExpanded] = useState(true) // D-05: expanded by default
+
+  // Stagger variants — useReducedMotion guard (15-UI-SPEC.md §3)
+  const sectionVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: shouldReduceMotion ? 0 : 0.07 } },
+  }
+  const itemVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 8 },
+    visible: { opacity: 1, y: 0, transition: { duration: shouldReduceMotion ? 0 : 0.25, ease: 'easeOut' as const } },
+  }
 
   const getPriceChangePct = (ticker: string): number | null => {
     const curr = prices[ticker]
@@ -225,7 +221,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
         </button>
       </div>
 
-      {/* "This Month's Context" panel (NEWS-06, D-01, D-05) */}
+      {/* "This Month's Context" panel (NEWS-06, D-01, D-05) — not wrapped in hover lift */}
       <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
         {/* Panel header row */}
         <div className="flex items-center justify-between gap-3">
@@ -281,7 +277,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
             </div>
           ) : (
             <p className="text-sm text-zinc-500 italic pt-1">
-              No news context yet — click Refresh News to generate your first summary.
+              No context yet — click Refresh News to generate your first summary.
             </p>
           )}
         </div>
@@ -307,97 +303,107 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
         </div>
       )}
 
-      {/* Merged ticker list */}
+      {/* Merged ticker list — All Picks (wrapped in hover lift + Card) */}
       {watchLists.length > 0 && (() => {
         const merged = buildMergedWatchList(watchLists.filter(wl => wl.hasProfile))
         if (merged.length === 0) return null
         return (
-          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
-            <p className="text-xl font-semibold text-white">All Picks</p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
-                    <th className="py-2 pr-2">Holding</th>
-                    <th className="py-2 pr-2 w-20">Conviction</th>
-                    <th className="py-2 pr-2 w-22">Signal</th>
-                    <th className="py-2 pr-2 w-[72px]">News</th>
-                    <th className="py-2 pr-2 w-18 text-right">Price</th>
-                    <th className="py-2">Creators</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {merged.map((item) => {
-                    const price = prices[item.ticker]
-                    const currency = currencies[item.ticker]
-                    const changePct = getPriceChangePct(item.ticker)
-                    return (
-                      <tr key={item.ticker} className="border-b border-white/5 last:border-0">
-                        <td className="py-2 pr-2">
-                          <a
-                            href={tradingViewUrl(item.ticker, currency ?? '')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-base font-semibold text-white hover:text-indigo-300 transition-colors"
-                          >
-                            {item.ticker}<ExternalLinkIcon />
-                          </a>
-                          <p className="text-xs text-zinc-400">{item.name}</p>
-                          {item.creators.length >= 2 && (
-                            <span className="mt-0.5 inline-block text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded px-1.5 py-0.5">
-                              Consensus
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2 pr-2">
-                          <span className={CONVICTION_CLASS[item.conviction]}>
-                            {CONVICTION_LABEL[item.conviction]}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-2">
-                          {item.layer === 'stable'
-                            ? <span className="text-xs text-zinc-500">Established</span>
-                            : <span className="text-xs text-amber-400">This Month</span>
-                          }
-                        </td>
-                        <td className="py-2 pr-2">
-                          {(() => {
-                            const count = newsContext.tickerCounts[item.ticker] ?? 0
-                            return count > 0 ? (
-                              <span className="text-xs font-semibold text-zinc-400 bg-zinc-700/50 border border-zinc-600/30 rounded px-1.5 py-0.5">
-                                {count} news
-                              </span>
-                            ) : (
-                              <span className="text-xs text-zinc-600" aria-label="No relevant news">—</span>
-                            )
-                          })()}
-                        </td>
-                        <td className="py-2 pr-2 text-right">
-                          {price !== undefined ? (
-                            <div className="flex flex-col items-end">
-                              <span className={`text-sm font-semibold ${getPriceColorClass(item.ticker)}`}>
-                                {currency === 'USD' ? '$' : '£'}{price.toFixed(2)}
-                              </span>
-                              {changePct !== null && (
-                                <span className={`text-xs ${changePct > 0 ? 'text-green-400' : changePct < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
-                                  {changePct > 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+          <motion.div
+            whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.01 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            style={{ willChange: 'transform' }}
+          >
+            <Card padding="md" className="space-y-3">
+              <p className="text-xl font-semibold text-white">All Picks</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
+                      <th className="py-2 pr-2">Holding</th>
+                      <th className="py-2 pr-2 w-20">Conviction</th>
+                      <th className="py-2 pr-2 w-22">Signal</th>
+                      <th className="py-2 pr-2 w-[72px]">News</th>
+                      <th className="py-2 pr-2 w-18 text-right">Price</th>
+                      <th className="py-2">Creators</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {merged.map((item) => {
+                      const price = prices[item.ticker]
+                      const currency = currencies[item.ticker]
+                      const changePct = getPriceChangePct(item.ticker)
+                      return (
+                        <tr key={item.ticker} className="border-b border-white/5 last:border-0">
+                          <td className="py-2 pr-2">
+                            <a
+                              href={tradingViewUrl(item.ticker, currency ?? '')}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-base font-semibold text-white hover:text-indigo-300 transition-colors"
+                            >
+                              {item.ticker}<ExternalLinkIcon />
+                            </a>
+                            <p className="text-xs text-zinc-400">{item.name}</p>
+                            {item.creators.length >= 2 && (
+                              <Badge variant="consensus">Consensus</Badge>
+                            )}
+                          </td>
+                          <td className="py-2 pr-2">
+                            <Badge
+                              variant={
+                                item.conviction === 'high'
+                                  ? 'high-conviction'
+                                  : item.conviction === 'medium'
+                                  ? 'medium-conviction'
+                                  : 'low-conviction'
+                              }
+                            >
+                              {item.conviction === 'high' ? 'High' : item.conviction === 'medium' ? 'Medium' : 'Low'}
+                            </Badge>
+                          </td>
+                          <td className="py-2 pr-2">
+                            {item.layer === 'stable'
+                              ? <Badge variant="established">Established</Badge>
+                              : <Badge variant="this-month">This Month</Badge>
+                            }
+                          </td>
+                          <td className="py-2 pr-2">
+                            {(() => {
+                              const count = newsContext.tickerCounts[item.ticker] ?? 0
+                              return count > 0 ? (
+                                <Badge variant="news-count">{count} news</Badge>
+                              ) : (
+                                <span className="text-xs text-zinc-600" aria-label="No relevant news">—</span>
+                              )
+                            })()}
+                          </td>
+                          <td className="py-2 pr-2 text-right">
+                            {price !== undefined ? (
+                              <div className="flex flex-col items-end">
+                                <span className={`text-sm font-semibold ${getPriceColorClass(item.ticker)}`}>
+                                  {currency === 'USD' ? '$' : '£'}{price.toFixed(2)}
                                 </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-zinc-500" aria-label="Price not available">—</span>
-                          )}
-                        </td>
-                        <td className="py-2">
-                          <p className="text-xs text-zinc-400">{item.creators.join(', ')}</p>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                                {changePct !== null && (
+                                  <span className={`text-xs ${changePct > 0 ? 'text-green-400' : changePct < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
+                                    {changePct > 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-zinc-500" aria-label="Price not available">—</span>
+                            )}
+                          </td>
+                          <td className="py-2">
+                            <p className="text-xs text-zinc-400">{item.creators.join(', ')}</p>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </motion.div>
         )
       })()}
 
@@ -416,251 +422,247 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                 <motion.div
                   key={wl.creatorId}
                   variants={itemVariants}
-                  className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 space-y-3"
-                  style={{ opacity: wl.profileLatestNull ? 0.8 : 1 }}
+                  whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.01 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  style={{ willChange: 'transform', opacity: wl.profileLatestNull ? 0.8 : 1 }}
                 >
-                  {/* Creator header row */}
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-xl font-semibold text-white">{wl.creatorName}</p>
+                  <Card padding="md" className="space-y-3">
+                    {/* Creator header row */}
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xl font-semibold text-white">{wl.creatorName}</p>
 
-                      {/* SIG-04: No recent posts badge — shown when profileLatestNull */}
-                      {wl.profileLatestNull && (
-                        <span className="text-xs font-semibold text-zinc-500 bg-zinc-700/40 border border-zinc-600/30 rounded-full px-2 py-0.5">
-                          No recent posts
-                        </span>
-                      )}
+                        {/* SIG-04: No recent posts badge — shown when profileLatestNull */}
+                        {wl.profileLatestNull && (
+                          <Badge variant="no-recent-posts">No recent posts</Badge>
+                        )}
 
-                      {/* SIG-02: Sentiment trend badge — suppressed when profileLatestNull (D-03) */}
-                      {!wl.profileLatestNull && wl.profileStable !== null && (() => {
-                        const trend = computeSentimentTrend(wl.profileStable, wl.profileLatest)
-                        if (!trend) return null
-                        return trend === 'bullish' ? (
-                          <span className="text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/30 rounded-full px-2 py-0.5">
-                            Trending bullish
-                          </span>
+                        {/* SIG-02: Sentiment trend badge — suppressed when profileLatestNull (D-03) */}
+                        {!wl.profileLatestNull && wl.profileStable !== null && (() => {
+                          const trend = computeSentimentTrend(wl.profileStable, wl.profileLatest)
+                          if (!trend) return null
+                          return trend === 'bullish' ? (
+                            <Badge variant="trending-bullish">Trending bullish</Badge>
+                          ) : (
+                            <Badge variant="trending-cautious">Trending cautious</Badge>
+                          )
+                        })()}
+
+                        {/* SIG-03: Contradiction badge — suppressed when profileLatestNull (D-04) */}
+                        {!wl.profileLatestNull && wl.profileStable !== null && (() => {
+                          const { hasContradiction, reason } = runContradictionCheck(wl.profileStable, wl.profileLatest)
+                          if (!hasContradiction) return null
+                          return (
+                            <Badge variant="contradiction" title={reason ?? undefined}>Contradiction</Badge>
+                          )
+                        })()}
+                      </div>
+
+                      {/* Budget display / edit */}
+                      <div className="flex flex-col items-end gap-1">
+                        {!isEditing ? (
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-zinc-400">£{wl.monthlyBudgetGbp} / month</span>
+                            <button
+                              onClick={() => setEditingBudget((e) => ({ ...e, [wl.creatorId]: wl.monthlyBudgetGbp }))}
+                              className="text-sm font-semibold text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                              Edit
+                            </button>
+                          </div>
                         ) : (
-                          <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5">
-                            Trending cautious
-                          </span>
-                        )
-                      })()}
-
-                      {/* SIG-03: Contradiction badge — suppressed when profileLatestNull (D-04) */}
-                      {!wl.profileLatestNull && wl.profileStable !== null && (() => {
-                        const { hasContradiction, reason } = runContradictionCheck(wl.profileStable, wl.profileLatest)
-                        if (!hasContradiction) return null
-                        return (
-                          <span
-                            title={reason ?? undefined}
-                            className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/30 rounded-full px-2 py-0.5 cursor-help"
-                          >
-                            Contradiction
-                          </span>
-                        )
-                      })()}
+                          <div className="flex items-center gap-2 flex-wrap justify-end">
+                            <label htmlFor={inputId} className="sr-only">
+                              Monthly budget for {wl.creatorName} in pounds
+                            </label>
+                            <span className="text-sm text-zinc-400">£</span>
+                            <input
+                              id={inputId}
+                              type="number"
+                              min="0"
+                              max="20000"
+                              step="10"
+                              value={editVal ?? 0}
+                              onChange={(e) => {
+                                const raw = parseFloat(e.target.value)
+                                const val = isNaN(raw) ? 0 : Math.max(0, raw)
+                                setEditingBudget((prev) => ({ ...prev, [wl.creatorId]: val }))
+                              }}
+                              className="w-28 bg-zinc-900 border border-zinc-700 rounded-md text-base text-white px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              aria-label={`Monthly budget for ${wl.creatorName} in pounds`}
+                            />
+                            <button
+                              onClick={() => handleSaveBudget(wl.creatorId)}
+                              disabled={isSaving}
+                              className="text-sm font-semibold bg-indigo-500 hover:bg-indigo-400 text-white rounded-md px-3 min-h-[44px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                              {isSaving ? 'Saving…' : 'Save Budget'}
+                            </button>
+                            <button
+                              onClick={() => setEditingBudget((e) => ({ ...e, [wl.creatorId]: null }))}
+                              className="text-sm text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                              Discard Changes
+                            </button>
+                          </div>
+                        )}
+                        {bError && (
+                          <p role="alert" aria-live="polite" className="text-sm text-red-400">{bError}</p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Budget display / edit */}
-                    <div className="flex flex-col items-end gap-1">
-                      {!isEditing ? (
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-zinc-400">£{wl.monthlyBudgetGbp} / month</span>
-                          <button
-                            onClick={() => setEditingBudget((e) => ({ ...e, [wl.creatorId]: wl.monthlyBudgetGbp }))}
-                            className="text-sm font-semibold text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
-                          <label htmlFor={inputId} className="sr-only">
-                            Monthly budget for {wl.creatorName} in pounds
-                          </label>
-                          <span className="text-sm text-zinc-400">£</span>
-                          <input
-                            id={inputId}
-                            type="number"
-                            min="0"
-                            max="20000"
-                            step="10"
-                            value={editVal ?? 0}
-                            onChange={(e) => {
-                              const raw = parseFloat(e.target.value)
-                              const val = isNaN(raw) ? 0 : Math.max(0, raw)
-                              setEditingBudget((prev) => ({ ...prev, [wl.creatorId]: val }))
-                            }}
-                            className="w-28 bg-zinc-900 border border-zinc-700 rounded-md text-base text-white px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            aria-label={`Monthly budget for ${wl.creatorName} in pounds`}
-                          />
-                          <button
-                            onClick={() => handleSaveBudget(wl.creatorId)}
-                            disabled={isSaving}
-                            className="text-sm font-semibold bg-indigo-500 hover:bg-indigo-400 text-white rounded-md px-3 min-h-[44px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          >
-                            {isSaving ? 'Saving…' : 'Save Budget'}
-                          </button>
-                          <button
-                            onClick={() => setEditingBudget((e) => ({ ...e, [wl.creatorId]: null }))}
-                            className="text-sm text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          >
-                            Discard Changes
-                          </button>
-                        </div>
-                      )}
-                      {bError && (
-                        <p role="alert" aria-live="polite" className="text-sm text-red-400">{bError}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Macro themes strip (NEWS-05) — below creator header, above ticker table */}
-                  {newsContext.macroThemes.length > 0 && (
-                    <div className="flex flex-wrap gap-2 py-1">
-                      {newsContext.macroThemes.slice(0, 3).map((theme, i) => (
-                        <span
-                          key={i}
-                          className="flex items-center gap-1.5 text-xs rounded-full px-2.5 py-1 bg-zinc-800/60 border border-white/10"
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    {/* Macro themes strip (NEWS-05) — below creator header, above ticker table */}
+                    {newsContext.macroThemes.length > 0 && (
+                      <div className="flex flex-wrap gap-2 py-1">
+                        {newsContext.macroThemes.slice(0, 3).map((theme, i) => (
+                          <Badge
+                            key={i}
+                            variant="macro-theme"
+                            sentimentDot={
                               theme.sentiment === 'positive'
-                                ? 'bg-green-400'
+                                ? 'positive'
                                 : theme.sentiment === 'negative'
-                                ? 'bg-red-400'
-                                : 'bg-zinc-400'
-                            }`}
-                          />
-                          <span className="text-zinc-300">{theme.sector}: {theme.theme}</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                                ? 'negative'
+                                : 'neutral'
+                            }
+                          >
+                            {theme.sector}: {theme.theme}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
 
-                  {/* No profile state */}
-                  {!wl.hasProfile && (
-                    <p className="text-sm text-zinc-500 text-center py-4">
-                      Refresh this creator to generate picks
-                    </p>
-                  )}
+                    {/* No profile state */}
+                    {!wl.hasProfile && (
+                      <p className="text-sm text-zinc-500 text-center py-4">
+                        Refresh this creator to generate picks
+                      </p>
+                    )}
 
-                  {/* Has profile but no tickers */}
-                  {wl.hasProfile && wl.items.length === 0 && (
-                    <p className="text-sm text-zinc-500 text-center py-4">
-                      This creator has not cited specific tickers recently
-                    </p>
-                  )}
+                    {/* Has profile but no tickers */}
+                    {wl.hasProfile && wl.items.length === 0 && (
+                      <p className="text-sm text-zinc-500 text-center py-4">
+                        This creator has not cited specific tickers recently
+                      </p>
+                    )}
 
-                  {/* Ticker table */}
-                  {wl.hasProfile && wl.items.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
-                            <th className="py-2 pr-2">Holding</th>
-                            <th className="py-2 pr-2 w-20">Conviction</th>
-                            <th className="py-2 pr-2 w-22">Signal</th>
-                            <th className="py-2 pr-2 w-[72px]">News</th>
-                            <th className="py-2 pr-2 w-18 text-right">Price</th>
-                            <th className="py-2 pr-2 w-12 text-right">Qty</th>
-                            <th className="py-2 w-16 text-right">Spend</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {wl.items.map((item, idx) => {
-                            const price = prices[item.ticker]
-                            const currency = currencies[item.ticker]
-                            const changePct = getPriceChangePct(item.ticker)
-                            const budget = new Decimal(wl.monthlyBudgetGbp)
-                            const qtyResult =
-                              price !== undefined && budget.greaterThan(0)
-                                ? calcShareQuantity(budget, new Decimal(price))
-                                : null
+                    {/* Ticker table */}
+                    {wl.hasProfile && wl.items.length > 0 && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-white/10">
+                              <th className="py-2 pr-2">Holding</th>
+                              <th className="py-2 pr-2 w-20">Conviction</th>
+                              <th className="py-2 pr-2 w-22">Signal</th>
+                              <th className="py-2 pr-2 w-[72px]">News</th>
+                              <th className="py-2 pr-2 w-18 text-right">Price</th>
+                              <th className="py-2 pr-2 w-12 text-right">Qty</th>
+                              <th className="py-2 w-16 text-right">Spend</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {wl.items.map((item, idx) => {
+                              const price = prices[item.ticker]
+                              const currency = currencies[item.ticker]
+                              const changePct = getPriceChangePct(item.ticker)
+                              const budget = new Decimal(wl.monthlyBudgetGbp)
+                              const qtyResult =
+                                price !== undefined && budget.greaterThan(0)
+                                  ? calcShareQuantity(budget, new Decimal(price))
+                                  : null
 
-                            return (
-                              <tr key={`${item.ticker}-${idx}`} className="border-b border-white/5 last:border-0">
-                                <td className="py-2 pr-2">
-                                  <a
-                                    href={tradingViewUrl(item.ticker, currency ?? '')}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-base font-semibold text-white hover:text-indigo-300 transition-colors"
-                                  >
-                                    {item.ticker}<ExternalLinkIcon />
-                                  </a>
-                                  <p className="text-xs text-zinc-400">{item.name}</p>
-                                </td>
-                                <td className="py-2 pr-2">
-                                  <span className={CONVICTION_CLASS[item.conviction]}>
-                                    {CONVICTION_LABEL[item.conviction]}
-                                  </span>
-                                </td>
-                                <td className="py-2 pr-2">
-                                  {item.layer === 'stable' ? (
-                                    <span className="text-xs text-zinc-500">Established</span>
-                                  ) : (
-                                    <span className="text-xs text-amber-400">This Month</span>
-                                  )}
-                                </td>
-                                <td className="py-2 pr-2">
-                                  {(() => {
-                                    const count = newsContext.tickerCounts[item.ticker] ?? 0
-                                    return count > 0 ? (
-                                      <span className="text-xs font-semibold text-zinc-400 bg-zinc-700/50 border border-zinc-600/30 rounded px-1.5 py-0.5">
-                                        {count} news
+                              return (
+                                <tr key={`${item.ticker}-${idx}`} className="border-b border-white/5 last:border-0">
+                                  <td className="py-2 pr-2">
+                                    <a
+                                      href={tradingViewUrl(item.ticker, currency ?? '')}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-base font-semibold text-white hover:text-indigo-300 transition-colors"
+                                    >
+                                      {item.ticker}<ExternalLinkIcon />
+                                    </a>
+                                    <p className="text-xs text-zinc-400">{item.name}</p>
+                                  </td>
+                                  <td className="py-2 pr-2">
+                                    <Badge
+                                      variant={
+                                        item.conviction === 'high'
+                                          ? 'high-conviction'
+                                          : item.conviction === 'medium'
+                                          ? 'medium-conviction'
+                                          : 'low-conviction'
+                                      }
+                                    >
+                                      {item.conviction === 'high' ? 'High' : item.conviction === 'medium' ? 'Medium' : 'Low'}
+                                    </Badge>
+                                  </td>
+                                  <td className="py-2 pr-2">
+                                    {item.layer === 'stable' ? (
+                                      <Badge variant="established">Established</Badge>
+                                    ) : (
+                                      <Badge variant="this-month">This Month</Badge>
+                                    )}
+                                  </td>
+                                  <td className="py-2 pr-2">
+                                    {(() => {
+                                      const count = newsContext.tickerCounts[item.ticker] ?? 0
+                                      return count > 0 ? (
+                                        <Badge variant="news-count">{count} news</Badge>
+                                      ) : (
+                                        <span className="text-xs text-zinc-600" aria-label="No relevant news">—</span>
+                                      )
+                                    })()}
+                                  </td>
+                                  <td className="py-2 pr-2 text-right">
+                                    {price !== undefined ? (
+                                      <div className="flex flex-col items-end">
+                                        <span
+                                          className={`text-sm font-semibold ${getPriceColorClass(item.ticker)}`}
+                                          title={
+                                            stale && priceTimestamp
+                                              ? `As of ${priceTimestamp.toLocaleString()} — refresh to update`
+                                              : undefined
+                                          }
+                                        >
+                                          {currency === 'USD' ? '$' : '£'}{price.toFixed(2)}
+                                        </span>
+                                        {changePct !== null && (
+                                          <span className={`text-xs ${changePct > 0 ? 'text-green-400' : changePct < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
+                                            {changePct > 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-zinc-500" aria-label="Price not available">—</span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 pr-2 text-right">
+                                    {qtyResult ? (
+                                      <span className="text-sm font-semibold text-white">
+                                        {qtyResult.quantity.toFixed(0)}
                                       </span>
                                     ) : (
-                                      <span className="text-xs text-zinc-600" aria-label="No relevant news">—</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="py-2 pr-2 text-right">
-                                  {price !== undefined ? (
-                                    <div className="flex flex-col items-end">
-                                      <span
-                                        className={`text-sm font-semibold ${getPriceColorClass(item.ticker)}`}
-                                        title={
-                                          stale && priceTimestamp
-                                            ? `As of ${priceTimestamp.toLocaleString()} — refresh to update`
-                                            : undefined
-                                        }
-                                      >
-                                        {currency === 'USD' ? '$' : '£'}{price.toFixed(2)}
-                                      </span>
-                                      {changePct !== null && (
-                                        <span className={`text-xs ${changePct > 0 ? 'text-green-400' : changePct < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
-                                          {changePct > 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
-                                        </span>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <span className="text-zinc-500" aria-label="Price not available">—</span>
-                                  )}
-                                </td>
-                                <td className="py-2 pr-2 text-right">
-                                  {qtyResult ? (
-                                    <span className="text-sm font-semibold text-white">
-                                      {qtyResult.quantity.toFixed(0)}
-                                    </span>
-                                  ) : (
-                                    <span className="text-zinc-500" aria-label="Price needed to calculate quantity">—</span>
-                                  )}
-                                </td>
-                                <td className="py-2 text-right">
-                                  {qtyResult ? (
-                                    <span className="text-xs text-zinc-400">£{qtyResult.spent.toFixed(2)}</span>
-                                  ) : (
-                                    <span className="text-zinc-500">—</span>
-                                  )}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                                      <span className="text-zinc-500" aria-label="Price needed to calculate quantity">—</span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 text-right">
+                                    {qtyResult ? (
+                                      <span className="text-xs text-zinc-400">£{qtyResult.spent.toFixed(2)}</span>
+                                    ) : (
+                                      <span className="text-zinc-500">—</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </Card>
                 </motion.div>
               )
             })}
