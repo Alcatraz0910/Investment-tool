@@ -31,7 +31,7 @@ export function StatTile({ label, value, delta, deltaPositive, animate: shouldAn
     }
     const controls = animate(count, numeric, { duration: 0.8, ease: 'easeOut' })
     return controls.stop
-  }, [numeric, shouldAnimate, shouldReduceMotion]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [numeric, shouldAnimate, shouldReduceMotion, count]) // count is stable MotionValue ref
 
   const display = useTransform(count, (v) => {
     // Re-apply formatting: 2 decimal places with thousands separator
