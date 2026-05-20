@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Creator Intelligence
-status: planning
-stopped_at: Phase 14 context gathered
-last_updated: "2026-05-20T00:00:00.000Z"
-last_activity: "2026-05-20 — Phase 14 context gathered. Ready to plan."
+status: phase_complete
+stopped_at: Phase 14 complete
+last_updated: "2026-05-20T02:00:00.000Z"
+last_activity: "2026-05-20 — Phase 14 complete (3/3 plans). Signal badges live. 2 review blockers to fix."
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 20
-  completed_plans: 17
-  percent: 85
+  completed_phases: 6
+  total_plans: 23
+  completed_plans: 20
+  percent: 92
 ---
 
 # Pulse — Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-13 — v1.1 milestone started)
 
 ## Current Position
 
-Phase: Phase 14 — Creator Signals + Housekeeping (next)
+Phase: Phase 15 — Visual Redesign
 Plan: 0/? plans complete
-Status: Ready to plan
-Last activity: 2026-05-20 — Phase 13 fully executed (3/3 plans + verification + rss-parser fix). Phase 14 is next.
+Status: Phase 14 complete. Ready for Phase 15.
+Last activity: 2026-05-20 — Phase 14 complete (3/3 plans). Signal badges live. 2 review blockers to fix.
 
 ## Milestone Status
 
@@ -48,7 +48,7 @@ Last activity: 2026-05-20 — Phase 13 fully executed (3/3 plans + verification 
 | 11 | Creator Intelligence Extraction | ✅ Complete (2026-05-19) |
 | 12 | Watch List + Per-Creator Budget | ✅ Complete (2026-05-20) |
 | 13 | Market News Integration | ✅ Complete (2026-05-20) |
-| 14 | Creator Signals + Housekeeping | 🔄 Context gathered |
+| 14 | Creator Signals + Housekeeping | ✅ Complete (2026-05-20) |
 | 15 | Visual Redesign | Not started |
 
 ## Accumulated Context
@@ -77,7 +77,7 @@ Last activity: 2026-05-20 — Phase 13 fully executed (3/3 plans + verification 
 - Phase 3 and Phase 6 missing formal VERIFICATION.md
 - VALIDATION.md files in draft (nyquist_compliant: false)
 - `unified_allocation: {}` stub in upsertBuyList (intentional)
-- Pre-existing TS errors in creator-actions.ts (TS2353/TS2339)
+- Pre-existing TS errors in creator-actions.ts (TS2353/TS2339) — to be fixed in Phase 14 Wave 0
 
 ## Key Decisions (v1.2)
 
@@ -89,8 +89,8 @@ Last activity: 2026-05-20 — Phase 13 fully executed (3/3 plans + verification 
 ## Session Continuity
 
 Last session: 2026-05-20
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-creator-signals-housekeeping/14-CONTEXT.md
+Stopped at: Phase 14 planned (3 plans verified)
+Resume file: .planning/phases/14-creator-signals-housekeeping/14-01-PLAN.md
 
 ## Notes
 
