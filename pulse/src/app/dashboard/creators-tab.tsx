@@ -1,6 +1,6 @@
 'use client'
 import { useState, useTransition, useActionState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import type { Creator, Transcript, CreatorStrategy, UserCreator } from '@/types'
 import { trackCreator, untrackCreator, addCustomCreator, searchCreators, trackSearchedCreator } from '@/app/dashboard/creator-actions'
 import { formatSubscriberCount, type SearchResult } from '@/lib/youtube/format'
@@ -8,16 +8,6 @@ import RefreshButton from './refresh-button'
 import TranscriptList from './transcript-list'
 import { StrategyCard } from './components/StrategyCard'
 import { TrustWeightSlider } from './components/TrustWeightSlider'
-
-const creatorListVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-}
-
-const creatorItemVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } },
-}
 
 interface CreatorsTabProps {
   creators: Creator[]
@@ -30,6 +20,18 @@ interface CreatorsTabProps {
 
 export function CreatorsTab({ creators, initialTracked, lastRefreshedMap, transcriptsByCreator, strategiesByCreator, userCreatorMap }: CreatorsTabProps) {
   // MOB-01 audit: no overflow risk at 375px — flex rows use flex-1 min-w-0, no fixed px widths, no tables
+  const shouldReduceMotion = useReducedMotion()
+
+  const creatorListVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  }
+
+  const creatorItemVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 8 },
+    visible: { opacity: 1, y: 0, transition: { duration: shouldReduceMotion ? 0 : 0.25, ease: 'easeOut' as const } },
+  }
+
   // Optimistic tracking state: mirror server state, update immediately on toggle
   const [tracked, setTracked] = useState<Set<string>>(new Set<string>(initialTracked))
   const [isPending, startT] = useTransition()
