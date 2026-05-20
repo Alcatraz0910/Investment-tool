@@ -42,20 +42,21 @@ Given a monthly budget and a creator's strategy, tell the user exactly what to b
 - Plaid integration — not suitable for UK market; TrueLayer is the standard UK provider
 - Trade execution — Pulse tells you what to buy; it does not place trades
 
-## Current Milestone: v1.1 Portfolio Intelligence
+## Current Milestone: v1.2 Complete
 
-**Goal:** Eliminate manual data entry friction and surface live market context across the Pulse workflow.
+**v1.2 Creator Intelligence shipped 2026-05-20.**
 
-**Target features:**
-- CSV Portfolio Import — generic CSV with auto-detect broker format, column mapping, preview before save
-- Creator Discovery/Search — search YouTube channels by name via YouTube Data API v3
-- TradingView Live Prices — real-time prices on portfolio valuation and Buy List
-- Mobile-Responsive Layout — full dashboard usable on phones
+Phases 11–15 complete:
+- Phase 11: Two-layer creator intelligence profiles (stable 4-month + 30-day signals), YouTube channel search
+- Phase 12: Watch List with per-creator budgets, real-time prices, live share quantity calculation
+- Phase 13: Market news integration (Finnhub + RSS), AI "This Month's Context" summary
+- Phase 14: Creator signal badges (consensus, sentiment trend, contradiction, inactive)
+- Phase 15: Visual redesign — Geist fonts, glassmorphism UI primitives (Card, Badge, Button, StatTile), animated tab bar, mobile-responsive Portfolio and Watch List tabs
 
 ## Context
 
-- **Current state:** v1.0 MVP shipped 2026-05-07. Full-stack app functional end-to-end.
-- **Codebase:** ~6,900 LOC TypeScript/TSX; 6 phases, 30 plans, 185 commits, 83 vitest tests
+- **Current state:** v1.2 milestone complete 2026-05-20. All 15 phases done.
+- **Codebase:** ~10,000+ LOC TypeScript/TSX; 15 phases, 33 plans; full design system in pulse/src/components/ui/
 - **Tech stack:** Next.js 15 (App Router), Supabase, Pinecone, Anthropic Claude, OpenAI embeddings, Recharts, Framer Motion, decimal.js
 - **Target account type:** UK Stocks & Shares ISA (£20,000 annual allowance, 6 Apr – 5 Apr)
 - **Regulatory stance:** Creator-derived information only. All plan outputs carry disclaimers. FCA authorisation explicitly out of scope.
