@@ -15,6 +15,9 @@ export interface CreatorWatchList {
   monthlyBudgetGbp: number    // plain number for RSC→client serialization
   items: WatchListItem[]
   hasProfile: boolean         // false = never refreshed after Phase 11
+  profileLatestNull: boolean      // true when hasProfile=true AND profileLatest=null
+  profileStable: CreatorProfile | null   // raw stable profile for SIG-02/SIG-03
+  profileLatest: CreatorProfile | null   // raw latest profile for SIG-02/SIG-03
 }
 
 const CONVICTION_ORDER = { high: 0, medium: 1, low: 2 } as const
@@ -30,7 +33,7 @@ export function buildWatchLists(
 ): CreatorWatchList[] {
   return creators.map(({ creatorId, creatorName, monthlyBudgetGbp, profileStable, profileLatest }) => {
     if (!profileStable) {
-      return { creatorId, creatorName, monthlyBudgetGbp, items: [], hasProfile: false }
+      return { creatorId, creatorName, monthlyBudgetGbp, items: [], hasProfile: false, profileLatestNull: false, profileStable: null, profileLatest: null }
     }
 
     const stableItems: WatchListItem[] = [
@@ -88,7 +91,7 @@ export function buildWatchLists(
       (a, b) => CONVICTION_ORDER[a.conviction] - CONVICTION_ORDER[b.conviction]
     )
 
-    return { creatorId, creatorName, monthlyBudgetGbp, items, hasProfile: true }
+    return { creatorId, creatorName, monthlyBudgetGbp, items, hasProfile: true, profileLatestNull: profileLatest === null, profileStable, profileLatest }
   })
 }
 

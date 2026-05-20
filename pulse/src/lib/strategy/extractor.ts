@@ -365,20 +365,8 @@ export async function extractCreatorStrategy(
     }
   }
 
-  // --- Contradiction check (D-15: no changes to contradiction.ts) ---
-  // Prior allocation may be null for Phase 11 rows — runContradictionCheck handles null gracefully.
-  // If prevAllocation is null, contradiction check returns no contradiction (safe fallback).
-  const { data: prevRows } = await svc
-    .from('creator_strategies')
-    .select('allocation')
-    .eq('creator_id', creatorId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-
-  const prevAllocation = prevRows?.[0]?.allocation ?? null
-  // Phase 11: allocation is always null in new rows; contradiction check is deferred.
-  // Always pass null as prev so contradiction.ts short-circuits before reading next.
-  const contradiction = runContradictionCheck(null, {})
+  // --- Contradiction check (Phase 14 redesign: compare CreatorProfile snapshots) ---
+  const contradiction = runContradictionCheck(stableProfile, latestProfile)
 
   // --- INSERT new strategy row (always INSERT, never UPDATE — full history) ---
   // D-14: allocation = null for Phase 11 rows; new data in profile_stable / profile_latest
@@ -394,7 +382,7 @@ export async function extractCreatorStrategy(
     confidence,
     source_video_ids: sourceVideoIds,
     has_contradiction: contradiction.hasContradiction,
-    contradiction_note: contradiction.note,
+    contradiction_note: contradiction.reason,
     extracted_at: new Date().toISOString(),
   })
 
