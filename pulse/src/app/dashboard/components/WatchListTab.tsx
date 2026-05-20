@@ -544,9 +544,9 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                     {/* Macro themes strip (NEWS-05) — below creator header, above ticker table */}
                     {newsContext.macroThemes.length > 0 && (
                       <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto pb-1">
-                        {newsContext.macroThemes.slice(0, 3).map((theme, i) => (
+                        {newsContext.macroThemes.slice(0, 3).map((theme) => (
                           <Badge
-                            key={i}
+                            key={`${theme.sector}-${theme.theme}`}
                             variant="macro-theme"
                             sentimentDot={
                               theme.sentiment === 'positive'
