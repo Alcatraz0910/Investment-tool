@@ -131,12 +131,11 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
   }
 
   const getPriceColorClass = (ticker: string): string => {
-    if (stale) return 'text-amber-400'
     const pct = getPriceChangePct(ticker)
-    if (pct === null) return 'text-white'
+    if (pct === null) return stale ? 'text-amber-400' : 'text-white'
     if (pct > 0) return 'text-green-400'
     if (pct < 0) return 'text-red-400'
-    return 'text-white'
+    return stale ? 'text-amber-400' : 'text-white'
   }
 
   const handleRefreshPrices = async () => {
