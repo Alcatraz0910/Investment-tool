@@ -11,6 +11,7 @@ import { WatchListTab } from '@/app/dashboard/components/WatchListTab'
 import type { NewsCacheContext, NewsContextResult } from '@/lib/news/news-types'
 import { AnimatedTabPanel } from '@/app/dashboard/components/AnimatedTabPanel'
 import { GettingStartedGuide } from '@/components/GettingStartedGuide'
+import { TabBar } from './TabBar'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Pulse',
@@ -235,26 +236,8 @@ export default async function DashboardPage({
         {/* Content card */}
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl">
           {/* Tab bar */}
-          <div className="border-b border-border mb-0">
-            <nav className="flex px-8 pt-6" aria-label="Dashboard tabs">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id
-                return (
-                  <a
-                    key={tab.id}
-                    href={`?tab=${tab.id}`}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={
-                      isActive
-                        ? 'px-4 py-2 text-sm font-semibold text-accent border-b-2 border-accent -mb-px focus:outline-none focus:ring-2 focus:ring-accent rounded-t-sm'
-                        : 'px-4 py-2 text-sm font-semibold text-zinc-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent rounded-t-sm'
-                    }
-                  >
-                    {tab.label}
-                  </a>
-                )
-              })}
-            </nav>
+          <div className="px-8 pt-6 pb-2">
+            <TabBar tabs={tabs} activeTab={activeTab} />
           </div>
 
           {/* Tab panels */}
