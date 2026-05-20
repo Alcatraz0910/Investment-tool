@@ -96,7 +96,7 @@ Wave 2 *(blocked on Wave 1 completion)*
 ### v1.2 Creator Intelligence
 
 - [ ] **Phase 11: Creator Intelligence Extraction** — AI produces a two-layer summary per creator (4-month stable summary + 30-day latest signals); extracts favoured stocks, methodology, industry/sector focus, and preferred index funds; scrape window limited to last 4 months
-- [ ] **Phase 12: Watch List + Per-Creator Budget** — Buy list replaced with a live watch list (real-time prices, news flags per item); user sets £X/month per creator; app translates into actual share quantities to buy based on current creator picks
+- [x] **Phase 12: Watch List + Per-Creator Budget** — Buy list replaced with a live watch list (real-time prices, news flags per item); user sets £X/month per creator; app translates into actual share quantities to buy based on current creator picks — completed 2026-05-20
 - [ ] **Phase 13: Market News Integration** — Finnhub/Alpha Vantage ticker news + BBC Business/Reuters UK/BoE RSS feeds; AI cross-references against watch list tickers and creator-backed sectors; generates a "this month's context" summary (3-4 sentences) combining creator signals and macro news
 - [ ] **Phase 14: Creator Signals + Housekeeping** — Consensus signal (2+ creators backing same ticker), sentiment trend (bullish/cautious shift over 4 months), contradiction detection (recent vs older stance), cadence weighting (less-active creators carry less weight); ISA tab removed
 - [ ] **Phase 15: Visual Redesign** — Futuristic, clean UI overhaul across all dashboard tabs; cohesive design system (typography, colour palette, spacing, motion); glassmorphism, dark-first aesthetic; polished component library replacing placeholder styling
@@ -120,6 +120,95 @@ Wave 2 *(blocked on Wave 1 completion)*
 - [x] 11-04-PLAN.md — Wave 2: searchCreators + trackSearchedCreator server actions; creators-tab.tsx search UI
 **UI hint**: yes
 
+### Phase 12: Watch List + Per-Creator Budget
+**Goal**: Buy list replaced with a live watch list (real-time prices); user sets £X/month per creator; app translates into actual share quantities to buy based on current creator picks
+**Depends on**: Phase 11 (profile_stable + profile_latest JSONB columns required)
+**Requirements**: WL-01, WL-02, WL-03, WL-04, WL-05
+**Success Criteria** (what must be TRUE):
+  1. Tab bar shows Portfolio | Creators | Watch List — no ISA tab
+  2. Watch List tab renders one glassmorphism card per creator with their ticker picks (both extraction layers)
+  3. Refresh Prices button fetches live prices and populates Price, Qty, and Spend columns
+  4. Budget input per creator saves via server action and retains value on page refresh
+  5. Qty uses Decimal.floor() — whole shares only; Spend = quantity × price
+  6. ISA tab, isa-tab.tsx, isa-actions.ts deleted; isa_contributions query removed from page.tsx
+**Plans**: 3 plans
+- [x] 12-01-PLAN.md — Wave 0: SQL migration (monthly_budget_gbp column) + vitest test stubs
+- [x] 12-02-PLAN.md — Wave 1: watchlist-generator.ts (buildWatchLists + calcShareQuantity) + watchlist-actions.ts (saveCreatorMonthlyBudget)
+- [x] 12-03-PLAN.md — Wave 2: WatchListTab.tsx + page.tsx rewire + ISA/Plan/BuyList dead code removal
+**UI hint**: yes
+
+### Phase 13: Market News Integration
+**Goal**: Watch List tab surfaces AI-generated market context: per-ticker news counts from Finnhub, UK macro themes from RSS feeds (BBC Business, Bank of England), and a 3-4 sentence "This Month's Context" summary combining creator signals and macro news — all cached in Supabase and refreshed on demand
+**Depends on**: Phase 12 (WatchListTab must exist; news badge column extends its ticker tables)
+**Requirements**: NEWS-01, NEWS-02, NEWS-03, NEWS-04, NEWS-05, NEWS-06, NEWS-07
+**Success Criteria** (what must be TRUE):
+  1. "Refresh News" button triggers Finnhub fetch + RSS parse + Claude cross-reference + Supabase UPSERT
+  2. "This Month's Context" panel renders at the top of the Watch List tab, expanded by default, with 3-4 sentence AI summary
+  3. News badge column ("News") appears in every ticker table showing per-ticker headline count
+  4. Macro theme pills appear below each creator header with sentiment dot (green/amber/red)
+  5. Staleness indicator turns amber when news_cache.fetched_at > 24h ago
+  6. Returning users see cached context immediately on page load (no blank state on first open)
+  7. Claude summary never contains "advice", "recommend", or "suggest" (post-call guard throws if detected)
+**Plans**: 3 plans
+- [x] 13-01-PLAN.md — Wave 0: FINNHUB_API_KEY setup + SQL migration (news_cache table) + npm install rss-parser + vitest stubs
+- [x] 13-02-PLAN.md — Wave 1: lib/news/news-types.ts + finnhub.ts + rss.ts + news-actions.ts (refreshNewsAndSummary) + page.tsx extension
+- [x] 13-03-PLAN.md — Wave 2: WatchListTab.tsx extension (context panel + news badge column + macro themes strip)
+**UI hint**: yes
+
+### Phase 14: Creator Signals + Housekeeping
+**Goal**: Surface four creator intelligence signals as badges on existing Watch List creator cards; fix pre-existing TS errors in creator-actions.ts
+**Depends on**: Phase 13 (WatchListTab must exist with creator cards)
+**Requirements**: SIG-01, SIG-02, SIG-03, SIG-04
+**Success Criteria** (what must be TRUE):
+  1. "Consensus" chip appears on tickers in the All Picks table when 2+ creators back the same ticker
+  2. Creator cards show sentiment trend badge ("Trending bullish" / "Trending cautious") derived from sector_focus drift between profile_stable and profile_latest
+  3. Creator cards show "Contradiction" badge with hover tooltip when high-conviction ticker drops or sector stance flips
+  4. Inactive creators (profile_latest = null) show "No recent posts" badge and card renders at 80% opacity
+  5. `npx tsc --noEmit` exits 0 (pre-existing TS2353/TS2339 errors in creator-actions.ts fixed)
+**Plans**: 3 plans
+
+Wave 1 *(blocked on Wave 0 completion)*
+- [ ] 14-01-PLAN.md — Wave 0: Fix TS2353/TS2339 in creator-actions.ts (addCustomCreator type cast)
+- [ ] 14-02-PLAN.md — Wave 1: Redesign contradiction.ts + extend CreatorWatchList + update extractor.ts call-site
+
+Wave 2 *(blocked on Wave 1 completion)*
+- [ ] 14-03-PLAN.md — Wave 2: Add SIG-01/02/03/04 badge UI to WatchListTab.tsx
+
+**Cross-cutting constraints:**
+- No financial advice language in any badge labels — observational only ("Consensus", "Trending bullish", etc.)
+- Signal badges are visual only — calcShareQuantity and budget allocation untouched
+- unified_allocation: {} stub in upsertBuyList must not be removed
+**UI hint**: yes
+
+### Phase 15: Visual Redesign
+**Goal**: Futuristic, clean UI overhaul across all dashboard tabs; cohesive design system (Geist typography, colour palette, spacing, motion); glassmorphism, dark-first aesthetic; polished component library in `src/components/ui/`; mobile-responsive Portfolio and Watch List tabs
+**Depends on**: Phase 14 (WatchListTab must have signal badges before visual primitives are applied)
+**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05, MOB-01, MOB-02, MOB-03
+**Success Criteria** (what must be TRUE):
+  1. All dashboard tabs use Geist (prose) and Geist Mono (numeric/ticker) fonts loaded via next/font
+  2. pulse/src/components/ui/ contains Card, Badge, Button, StatTile — all tabs import from this shared source
+  3. Tab bar is pill-style with frosted glass background and a sliding Framer Motion layoutId indicator
+  4. Watch List creator cards reveal with 70ms stagger and lift on hover; all animations respect useReducedMotion
+  5. Portfolio tab shows animated StatTile total (count-up); holdings table collapses to mini cards on mobile (< 640px)
+  6. Watch List tab stacks full-width on mobile with per-creator ticker summary + expand toggle; All Picks shows chip fallback
+  7. npx tsc --noEmit exits 0
+**Plans**: 5 plans
+
+Wave 1
+- [ ] 15-01-PLAN.md — Wave 1: Design tokens (globals.css font vars) + Geist font loading (layout.tsx)
+
+Wave 2 *(blocked on Wave 1 completion)*
+- [ ] 15-02-PLAN.md — Wave 2: UI primitives — Card, Badge, Button, StatTile in pulse/src/components/ui/
+
+Wave 2 (parallel with 15-02) *(blocked on Wave 1 completion)*
+- [ ] 15-03-PLAN.md — Wave 2: Tab bar (TabBar.tsx Client Component + page.tsx rewire) + AnimatedTabPanel upgrade + WatchListTab primitives + motion
+- [ ] 15-04-PLAN.md — Wave 2: PortfolioTab primitives + StatTile total + mobile mini cards
+
+Wave 3 *(blocked on Wave 2 completion)*
+- [ ] 15-05-PLAN.md — Wave 3: Watch List mobile layout (ticker summary toggle, All Picks chips, macro scroll) + TypeScript clean pass
+
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -135,3 +224,7 @@ Wave 2 *(blocked on Wave 1 completion)*
 | 9. Creator Search | v1.1 | 0/? | Not started | — |
 | 10. Mobile Layout | v1.1 | 0/? | Not started | — |
 | 11. Creator Intelligence Extraction | v1.2 | 4/4 | Verification pending | — |
+| 12. Watch List + Per-Creator Budget | v1.2 | 3/3 | Complete | 2026-05-20 |
+| 13. Market News Integration | v1.2 | 3/3 | Complete | 2026-05-20 |
+| 14. Creator Signals + Housekeeping | v1.2 | 0/3 | Ready to execute | — |
+| 15. Visual Redesign | v1.2 | 0/5 | Ready to execute | — |
