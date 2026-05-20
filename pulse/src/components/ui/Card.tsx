@@ -11,7 +11,6 @@ export function Card({ children, className = '', padding = 'md' }: CardProps) {
   return (
     <div
       className={`backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl ${padClass} ${className}`}
-      style={{ WebkitBackdropFilter: 'blur(24px)' }}
     >
       {children}
     </div>
