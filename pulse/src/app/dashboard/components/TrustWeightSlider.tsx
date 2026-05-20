@@ -8,7 +8,7 @@
  * Client component — interactive slider.
  */
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { saveCreatorWeight } from '@/app/dashboard/actions'
 
 const CATEGORIES = [
@@ -41,6 +41,9 @@ function SingleSlider({
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
 
   const handleRelease = async () => {
     setSaving(true)
@@ -48,7 +51,8 @@ function SingleSlider({
     try {
       await onSave(value)
       setSaved(true)
-      setTimeout(() => setSaved(false), 1500)
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => setSaved(false), 1500)
     } catch {
       setSaveError('Save failed — try again')
     } finally {
