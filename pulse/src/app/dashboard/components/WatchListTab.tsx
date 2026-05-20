@@ -344,6 +344,11 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                             {item.ticker}<ExternalLinkIcon />
                           </a>
                           <p className="text-xs text-zinc-400">{item.name}</p>
+                          {item.creators.length >= 2 && (
+                            <span className="mt-0.5 inline-block text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded px-1.5 py-0.5">
+                              Consensus
+                            </span>
+                          )}
                         </td>
                         <td className="py-2 pr-2">
                           <span className={CONVICTION_CLASS[item.conviction]}>
@@ -413,10 +418,49 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                   key={wl.creatorId}
                   variants={itemVariants}
                   className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 space-y-3"
+                  style={{ opacity: wl.profileLatestNull ? 0.8 : 1 }}
                 >
                   {/* Creator header row */}
                   <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <p className="text-xl font-semibold text-white">{wl.creatorName}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xl font-semibold text-white">{wl.creatorName}</p>
+
+                      {/* SIG-04: No recent posts badge — shown when profileLatestNull */}
+                      {wl.profileLatestNull && (
+                        <span className="text-xs font-semibold text-zinc-500 bg-zinc-700/40 border border-zinc-600/30 rounded-full px-2 py-0.5">
+                          No recent posts
+                        </span>
+                      )}
+
+                      {/* SIG-02: Sentiment trend badge — suppressed when profileLatestNull (D-03) */}
+                      {!wl.profileLatestNull && wl.profileStable !== null && (() => {
+                        const trend = computeSentimentTrend(wl.profileStable, wl.profileLatest)
+                        if (!trend) return null
+                        return trend === 'bullish' ? (
+                          <span className="text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/30 rounded-full px-2 py-0.5">
+                            Trending bullish
+                          </span>
+                        ) : (
+                          <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5">
+                            Trending cautious
+                          </span>
+                        )
+                      })()}
+
+                      {/* SIG-03: Contradiction badge — suppressed when profileLatestNull (D-04) */}
+                      {!wl.profileLatestNull && wl.profileStable !== null && (() => {
+                        const { hasContradiction, reason } = runContradictionCheck(wl.profileStable, wl.profileLatest)
+                        if (!hasContradiction) return null
+                        return (
+                          <span
+                            title={reason ?? undefined}
+                            className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/30 rounded-full px-2 py-0.5 cursor-help"
+                          >
+                            Contradiction
+                          </span>
+                        )
+                      })()}
+                    </div>
 
                     {/* Budget display / edit */}
                     <div className="flex flex-col items-end gap-1">
