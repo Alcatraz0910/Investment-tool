@@ -14,6 +14,7 @@ import { runContradictionCheck } from '@/lib/strategy/contradiction'
 import type { CreatorProfile } from '@/lib/strategy/extractor'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 
 interface WatchListTabProps {
   initialWatchLists: CreatorWatchList[]
@@ -214,13 +215,14 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
       {/* Heading row */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Watch List</h2>
-        <button
+        <Button
+          variant="primary"
           onClick={handleRefreshPrices}
           disabled={refreshing || newsRefreshing}
-          className="bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-md px-4 min-h-[44px] disabled:opacity-75 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2"
+          loading={refreshing}
         >
-          {refreshing ? <SpinnerSVG /> : 'Refresh Prices'}
-        </button>
+          Refresh Prices
+        </Button>
       </div>
 
       {/* "This Month's Context" panel (NEWS-06, D-01, D-05) — not wrapped in hover lift */}
@@ -240,18 +242,19 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="ghost"
               onClick={handleRefreshNews}
               disabled={newsRefreshing || refreshing}
-              className="text-sm font-semibold text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2"
+              loading={newsRefreshing}
             >
-              {newsRefreshing ? <SpinnerSVG /> : 'Refresh News'}
-            </button>
+              Refresh News
+            </Button>
             <button
               onClick={() => setIsContextExpanded((v) => !v)}
               aria-expanded={isContextExpanded}
               aria-controls="news-context-body"
-              className="p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+              className="p-1 focus:outline-none focus:ring-2 focus:ring-accent rounded"
             >
               <svg
                 className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isContextExpanded ? 'rotate-180' : ''}`}
@@ -482,12 +485,12 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                         {!isEditing ? (
                           <div className="flex items-center gap-3">
                             <span className="text-sm text-zinc-400">£{wl.monthlyBudgetGbp} / month</span>
-                            <button
+                            <Button
+                              variant="ghost"
                               onClick={() => setEditingBudget((e) => ({ ...e, [wl.creatorId]: wl.monthlyBudgetGbp }))}
-                              className="text-sm font-semibold text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                               Edit
-                            </button>
+                            </Button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -507,22 +510,23 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                                 const val = isNaN(raw) ? 0 : Math.max(0, raw)
                                 setEditingBudget((prev) => ({ ...prev, [wl.creatorId]: val }))
                               }}
-                              className="w-28 bg-zinc-900 border border-zinc-700 rounded-md text-base text-white px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-28 bg-zinc-900 border border-zinc-700 rounded-md text-base text-white px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-accent"
                               aria-label={`Monthly budget for ${wl.creatorName} in pounds`}
                             />
-                            <button
+                            <Button
+                              variant="primary"
                               onClick={() => handleSaveBudget(wl.creatorId)}
                               disabled={isSaving}
-                              className="text-sm font-semibold bg-indigo-500 hover:bg-indigo-400 text-white rounded-md px-3 min-h-[44px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              loading={isSaving}
                             >
-                              {isSaving ? 'Saving…' : 'Save Budget'}
-                            </button>
-                            <button
+                              Save Budget
+                            </Button>
+                            <Button
+                              variant="ghost"
                               onClick={() => setEditingBudget((e) => ({ ...e, [wl.creatorId]: null }))}
-                              className="text-sm text-zinc-400 hover:text-white border border-zinc-700 rounded-md px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                               Discard Changes
-                            </button>
+                            </Button>
                           </div>
                         )}
                         {bError && (
