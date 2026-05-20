@@ -8,6 +8,7 @@ import { PortfolioTab } from '@/components/PortfolioTab'
 import { buildWatchLists } from '@/lib/watchlist/generator'
 import type { CreatorWatchList } from '@/lib/watchlist/generator'
 import { WatchListTab } from '@/app/dashboard/components/WatchListTab'
+import type { NewsCacheContext, NewsContextResult } from '@/lib/news/news-types'
 import { AnimatedTabPanel } from '@/app/dashboard/components/AnimatedTabPanel'
 import { GettingStartedGuide } from '@/components/GettingStartedGuide'
 
@@ -85,6 +86,13 @@ export default async function DashboardPage({
   // ---------------------------------------------------------------------------
   let watchLists: CreatorWatchList[] = []
   let userCreatorIdMap: Record<string, string> = {}
+  let initialNewsContext: NewsCacheContext = {
+    contextSummary: null,
+    newsLastFetchedAt: null,
+    tickerCounts: {},
+    macroThemes: [],
+    creatorSectors: [],
+  }
 
   if (activeTab === 'watchlist') {
     const { data: ucRows } = await supabase
@@ -136,6 +144,38 @@ export default async function DashboardPage({
     userCreatorIdMap = Object.fromEntries(
       (ucRows ?? []).map((uc) => [uc.creator_id as string, uc.id as string])
     )
+
+    // News cache pre-fetch (D-01) — read cached news_cache row for this user
+    const { data: newsCacheRow } = await supabase
+      .from('news_cache')
+      .select('context, fetched_at')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // Creator sectors pre-fetch (RESEARCH.md open Q3 resolution) — read sector_focus from
+    // creator_strategies for all creators the user tracks, so refreshNewsAndSummary receives
+    // sector hints and Claude can produce more relevant macro_themes.
+    const userCreatorIds = Object.values(userCreatorIdMap)
+    const { data: strategyRows } = userCreatorIds.length > 0
+      ? await supabase
+          .from('creator_strategies')
+          .select('profile_stable')
+          .in('user_creator_id', userCreatorIds)
+      : { data: [] }
+
+    const creatorSectors = (strategyRows ?? []).flatMap((s) => {
+      const profile = s.profile_stable as { sector_focus?: Array<{ sector: string }> } | null
+      return profile?.sector_focus?.map((sf) => sf.sector) ?? []
+    })
+
+    const newsContext = newsCacheRow?.context as NewsContextResult | null
+    initialNewsContext = {
+      contextSummary: newsContext?.context_summary ?? null,
+      newsLastFetchedAt: newsCacheRow?.fetched_at ? new Date(newsCacheRow.fetched_at as string) : null,
+      tickerCounts: (newsContext?.ticker_counts ?? {}) as Record<string, number>,
+      macroThemes: (newsContext?.macro_themes ?? []) as NewsCacheContext['macroThemes'],
+      creatorSectors,
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -230,6 +270,7 @@ export default async function DashboardPage({
                 <WatchListTab
                   initialWatchLists={watchLists}
                   userCreatorIdMap={userCreatorIdMap}
+                  initialNewsContext={initialNewsContext}
                 />
               )}
             </AnimatedTabPanel>
