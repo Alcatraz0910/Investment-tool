@@ -152,6 +152,10 @@ export async function refreshNewsAndSummary(
 
   const contextResult = toolBlock.input as NewsContextResult
 
+  if (typeof contextResult.context_summary !== 'string') {
+    return { success: false, error: 'Claude did not return a context_summary — try refreshing again' }
+  }
+
   // Post-call guard: reject if advice language slipped through (CLAUDE.md, Pitfall 5)
   assertNoAdviceLanguage(contextResult.context_summary)
 
