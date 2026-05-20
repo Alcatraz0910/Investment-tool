@@ -112,6 +112,8 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
   // Mobile expand toggle per-creator (15-05: MOB-01)
   const [tickersExpanded, setTickersExpanded] = useState<Record<string, boolean>>({})
 
+  const stale = isStale(priceTimestamp)
+
   // Stagger variants — useReducedMotion guard (15-UI-SPEC.md §3)
   const sectionVariants = {
     hidden: { opacity: 0 },
@@ -171,6 +173,11 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
     setSavingBudget((s) => ({ ...s, [creatorId]: true }))
     setBudgetError((e) => ({ ...e, [creatorId]: null }))
     const userCreatorId = userCreatorIdMap[creatorId]
+    if (!userCreatorId) {
+      setBudgetError((e) => ({ ...e, [creatorId]: 'Creator not found — please refresh the page.' }))
+      setSavingBudget((s) => ({ ...s, [creatorId]: false }))
+      return
+    }
     const result = await saveCreatorMonthlyBudget(userCreatorId, budget)
     if (result.success) {
       setWatchLists((wls) =>
@@ -207,7 +214,6 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
     setNewsRefreshing(false)
   }
 
-  const stale = isStale(priceTimestamp)
   const newsStale = isNewsStale(newsContext.newsLastFetchedAt)
 
   return (
@@ -507,7 +513,7 @@ export function WatchListTab({ initialWatchLists, userCreatorIdMap, initialNewsC
                               value={editVal ?? 0}
                               onChange={(e) => {
                                 const raw = parseFloat(e.target.value)
-                                const val = isNaN(raw) ? 0 : Math.max(0, raw)
+                                const val = isNaN(raw) ? 0 : Math.min(20000, Math.max(0, raw))
                                 setEditingBudget((prev) => ({ ...prev, [wl.creatorId]: val }))
                               }}
                               className="w-28 bg-zinc-900 border border-zinc-700 rounded-md text-base text-white px-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-accent"
