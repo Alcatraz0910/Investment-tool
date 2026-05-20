@@ -33,7 +33,7 @@ export function AnimatedTabPanel({ tabKey, children }: AnimatedTabPanelProps) {
         key={tabKey}
         initial={{ opacity: 0, x: shouldReduceMotion ? 0 : 16 }}
         animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: shouldReduceMotion ? 0 : -16 }}
+        // no exit — RSC navigation replaces the tree before AnimatePresence can run exit transitions
         transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
       >
         {children}
