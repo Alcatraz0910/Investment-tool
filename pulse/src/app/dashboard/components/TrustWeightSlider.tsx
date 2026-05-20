@@ -58,7 +58,7 @@ function SingleSlider({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-h-[44px]" style={{ touchAction: 'manipulation' }}>
         <span className="text-sm text-zinc-400 w-32 shrink-0">{label}</span>
         <input
           type="range"
