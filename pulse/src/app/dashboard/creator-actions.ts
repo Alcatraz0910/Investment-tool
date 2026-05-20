@@ -90,7 +90,8 @@ export async function addCustomCreator(formData: FormData): Promise<ActionResult
     const { createServiceClient } = await import('@/lib/supabase/service')
     const serviceClient = createServiceClient()
 
-    const { data: newCreator, error: insertError } = await serviceClient
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newCreator, error: insertError } = await (serviceClient as any)
       .from('creators')
       .insert({ channel_url: rawUrl, display_name: displayName, is_active: true })
       .select('id')
@@ -99,7 +100,7 @@ export async function addCustomCreator(formData: FormData): Promise<ActionResult
     if (insertError || !newCreator) {
       return { error: 'Something went wrong. Please try again.' }
     }
-    creatorId = newCreator.id
+    creatorId = (newCreator as { id: string }).id
   }
 
   // Insert user_creators row (ON CONFLICT = already tracking, treat as success)
