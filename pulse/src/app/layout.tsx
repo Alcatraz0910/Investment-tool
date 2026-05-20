@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
-      <body className="font-[var(--font-geist)]">{children}</body>
+      <body style={{ fontFamily: 'var(--font-geist)' }}>{children}</body>
     </html>
   )
 }
