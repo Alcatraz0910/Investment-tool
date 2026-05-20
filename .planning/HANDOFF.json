@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-20T21:31:59Z",
+  "phase": "15",
+  "phase_name": "Visual Redesign",
+  "phase_dir": ".planning/phases/15-visual-redesign",
+  "plan": 5,
+  "task": 5,
+  "total_tasks": 5,
+  "status": "milestone_complete",
+  "completed_tasks": [
+    {"id": 1, "name": "15-01: Foundation tokens & glassmorphism base", "status": "done", "commit": "1041884"},
+    {"id": 2, "name": "15-02: Portfolio tab redesign", "status": "done", "commit": "1041884"},
+    {"id": 3, "name": "15-03: Watch List tab redesign", "status": "done", "commit": "1041884"},
+    {"id": 4, "name": "15-04: Creators page redesign", "status": "done", "commit": "1041884"},
+    {"id": 5, "name": "15-05: News & cross-cutting polish", "status": "done", "commit": "1041884"}
+  ],
+  "remaining_tasks": [],
+  "blockers": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Creators tab moved to standalone /dashboard/creators page", "rationale": "Phase 11 design decision; tab bar is Portfolio | Watch List only", "phase": "11"},
+    {"decision": "Watch List merged section deduplicates tickers across all tracked creators", "rationale": "UX simplicity", "phase": "12"},
+    {"decision": "TradingView links: LSE-prefixed for GBP stocks, bare symbol for US", "rationale": "TradingView URL convention", "phase": "12"},
+    {"decision": "CSV parsed client-side via PapaParse", "rationale": "Avoids Next.js 15.5 1MB server action body limit", "phase": "7"},
+    {"decision": "yahoo-finance2 for price data; TradingView widgets decorative only", "rationale": "Programmatic data vs display separation", "phase": "8"},
+    {"decision": "Tickers stored bare in DB; .L suffix applied only at yahoo-finance2 call boundary", "rationale": "DB normalisation", "phase": "8"}
+  ],
+  "uncommitted_files": [
+    ".planning/phases/11-creator-intelligence-extraction/11-01-PLAN.md",
+    ".planning/phases/11-creator-intelligence-extraction/11-03-PLAN.md",
+    ".planning/phases/11-creator-intelligence-extraction/11-04-PLAN.md",
+    ".planning/phases/11-creator-intelligence-extraction/11-CONTEXT.md",
+    ".planning/phases/11-creator-intelligence-extraction/11-AI-SPEC.md",
+    ".planning/phases/11-creator-intelligence-extraction/11-RESEARCH.md",
+    ".planning/phases/11-creator-intelligence-extraction/11-UI-SPEC.md",
+    ".planning/phases/11-creator-intelligence-extraction/11-VALIDATION.md",
+    ".planning/phases/12-watch-list-per-creator-budget/12-01-PLAN.md",
+    ".planning/phases/12-watch-list-per-creator-budget/12-02-PLAN.md",
+    ".planning/phases/12-watch-list-per-creator-budget/12-03-PLAN.md",
+    ".planning/phases/13-market-news-integration/13-01-PLAN.md",
+    ".planning/phases/13-market-news-integration/13-02-PLAN.md",
+    ".planning/phases/13-market-news-integration/13-03-PLAN.md",
+    ".planning/phases/14-creator-signals-housekeeping/14-01-PLAN.md",
+    ".planning/phases/14-creator-signals-housekeeping/14-02-PLAN.md",
+    ".planning/phases/14-creator-signals-housekeeping/14-03-PLAN.md",
+    ".planning/phases/15-visual-redesign/15-REVIEW-FIX.md",
+    ".claude/"
+  ],
+  "next_action": "Run /gsd-complete-milestone to archive v1.2 and define v1.3 milestone, OR run /gsd-new-milestone to start the next planning cycle",
+  "context_notes": "v1.2 Creator Intelligence milestone fully complete. All 15 phases done across v1.0–v1.2. Large batch of untracked planning files from phases 11–15 need a bulk commit. No active code work pending."
+}
