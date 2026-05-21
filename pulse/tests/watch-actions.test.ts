@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }))
 vi.mock('next/headers', () => ({ cookies: vi.fn() }))
@@ -28,5 +30,23 @@ describe('watch-actions — fetchTickerPrices integration', () => {
     // This test verifies the guard exists in WatchListTab (structural, not runtime).
     const fs = await import('@/app/dashboard/components/WatchListTab')
     expect(typeof fs.WatchListTab).toBe('function')
+  })
+})
+
+// WL-05: ISA tab removed — structural deletion verification
+describe('WL-05 — ISA tab deletion', () => {
+  const srcRoot = resolve(__dirname, '../src/app/dashboard')
+
+  it('isa-tab.tsx is deleted', () => {
+    expect(existsSync(resolve(srcRoot, 'isa-tab.tsx'))).toBe(false)
+  })
+
+  it('isa-actions.ts is deleted', () => {
+    expect(existsSync(resolve(srcRoot, 'isa-actions.ts'))).toBe(false)
+  })
+
+  it('page.tsx does not query isa_contributions', () => {
+    const pageContent = readFileSync(resolve(srcRoot, 'page.tsx'), 'utf-8')
+    expect(pageContent).not.toContain('isa_contributions')
   })
 })

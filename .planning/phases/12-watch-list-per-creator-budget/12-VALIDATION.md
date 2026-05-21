@@ -46,7 +46,7 @@ created: 2026-05-21
 | 12-02-02 | 02 | 1 | WL-03 | T-12-02, T-12-03 | saveCreatorMonthlyBudget: range validation + IDOR ownership check (user_id) | unit | `cd pulse && npx vitest run tests/watch-budget.test.ts` | ✅ exists | ✅ green |
 | 12-03-01 | 03 | 2 | WL-02 | T-12-06 | fetchTickerPrices: ticker validation via TICKER_RE; prices in GBP | unit | `cd pulse && npx vitest run tests/watch-actions.test.ts` | ✅ exists | ✅ green |
 | 12-03-02 | 03 | 2 | WL-01, WL-02, WL-03, WL-04 | T-12-07, T-12-08 | WatchListTab: no dangerouslySetInnerHTML; no advice language; IDOR via server-built map | tsc | `cd pulse && npx tsc --noEmit` | ✅ existing | ✅ green |
-| 12-03-03 | 03 | 2 | WL-05 | — | ISA tab removed; no isa_contributions query | grep | `grep -r "isa_contributions" pulse/src/` | N/A | ✅ green |
+| 12-03-03 | 03 | 2 | WL-05 | — | ISA tab removed; no isa_contributions query | structural | `cd pulse && npx vitest run tests/watch-actions.test.ts` | ✅ exists | ✅ green |
 | 12-03-04 | 03 | 2 | WL-01–05 | — | Full vitest suite green | unit | `cd pulse && npx vitest run` | ✅ existing | ✅ green |
 | 12-03-05 | 03 | 2 | WL-01–04 | — | Visual render + browser flows | visual | see Manual-Only below | N/A | ⬜ pending |
 
@@ -87,7 +87,7 @@ All three files existed before Wave 1 implementation. All stubs were filled and 
 - [x] Feedback latency < 5s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** retroactive 2026-05-21 — 21/21 automated tests green; 4 visual/browser items documented as manual-only
+**Approval:** retroactive 2026-05-21 — 24/24 automated tests green; 4 visual/browser items documented as manual-only
 
 ---
 
@@ -95,7 +95,7 @@ All three files existed before Wave 1 implementation. All stubs were filled and 
 
 | Metric | Count |
 |--------|-------|
-| Gaps found | 4 (manual-only) |
-| Resolved (automated) | 21 tests across 3 files |
-| Escalated to manual-only | 4 |
+| Gaps found | 1 (WL-05 had no automated test) |
+| Resolved (automated) | 24 tests across 3 files (3 new WL-05 structural tests added to watch-actions.test.ts) |
+| Escalated to manual-only | 4 (visual render, live prices, budget save flow, ISA tab visual check) |
 | New test files created | 0 (all existed from execution) |
