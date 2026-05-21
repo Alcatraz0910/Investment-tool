@@ -9,7 +9,7 @@ import {
 
 describe('detectBroker', () => {
   it('detects Hargreaves Lansdown by required headers', () => {
-    const headers = ['Code', 'Description', 'Units', 'Price (p)', 'Value (£)', 'Cost (£)']
+    const headers = ['Code', 'Description', 'Units held', 'Price (p)', 'Value (£)', 'Cost (£)']
     expect(detectBroker(headers)?.name).toBe('Hargreaves Lansdown')
   })
 
@@ -25,7 +25,7 @@ describe('detectBroker', () => {
 
   it('HL preset quantityCol is Units', () => {
     const hl = BROKER_PRESETS.find(p => p.name === 'Hargreaves Lansdown')
-    expect(hl?.quantityCol).toBe('Units')
+    expect(hl?.quantityCol).toBe('Units held')
   })
 
   it('detects AJ Bell by required headers', () => {

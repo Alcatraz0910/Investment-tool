@@ -131,7 +131,7 @@ describe('refreshHoldingPrices', () => {
     expect(result.results![0]).toMatchObject({
       ticker: 'FAKE',
       price: null,
-      error: 'fetch failed',
+      error: 'not found',
     })
   })
 
