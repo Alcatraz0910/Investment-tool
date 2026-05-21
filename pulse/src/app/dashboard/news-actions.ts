@@ -134,14 +134,20 @@ export async function refreshNewsAndSummary(
 
   // --- Step 4: Claude structured output (D-06, D-07) ---
   const anthropic = getAnthropic()
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
-    system: NEWS_SYSTEM_PROMPT,
-    tool_choice: { type: 'tool', name: 'generate_news_context' },
-    tools: [NEWS_CONTEXT_TOOL],
-    messages: [{ role: 'user', content: userPrompt }],
-  })
+  let response: Anthropic.Message
+  try {
+    response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: NEWS_SYSTEM_PROMPT,
+      tool_choice: { type: 'tool', name: 'generate_news_context' },
+      tools: [NEWS_CONTEXT_TOOL],
+      messages: [{ role: 'user', content: userPrompt }],
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown Claude error'
+    return { success: false, error: `Claude API error: ${msg}` }
+  }
 
   const toolBlock = response.content.find(
     (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
@@ -152,12 +158,15 @@ export async function refreshNewsAndSummary(
 
   const contextResult = toolBlock.input as NewsContextResult
 
+  // Claude can return null for required string fields despite the schema — coerce defensively
   if (typeof contextResult.context_summary !== 'string') {
-    return { success: false, error: 'Claude did not return a context_summary — try refreshing again' }
+    console.error('[news-actions] Unexpected tool input shape:', JSON.stringify(toolBlock.input))
+    contextResult.context_summary =
+      'Market context is unavailable for this refresh. Ticker counts and macro themes above are still valid.'
   }
 
   // Post-call guard: reject if advice language slipped through (CLAUDE.md, Pitfall 5)
-  assertNoAdviceLanguage(contextResult.context_summary)
+  if (contextResult.context_summary) assertNoAdviceLanguage(contextResult.context_summary)
 
   // --- Step 5: Supabase UPSERT (D-08, D-10) ---
   // headlines stored as JSONB array; context stored as JSONB object
