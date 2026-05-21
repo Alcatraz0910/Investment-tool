@@ -42,7 +42,19 @@ Given a monthly budget and a creator's strategy, tell the user exactly what to b
 - Plaid integration — not suitable for UK market; TrueLayer is the standard UK provider
 - Trade execution — Pulse tells you what to buy; it does not place trades
 
-## Current Milestone: v1.2 Complete
+## Current Milestone: v1.3 — Household Budget Tracker
+
+**Goal:** A standalone budgeting section where household members (user + partner) import bank CSVs, AI categorises spending, users review/edit categories, AI surfaces cut-back observations, and a monthly surplus is displayed.
+
+**Key decisions already made:**
+- Standalone section — NOT connected to Watch List monthly budgets
+- Manual CSV import only — no Open Banking / TrueLayer
+- AI advice framed as observations (same guardrail as creator tool)
+- Phases 16–19
+
+---
+
+## Previous Milestone: v1.2 Complete
 
 **v1.2 Creator Intelligence shipped 2026-05-20.**
 
@@ -55,7 +67,7 @@ Phases 11–15 complete:
 
 ## Context
 
-- **Current state:** v1.2 milestone complete 2026-05-20. All 15 phases done.
+- **Current state:** v1.3 milestone started 2026-05-21. Phases 16–19 planned.
 - **Codebase:** ~10,000+ LOC TypeScript/TSX; 15 phases, 33 plans; full design system in pulse/src/components/ui/
 - **Tech stack:** Next.js 15 (App Router), Supabase, Pinecone, Anthropic Claude, OpenAI embeddings, Recharts, Framer Motion, decimal.js
 - **Target account type:** UK Stocks & Shares ISA (£20,000 annual allowance, 6 Apr – 5 Apr)

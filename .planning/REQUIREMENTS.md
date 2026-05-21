@@ -94,11 +94,49 @@ Requirements for the Portfolio Intelligence milestone. Each maps to roadmap phas
 - **ANLT-01**: User can view gain/loss per holding vs average cost (P&L tracking)
 - **ANLT-02**: Holdings and Buy List display a TradingView price chart per ticker
 
+## v1.3 Requirements — Household Budget Tracker
+
+### Household Setup (HSLD)
+
+- [ ] **HSLD-01**: User can add household members with a display name (e.g. "Me", "Partner")
+- [ ] **HSLD-02**: User can enter a monthly income amount per household member
+- [ ] **HSLD-03**: User can edit or remove household members and their income entries
+
+### Transaction Import (TIMP)
+
+- [ ] **TIMP-01**: User can import a bank transaction CSV per household member via file picker or drag-and-drop
+- [ ] **TIMP-02**: Column mapping UI lets user identify date, description, and amount columns for any CSV format
+- [ ] **TIMP-03**: Common UK bank formats (Monzo, Barclays, Lloyds, NatWest) are auto-detected where possible
+- [ ] **TIMP-04**: User can view all imported transactions in a searchable, filterable list
+- [ ] **TIMP-05**: User can delete individual transactions or clear a month's imports
+
+### Categorisation (TCAT)
+
+- [ ] **TCAT-01**: AI suggests a spending category for each transaction immediately after import
+- [ ] **TCAT-02**: Categories include: Bills, Food & Groceries, Entertainment, Transport, Subscriptions, Shopping, Healthcare, Other
+- [ ] **TCAT-03**: User can confirm AI category or override with their own selection per transaction
+- [ ] **TCAT-04**: User category overrides are persisted
+
+### AI Insights (AINS)
+
+- [ ] **AINS-01**: AI identifies potential duplicate or overlapping subscriptions across transactions
+- [ ] **AINS-02**: AI generates per-category cut-back observations (observational language only — no personalised advice)
+- [ ] **AINS-03**: Insights panel highlights the top spending areas relative to income
+- [ ] **AINS-04**: AI output never uses "advise", "recommend", or "suggest" (same guardrail as creator tool)
+
+### Budget Summary (BSUM)
+
+- [ ] **BSUM-01**: Budget page shows total household income for the selected month
+- [ ] **BSUM-02**: Budget page shows total outgoings broken down by category with £ amounts and % of income
+- [ ] **BSUM-03**: Monthly surplus (income − outgoings) is displayed prominently
+- [ ] **BSUM-04**: User can navigate between months to view historical budget summaries
+
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| TrueLayer Open Banking | OAuth complexity; deferred to v1.2 |
+| TrueLayer Open Banking | OAuth complexity; deferred indefinitely — manual CSV covers v1.3 needs |
+| Open Banking / bank feeds | Auto-import adds regulatory and technical complexity out of proportion to benefit |
 | Server-side CSV parsing | Client-side (PapaParse) avoids upload size limits and is simpler |
 | XLS/Excel format | CSV is universal; Excel format is a rabbit hole |
 | Price streaming / WebSocket | Daily close sufficient for a monthly planning tool |
@@ -127,11 +165,33 @@ Requirements for the Portfolio Intelligence milestone. Each maps to roadmap phas
 | MOB-02 | Phase 10 | Pending |
 | MOB-03 | Phase 10 | Pending |
 
+| HSLD-01 | Phase 16 | Pending |
+| HSLD-02 | Phase 16 | Pending |
+| HSLD-03 | Phase 16 | Pending |
+| TIMP-01 | Phase 17 | Pending |
+| TIMP-02 | Phase 17 | Pending |
+| TIMP-03 | Phase 17 | Pending |
+| TIMP-04 | Phase 17 | Pending |
+| TIMP-05 | Phase 17 | Pending |
+| TCAT-01 | Phase 18 | Pending |
+| TCAT-02 | Phase 18 | Pending |
+| TCAT-03 | Phase 18 | Pending |
+| TCAT-04 | Phase 18 | Pending |
+| AINS-01 | Phase 19 | Pending |
+| AINS-02 | Phase 19 | Pending |
+| AINS-03 | Phase 19 | Pending |
+| AINS-04 | Phase 19 | Pending |
+| BSUM-01 | Phase 19 | Pending |
+| BSUM-02 | Phase 19 | Pending |
+| BSUM-03 | Phase 19 | Pending |
+| BSUM-04 | Phase 19 | Pending |
+
 **Coverage:**
 - v1.1 requirements: 16 total
-- Mapped to phases: 16
-- Unmapped: 0 ✓
+- v1.2 requirements: 17 total
+- v1.3 requirements: 20 total
+- All mapped to phases ✓
 
 ---
 *Requirements defined: 2026-05-13*
-*Last updated: 2026-05-13 — traceability filled after roadmap creation*
+*Last updated: 2026-05-21 — v1.3 Household Budget Tracker requirements added*

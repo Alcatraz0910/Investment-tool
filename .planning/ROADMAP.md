@@ -209,6 +209,62 @@ Wave 3 *(blocked on Wave 2 completion)*
 
 **UI hint**: yes
 
+### v1.3 Household Budget Tracker
+
+- [ ] **Phase 16: Budget Foundation** — DB schema, Budget page/tab, household member + income entry UI
+- [ ] **Phase 17: Transaction CSV Import** — PapaParse import, column mapper, transaction list with search/filter/delete
+- [ ] **Phase 18: AI Categorisation + Review** — Claude batch-categorises transactions, review/override UI, persisted overrides
+- [ ] **Phase 19: AI Insights + Budget Summary** — Cut-back observations, per-category breakdown, monthly surplus, month navigation
+
+### Phase 16: Budget Foundation
+**Goal**: Budget section exists in the dashboard with DB tables for household members, income, and transactions; user can add/edit household members and enter monthly income per person
+**Depends on**: Nothing (self-contained new section)
+**Requirements**: HSLD-01, HSLD-02, HSLD-03
+**Success Criteria** (what must be TRUE):
+  1. A Budget tab/page is accessible from the dashboard nav
+  2. User can add household members with a name and monthly income amount
+  3. Members and income entries persist across page reloads via Supabase
+  4. User can edit and delete household members
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 17: Transaction CSV Import
+**Goal**: Users can import bank transaction CSVs per household member; transactions appear in a reviewable list with search and delete capability
+**Depends on**: Phase 16
+**Requirements**: TIMP-01, TIMP-02, TIMP-03, TIMP-04, TIMP-05
+**Success Criteria** (what must be TRUE):
+  1. User can drag-drop or pick a CSV file and assign it to a household member
+  2. Column mapping UI pre-fills for Monzo, Barclays, Lloyds, NatWest; falls back to manual mapping
+  3. Parsed transactions appear in a list showing date, description, and amount
+  4. User can search/filter the transaction list and delete individual rows or bulk-clear a month
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 18: AI Categorisation + Manual Review
+**Goal**: Claude suggests a category for each imported transaction; user reviews and confirms or overrides; overrides are persisted
+**Depends on**: Phase 17
+**Requirements**: TCAT-01, TCAT-02, TCAT-03, TCAT-04
+**Success Criteria** (what must be TRUE):
+  1. After import, each transaction shows an AI-suggested category (Bills, Food, Entertainment, etc.)
+  2. User can confirm or change the category per transaction inline
+  3. Overridden categories are saved and shown on next load
+  4. Categorisation runs client-triggered, not automatically in the background
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 19: AI Insights + Budget Summary
+**Goal**: Budget page shows total income, categorised outgoings, monthly surplus, and an AI observations panel with cut-back suggestions; user can navigate between months
+**Depends on**: Phase 18
+**Requirements**: AINS-01, AINS-02, AINS-03, AINS-04, BSUM-01, BSUM-02, BSUM-03, BSUM-04
+**Success Criteria** (what must be TRUE):
+  1. Budget summary card shows: total income, total outgoings, surplus (income − outgoings) for the selected month
+  2. Outgoings are broken down by category with £ amounts and % of income
+  3. AI observations panel shows cut-back opportunities and duplicate subscription flags (observational language only)
+  4. User can navigate between months via a month picker; prior months show historical data
+  5. AI output contains no instances of "advise", "recommend", or "suggest"
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -228,3 +284,7 @@ Wave 3 *(blocked on Wave 2 completion)*
 | 13. Market News Integration | v1.2 | 3/3 | Complete | 2026-05-20 |
 | 14. Creator Signals + Housekeeping | v1.2 | 0/3 | Ready to execute | — |
 | 15. Visual Redesign | v1.2 | 5/5 | Complete | 2026-05-20 |
+| 16. Budget Foundation | v1.3 | 0/? | Not started | — |
+| 17. Transaction CSV Import | v1.3 | 0/? | Not started | — |
+| 18. AI Categorisation + Review | v1.3 | 0/? | Not started | — |
+| 19. AI Insights + Budget Summary | v1.3 | 0/? | Not started | — |
