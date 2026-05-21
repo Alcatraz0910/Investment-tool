@@ -37,7 +37,7 @@ export function buildWatchLists(
     }
 
     const stableItems: WatchListItem[] = [
-      ...profileStable.favoured_stocks
+      ...(Array.isArray(profileStable.favoured_stocks) ? profileStable.favoured_stocks : [])
         .filter((s) => s.ticker !== null)
         .map((s) => ({
           ticker: s.ticker as string,
@@ -46,7 +46,7 @@ export function buildWatchLists(
           layer: 'stable' as const,
           rationale: s.rationale,
         })),
-      ...(profileStable.preferred_index_funds ?? [])
+      ...(Array.isArray(profileStable.preferred_index_funds) ? profileStable.preferred_index_funds : [])
         .filter((f) => f.ticker !== null)
         .map((f) => ({
           ticker: f.ticker as string,
@@ -59,7 +59,7 @@ export function buildWatchLists(
 
     const latestItems: WatchListItem[] = profileLatest
       ? [
-          ...profileLatest.favoured_stocks
+          ...(Array.isArray(profileLatest.favoured_stocks) ? profileLatest.favoured_stocks : [])
             .filter((s) => s.ticker !== null)
             .map((s) => ({
               ticker: s.ticker as string,
@@ -68,7 +68,7 @@ export function buildWatchLists(
               layer: 'latest' as const,
               rationale: s.rationale,
             })),
-          ...(profileLatest.preferred_index_funds ?? [])
+          ...(Array.isArray(profileLatest.preferred_index_funds) ? profileLatest.preferred_index_funds : [])
             .filter((f) => f.ticker !== null)
             .map((f) => ({
               ticker: f.ticker as string,

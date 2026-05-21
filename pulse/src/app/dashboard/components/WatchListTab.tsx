@@ -68,9 +68,9 @@ function computeSentimentTrend(
   let towardBullish = 0
   let towardCautious = 0
   const latestMap = new Map(
-    latest.sector_focus.map((s) => [s.sector.toLowerCase(), s.stance]),
+    (Array.isArray(latest.sector_focus) ? latest.sector_focus : []).map((s) => [s.sector.toLowerCase(), s.stance]),
   )
-  for (const sf of stable.sector_focus) {
+  for (const sf of (Array.isArray(stable.sector_focus) ? stable.sector_focus : [])) {
     const latestStance = latestMap.get(sf.sector.toLowerCase())
     if (!latestStance) continue  // D-11: unmatched sectors ignored
     if (sf.stance !== 'bullish' && latestStance === 'bullish') towardBullish++

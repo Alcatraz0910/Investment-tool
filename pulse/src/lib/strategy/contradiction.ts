@@ -31,11 +31,11 @@ export function runContradictionCheck(
 
   // Check (a): high-conviction stable ticker absent from latest favoured_stocks
   const latestTickers = new Set(
-    (latest.favoured_stocks ?? [])
+    (Array.isArray(latest.favoured_stocks) ? latest.favoured_stocks : [])
       .map((s) => s.ticker?.toUpperCase())
       .filter((t): t is string => t !== null && t !== undefined),
   )
-  for (const stock of (stable.favoured_stocks ?? [])) {
+  for (const stock of (Array.isArray(stable.favoured_stocks) ? stable.favoured_stocks : [])) {
     if (
       stock.conviction === 'high' &&
       stock.ticker !== null &&
@@ -47,9 +47,9 @@ export function runContradictionCheck(
 
   // Check (b): sector stance flipped bullish ↔ cautious (D-11: case-insensitive name match)
   const latestSectorMap = new Map(
-    (latest.sector_focus ?? []).map((s) => [s.sector.toLowerCase(), s.stance]),
+    (Array.isArray(latest.sector_focus) ? latest.sector_focus : []).map((s) => [s.sector.toLowerCase(), s.stance]),
   )
-  for (const sf of (stable.sector_focus ?? [])) {
+  for (const sf of (Array.isArray(stable.sector_focus) ? stable.sector_focus : [])) {
     const latestStance = latestSectorMap.get(sf.sector.toLowerCase())
     if (!latestStance) continue  // unmatched sector — ignored per D-11
     if (
