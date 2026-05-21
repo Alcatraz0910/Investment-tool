@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "Bash(npx tsc *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat\\(04-03\\): implement contradiction.ts and blender.ts pure functions *)",
+      "Bash(npx vitest *)",
+      "Bash(git commit -m 'docs\\(04-03\\): complete contradiction detection and strategy blender plan *)",
+      "Bash(git commit -m 'feat\\(04-04\\): add saveCreatorWeight server action \\(BLEND-01\\) *)",
+      "Bash(git commit -m 'test\\(04-04\\): implement BLEND-01 unit tests for saveCreatorWeight — 5 tests green *)",
+      "Bash(git commit -m 'docs\\(04-04\\): complete refresh route integration and saveCreatorWeight plan *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

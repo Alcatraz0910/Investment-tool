@@ -10,6 +10,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockInsert = vi.fn().mockResolvedValue({ error: null })
 const mockUpsert = vi.fn().mockResolvedValue({ error: null })
+const mockUpdateEqEq = vi.fn().mockResolvedValue({ error: null })
+const mockUpdateEq = vi.fn().mockReturnValue({ eq: mockUpdateEqEq })
+const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq })
 
 vi.mock('@/lib/supabase/service', () => ({
   createServiceClient: () => ({
@@ -27,9 +30,10 @@ vi.mock('@/lib/supabase/service', () => ({
           }),
         }
       }
-      // refresh_jobs upsert
+      // refresh_jobs — update().eq().eq() chain used by extractor step tracking
       return {
         upsert: mockUpsert,
+        update: mockUpdate,
       }
     },
   }),
@@ -181,6 +185,9 @@ describe('extractCreatorStrategy (STRAT-01, STRAT-02, STRAT-03)', () => {
   })
 
   it('STRAT-01: throws if no Pinecone chunks found', async () => {
+    // Extractor retries without date filter when first query returns 0 matches,
+    // so both the filtered and unfiltered queries must return empty.
+    mockPineconeQuery.mockResolvedValueOnce({ matches: [] })
     mockPineconeQuery.mockResolvedValueOnce({ matches: [] })
     await expect(extractCreatorStrategy(CREATOR_ID, USER_ID)).rejects.toThrow(
       'No Pinecone chunks found',

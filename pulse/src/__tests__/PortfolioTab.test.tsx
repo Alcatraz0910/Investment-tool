@@ -110,33 +110,33 @@ describe('PortfolioTab — price display (Phase 8)', () => {
     expect(dashEl.textContent).toBe('—')
   })
 
-  it('renders timestamp with text-zinc-400 class when priceFetchedAt is fresh (< 24h)', () => {
+  it('renders price span without amber class when priceFetchedAt is fresh (< 24h)', () => {
     render(
       <PortfolioTab
         profile={defaultProfile}
-        holdings={[makeHolding({ priceFetchedAt: freshDate })]}
+        holdings={[makeHolding({ currentPrice: 114.22, priceFetchedAt: freshDate })]}
       />
     )
-    // The timestamp span should have text-zinc-400 (fresh) not text-amber-400 (stale)
-    const allSpans = document.querySelectorAll('span.text-zinc-400')
-    // At least one span with text-zinc-400 must contain the localised timestamp text
-    const timestampText = new Date(freshDate).toLocaleString('en-GB')
-    const match = Array.from(allSpans).find(el => el.textContent === timestampText)
-    expect(match).toBeTruthy()
-    expect(match?.classList.contains('text-amber-400')).toBe(false)
+    // Phase 15: staleness coloring is on the price span itself; fresh = text-white, stale = text-amber-400
+    // Timestamp is surfaced via title attribute, not as visible text
+    const timestampTitle = `As of ${new Date(freshDate).toLocaleString('en-GB')}`
+    const priceSpan = document.querySelector(`span[title="${timestampTitle}"]`)
+    expect(priceSpan).toBeTruthy()
+    expect(priceSpan?.classList.contains('text-amber-400')).toBe(false)
   })
 
-  it('renders timestamp with text-amber-400 class when priceFetchedAt is stale (> 24h)', () => {
+  it('renders price span with text-amber-400 class when priceFetchedAt is stale (> 24h)', () => {
     render(
       <PortfolioTab
         profile={defaultProfile}
-        holdings={[makeHolding({ priceFetchedAt: staleDate })]}
+        holdings={[makeHolding({ currentPrice: 114.22, priceFetchedAt: staleDate })]}
       />
     )
-    const timestampText = new Date(staleDate).toLocaleString('en-GB')
-    const amberSpans = document.querySelectorAll('span.text-amber-400')
-    const match = Array.from(amberSpans).find(el => el.textContent === timestampText)
-    expect(match).toBeTruthy()
+    // Phase 15: stale price span gets text-amber-400; timestamp is in title attribute
+    const timestampTitle = `As of ${new Date(staleDate).toLocaleString('en-GB')}`
+    const priceSpan = document.querySelector(`span[title="${timestampTitle}"]`)
+    expect(priceSpan).toBeTruthy()
+    expect(priceSpan?.classList.contains('text-amber-400')).toBe(true)
   })
 
   it('renders nothing in the as-of cell when priceFetchedAt is null', () => {
@@ -167,14 +167,17 @@ describe('PortfolioTab — price display (Phase 8)', () => {
     expect(screen.getByText('Refresh Prices')).toBeTruthy()
   })
 
-  it('renders chart toggle button with aria-expanded=false by default', () => {
+  it('renders TradingView chart link for holding', () => {
     render(
       <PortfolioTab
         profile={defaultProfile}
         holdings={[makeHolding({ ticker: 'VWRL' })]}
       />
     )
-    const chartBtn = screen.getByLabelText('Show chart for VWRL')
-    expect(chartBtn.getAttribute('aria-expanded')).toBe('false')
+    // Phase 15: chart toggle button replaced with a TradingView link.
+    // Link appears in both mobile mini-card and desktop table, so use getAllByLabelText.
+    const chartLinks = screen.getAllByLabelText('View VWRL chart on TradingView')
+    expect(chartLinks.length).toBeGreaterThan(0)
+    expect(chartLinks[0].tagName.toLowerCase()).toBe('a')
   })
 })
